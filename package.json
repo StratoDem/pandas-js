@@ -2,7 +2,8 @@
   "name": "pandas.js",
   "version": "0.1.0",
   "description": "Pandas for JavaScript",
-  "main": "./dist/js/index.js",
+  "main": "./dist/index.js",
+  "files": ["dist/", "src/"],
   "dependencies": {
     "immutable": "^3.8.1"
   },
@@ -52,7 +53,7 @@
   },
   "homepage": "https://github.com/StratoDem/pandas.js#readme",
   "scripts": {
-    "build": "babel src --out-dir dist",
+    "build": "babel src/es6 --out-dir dist",
     "test": "jest --verbose"
   }
 }
