@@ -77,9 +77,6 @@ export default class DataFrame {
         index += 1;
         const row = {};
         this.columns.forEach((k) => {
-          console.log(k);
-          console.log(this);
-          console.log(this[k]);
           row[k] = this[k].values.get(index);
         });
         return {
@@ -115,7 +112,8 @@ export default class DataFrame {
       this[prevColumn].name = k;
       this[k] = this[prevColumn];
 
-      delete this[prevColumn];
+      if (prevColumn !== k)
+        delete this[prevColumn];
     });
     this._columns = columns;
   }

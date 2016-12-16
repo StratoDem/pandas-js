@@ -136,9 +136,6 @@ var DataFrame = function () {
           index += 1;
           var row = {};
           _this3.columns.forEach(function (k) {
-            console.log(k);
-            console.log(_this3);
-            console.log(_this3[k]);
             row[k] = _this3[k].values.get(index);
           });
           return {
@@ -197,7 +194,7 @@ var DataFrame = function () {
         _this4[prevColumn].name = k;
         _this4[k] = _this4[prevColumn];
 
-        delete _this4[prevColumn];
+        if (prevColumn !== k) delete _this4[prevColumn];
       });
       this._columns = columns;
     }
