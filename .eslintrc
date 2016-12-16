@@ -1,0 +1,39 @@
+{
+  "extends": "airbnb",
+  "rules": {
+    "curly": "off",
+    "indent": [
+      "warn",
+      2,
+      {
+        "SwitchCase": 1
+      }
+    ],
+    "no-undef": "off",
+    "import/extensions": "off",
+    "no-underscore-dangle": "off",
+    "object-curly-spacing": "off",
+    "no-restricted-syntax": 0,
+    "operator-linebreak": [
+      "error",
+      "before"
+    ],
+    "quotes": "off"
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [
+          ".es6",
+          ".js",
+          ".jsx"
+        ]
+      }
+    }
+  },
+  "parserOptions": {
+    "ecmaFeatures": {
+      "experimentalObjectRestSpread": true
+    }
+  }
+}
