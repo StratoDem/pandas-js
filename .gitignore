@@ -1,0 +1,7 @@
+# Packages
+node_modules/
+
+# Compiled tests
+
+# IntelliJ project files
+.idea
