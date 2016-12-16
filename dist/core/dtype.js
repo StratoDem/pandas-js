@@ -3,12 +3,21 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.arrayToDType = exports.elementToDType = exports.DType = undefined;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof2 = require('babel-runtime/helpers/typeof');
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _typeof3 = _interopRequireDefault(_typeof2);
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
+
+var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+var _createClass2 = require('babel-runtime/helpers/createClass');
+
+var _createClass3 = _interopRequireDefault(_createClass2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var int = 'int';
 var float = 'float';
@@ -18,14 +27,14 @@ var ALLOWED_DTYPES = [int, float, object];
 
 var DType = exports.DType = function () {
   function DType(name) {
-    _classCallCheck(this, DType);
+    (0, _classCallCheck3.default)(this, DType);
 
     if (ALLOWED_DTYPES.indexOf(name) < 0) throw new Error('dtype ' + name + ' not allowed');
 
     this._name = name;
   }
 
-  _createClass(DType, [{
+  (0, _createClass3.default)(DType, [{
     key: 'toString',
     value: function toString() {
       return 'dtype(' + this.dtype + ')';
@@ -36,7 +45,6 @@ var DType = exports.DType = function () {
       return this._name;
     }
   }]);
-
   return DType;
 }();
 
@@ -50,7 +58,7 @@ var DType = exports.DType = function () {
 var elementToDType = exports.elementToDType = function elementToDType(el) {
   var arrayDType = int;
 
-  if ((typeof el === 'undefined' ? 'undefined' : _typeof(el)) === 'object') {
+  if ((typeof el === 'undefined' ? 'undefined' : (0, _typeof3.default)(el)) === 'object') {
     arrayDType = object;
   } else if (typeof el === 'string') {
     arrayDType = object;

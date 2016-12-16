@@ -3,9 +3,17 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.sum = undefined;
+
+var _regenerator = require("babel-runtime/regenerator");
+
+var _regenerator2 = _interopRequireDefault(_regenerator);
+
 exports.enumerate = enumerate;
 
-var _marked = [enumerate].map(regeneratorRuntime.mark);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var _marked = [enumerate].map(_regenerator2.default.mark);
 
 /**
  * Calculate the sum of values in an iterable
@@ -27,7 +35,7 @@ var sum = exports.sum = function sum(iterable) {
 function enumerate(iterable) {
   var i, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, x;
 
-  return regeneratorRuntime.wrap(function enumerate$(_context) {
+  return _regenerator2.default.wrap(function enumerate$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
         case 0:
