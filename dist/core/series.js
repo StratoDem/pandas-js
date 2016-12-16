@@ -3,9 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Series = undefined;
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * A pandas.Series one-dimensional array with axis labels, with an Immutable.List instead of
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * numpy.ndarray as the values
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
 
 var _immutable = require('immutable');
 
@@ -15,15 +19,11 @@ var _utils = require('./utils');
 
 var _dtype = require('./dtype');
 
-var dtype = _interopRequireWildcard(_dtype);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Series = exports.Series = function () {
+var Series = function () {
   /**
    * One dimensional array with axis labels
    *
@@ -44,23 +44,23 @@ var Series = exports.Series = function () {
     _classCallCheck(this, Series);
 
     if (Array.isArray(data)) {
-      this._data = _immutable2.default.List(data);
-      this._dtype = dtype.arrayToDType(data);
+      this._values = _immutable2.default.List(data);
+      this._dtype = (0, _dtype.arrayToDType)(data);
     } else if (data instanceof _immutable2.default.List) {
-      this._data = data;
-      this._dtype = dtype.arrayToDType(data);
+      this._values = data;
+      this._dtype = (0, _dtype.arrayToDType)(data);
     } else {
-      this._data = _immutable2.default.List.of(data);
+      this._values = _immutable2.default.List.of(data);
     }
 
-    this._name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
+    this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
     this._index = kwargs.index;
   }
 
   _createClass(Series, [{
     key: Symbol.iterator,
     value: function value() {
-      var values = this._data;
+      var values = this.values;
       var index = -1;
 
       return {
@@ -69,6 +69,51 @@ var Series = exports.Series = function () {
           return { value: values.get(index), done: !(index >= 0 && index < values.size) };
         }
       };
+    }
+  }, {
+    key: 'map',
+    value: function map(func) {
+      var array = [];
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = (0, _utils.enumerate)(this)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var _step$value = _slicedToArray(_step.value, 2),
+              val = _step$value[0],
+              idx = _step$value[1];
+
+          array.push(func(val, idx));
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      return new Series(array);
+    }
+  }, {
+    key: 'toString',
+    value: function toString() {
+      var vals = this.iloc(0, 10).values;
+
+      var valString = '';
+      vals.forEach(function (v, idx) {
+        valString += idx + '\t' + v + '\n';
+      });
+
+      return valString + 'Name: ' + this.name + ', dtype: ' + this.dtype;
     }
   }, {
     key: 'astype',
@@ -80,29 +125,50 @@ var Series = exports.Series = function () {
      * @param {DType} nextType
      */
     value: function astype(nextType) {
-      if (!(nextType instanceof dtype.DType)) throw new Error('Next type must be a DType');
+      if (!(nextType instanceof _dtype.DType)) throw new Error('Next type must be a DType');
 
       if (nextType.dtype === this.dtype) return this;
 
       switch (nextType.dtype) {
         case 'int':
-          if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to int');
-          var kwargs = { name: this.name, index: this.index };
-          return new Series(this.values.map(function (v) {
-            return Math.floor(v);
-          }), kwargs);
+          {
+            if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to int');
+            var kwargs = { name: this.name, index: this.index };
+            return new Series(this.values.map(function (v) {
+              return Math.floor(v);
+            }), kwargs);
+          }
         case 'float':
-          if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to float');
-          this._dtype = new dtype.DType('float');
-          return this;
+          {
+            if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to float');
+            this._dtype = new _dtype.DType('float');
+            return this;
+          }
         default:
           throw new Error('Invalid dtype ' + nextType);
       }
     }
+
+    /**
+     * Return the Series between [startVal, endVal), or at startVal if endVal is undefined
+     *
+     * @param {int} startVal
+     * @param {int} [endVal]
+     *
+     * @returns {Series}
+     */
+
+  }, {
+    key: 'iloc',
+    value: function iloc(startVal, endVal) {
+      if (typeof endVal === 'undefined') return this.values.get(startVal);
+
+      return new Series(this.values.slice(startVal, endVal), this.kwargs);
+    }
   }, {
     key: 'sum',
     value: function sum() {
-      return (0, _utils.sum)(this._data);
+      return (0, _utils.sum)(this.values);
     }
   }, {
     key: 'mean',
@@ -117,7 +183,7 @@ var Series = exports.Series = function () {
       var mean = this.mean();
 
       var meanSqDiff = 0;
-      this._data.forEach(function (v) {
+      this.values.forEach(function (v) {
         var diff = v - mean;
         meanSqDiff += diff * diff / _this.length;
       });
@@ -135,13 +201,13 @@ var Series = exports.Series = function () {
   }, {
     key: 'plus',
     value: function plus(val) {
-      if (typeof val === 'number') return new Series(this._data.map(function (v) {
+      if (typeof val === 'number') return new Series(this.values.map(function (v) {
         return v + val;
-      }));else if (val instanceof Series) return new Series(this._data.map(function (v, idx) {
+      }));else if (val instanceof Series) return new Series(this.values.map(function (v, idx) {
         return v + val.values.get(idx);
-      }));else if (Array.isArray(val)) return new Series(this._data.map(function (v, idx) {
+      }));else if (Array.isArray(val)) return new Series(this.values.map(function (v, idx) {
         return v + val[idx];
-      }));else if (val instanceof _immutable2.default.List) return new Series(this._data.map(function (v, idx) {
+      }));else if (val instanceof _immutable2.default.List) return new Series(this.values.map(function (v, idx) {
         return v + val.get(idx);
       }));
 
@@ -159,13 +225,13 @@ var Series = exports.Series = function () {
   }, {
     key: 'minus',
     value: function minus(val) {
-      if (typeof val === 'number') return new Series(this._data.map(function (v) {
+      if (typeof val === 'number') return new Series(this.values.map(function (v) {
         return v - val;
-      }));else if (val instanceof Series) return new Series(this._data.map(function (v, idx) {
+      }));else if (val instanceof Series) return new Series(this.values.map(function (v, idx) {
         return v - val.values.get(idx);
-      }));else if (Array.isArray(val)) return new Series(this._data.map(function (v, idx) {
+      }));else if (Array.isArray(val)) return new Series(this.values.map(function (v, idx) {
         return v - val[idx];
-      }));else if (val instanceof _immutable2.default.List) return new Series(this._data.map(function (v, idx) {
+      }));else if (val instanceof _immutable2.default.List) return new Series(this.values.map(function (v, idx) {
         return v - val.get(idx);
       }));
 
@@ -183,13 +249,13 @@ var Series = exports.Series = function () {
   }, {
     key: 'times',
     value: function times(val) {
-      if (typeof val === 'number') return new Series(this._data.map(function (v) {
+      if (typeof val === 'number') return new Series(this.values.map(function (v) {
         return v * val;
-      }));else if (val instanceof Series) return new Series(this._data.map(function (v, idx) {
+      }));else if (val instanceof Series) return new Series(this.values.map(function (v, idx) {
         return v * val.values.get(idx);
-      }));else if (Array.isArray(val)) return new Series(this._data.map(function (v, idx) {
+      }));else if (Array.isArray(val)) return new Series(this.values.map(function (v, idx) {
         return v * val[idx];
-      }));else if (val instanceof _immutable2.default.List) return new Series(this._data.map(function (v, idx) {
+      }));else if (val instanceof _immutable2.default.List) return new Series(this.values.map(function (v, idx) {
         return v * val.get(idx);
       }));
 
@@ -207,17 +273,25 @@ var Series = exports.Series = function () {
   }, {
     key: 'dividedBy',
     value: function dividedBy(val) {
-      if (typeof val === 'number') return new Series(this._data.map(function (v) {
+      if (typeof val === 'number') return new Series(this.values.map(function (v) {
         return v / val;
-      }));else if (val instanceof Series) return new Series(this._data.map(function (v, idx) {
+      }));else if (val instanceof Series) return new Series(this.values.map(function (v, idx) {
         return v / val.values.get(idx);
-      }));else if (Array.isArray(val)) return new Series(this._data.map(function (v, idx) {
+      }));else if (Array.isArray(val)) return new Series(this.values.map(function (v, idx) {
         return v / val[idx];
-      }));else if (val instanceof _immutable2.default.List) return new Series(this._data.map(function (v, idx) {
+      }));else if (val instanceof _immutable2.default.List) return new Series(this.values.map(function (v, idx) {
         return v / val.get(idx);
       }));
 
       throw new Error('minus only supports numbers, Arrays, Immutable List and pandas.Series');
+    }
+  }, {
+    key: 'kwargs',
+    get: function get() {
+      return {
+        name: this.name,
+        index: this._index
+      };
     }
   }, {
     key: 'dtype',
@@ -230,31 +304,18 @@ var Series = exports.Series = function () {
       return this._index;
     }
   }, {
-    key: 'name',
-    get: function get() {
-      return this._name;
-    }
-  }, {
     key: 'length',
     get: function get() {
-      return this._data.size;
-    }
-  }, {
-    key: 'loc',
-    get: function get() {
-      throw 'loc not implemented!';
-    }
-  }, {
-    key: 'iloc',
-    get: function get() {
-      throw 'iloc not implemented!';
+      return this.values.size;
     }
   }, {
     key: 'values',
     get: function get() {
-      return this._data;
+      return this._values;
     }
   }]);
 
   return Series;
 }();
+
+exports.default = Series;
