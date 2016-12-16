@@ -52,6 +52,7 @@
   },
   "homepage": "https://github.com/StratoDem/pandas.js#readme",
   "scripts": {
+    "build": "babel src --out-dir dist",
     "test": "jest --verbose"
   }
 }

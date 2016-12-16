@@ -7,4 +7,3 @@ src/es6/core/**/*.js
 
 # IntelliJ project files
 .idea
-dist/

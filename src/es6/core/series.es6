@@ -54,6 +54,10 @@ export class Series {
     return this._index;
   }
 
+  get name() {
+    return this._name;
+  }
+
   get length() {
     return this._data.size;
   }
@@ -85,9 +89,11 @@ export class Series {
     switch (nextType.dtype) {
       case 'int':
         if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to int');
-        return new Series(this.values.map(v => Math.floor(v)), {name: this._name, index: this.index});
+        const kwargs = {name: this.name, index: this.index};
+        return new Series(this.values.map(v => Math.floor(v)), kwargs);
       case 'float':
         if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to float');
+        this._dtype = new dtype.DType('float');
         return this;
       default:
         throw new Error(`Invalid dtype ${nextType}`);
