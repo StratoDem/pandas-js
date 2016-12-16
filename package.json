@@ -40,7 +40,8 @@
       "node_modules",
       "bower_components",
       "shared"
-    ]
+    ],
+    "testPathDirs": ["src/js"]
   },
   "keywords": [
     "pandas",

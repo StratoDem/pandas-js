@@ -1,11 +1,15 @@
+/**
+ * A pandas.Series one-dimensional array with axis labels, with an Immutable.List instead of
+ * numpy.ndarray as the values
+ */
 
 import Immutable from 'immutable';
 
 import { sum } from './utils';
-import * as dtype from './dtype';
+import { DType, arrayToDType } from './dtype';
 
 
-export class Series {
+export default class Series {
   /**
    * One dimensional array with axis labels
    *
@@ -22,20 +26,20 @@ export class Series {
   constructor(data = null, kwargs = {}) {
     if (Array.isArray(data)) {
       this._data = Immutable.List(data);
-      this._dtype = dtype.arrayToDType(data);
+      this._dtype = arrayToDType(data);
     } else if (data instanceof Immutable.List) {
       this._data = data;
-      this._dtype = dtype.arrayToDType(data);
+      this._dtype = arrayToDType(data);
     } else {
       this._data = Immutable.List.of(data);
     }
 
-    this._name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
+    this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
     this._index = kwargs.index;
   }
 
   [Symbol.iterator]() {
-    const values = this._data;
+    const values = this.values;
     let index = -1;
 
     return {
@@ -44,7 +48,25 @@ export class Series {
         return {value: values.get(index), done: !(index >= 0 && index < values.size)};
       },
     };
-  };
+  }
+
+  toString() {
+    const vals = this.iloc(0, 10).values;
+
+    let valString = '';
+    vals.forEach((v, idx) => {
+      valString += `${idx}\t${v}\n`;
+    });
+
+    return `${valString}Name: ${this.name}, dtype: ${this.dtype}`;
+  }
+
+  get kwargs() {
+    return {
+      name: this.name,
+      index: this._index,
+    };
+  }
 
   get dtype() {
     return this._dtype;
@@ -54,20 +76,8 @@ export class Series {
     return this._index;
   }
 
-  get name() {
-    return this._name;
-  }
-
   get length() {
-    return this._data.size;
-  }
-
-  get loc() {
-    throw 'loc not implemented!';
-  }
-
-  get iloc() {
-    throw 'iloc not implemented!';
+    return this.values.size;
   }
 
   get values() {
@@ -80,28 +90,45 @@ export class Series {
    * @param {DType} nextType
    */
   astype(nextType) {
-    if (!(nextType instanceof dtype.DType))
+    if (!(nextType instanceof DType))
       throw new Error('Next type must be a DType');
 
     if (nextType.dtype === this.dtype)
       return this;
 
     switch (nextType.dtype) {
-      case 'int':
+      case 'int': {
         if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to int');
         const kwargs = {name: this.name, index: this.index};
         return new Series(this.values.map(v => Math.floor(v)), kwargs);
-      case 'float':
+      }
+      case 'float': {
         if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to float');
         this._dtype = new dtype.DType('float');
         return this;
+      }
       default:
         throw new Error(`Invalid dtype ${nextType}`);
     }
   }
 
+  /**
+   * Return the Series between [startVal, endVal), or at startVal if endVal is undefined
+   *
+   * @param {int} startVal
+   * @param {int} [endVal]
+   *
+   * @returns {Series}
+   */
+  iloc(startVal, endVal) {
+    if (typeof endVal === 'undefined')
+      return this.values.get(startVal);
+
+    return new Series(this.values.slice(startVal, endVal), this.kwargs);
+  }
+
   sum() {
-    return sum(this._data);
+    return sum(this.values);
   }
 
   mean() {
@@ -112,7 +139,7 @@ export class Series {
     const mean = this.mean();
 
     let meanSqDiff = 0;
-    this._data.forEach((v) => {
+    this.values.forEach((v) => {
       const diff = v - mean;
       meanSqDiff += ((diff * diff) / this.length);
     });
@@ -128,13 +155,13 @@ export class Series {
    */
   plus(val) {
     if (typeof val === 'number')
-      return new Series(this._data.map(v => v + val));
+      return new Series(this.values.map(v => v + val));
     else if (val instanceof Series)
-      return new Series(this._data.map((v, idx) => v + val.values.get(idx)));
+      return new Series(this.values.map((v, idx) => v + val.values.get(idx)));
     else if (Array.isArray(val))
-      return new Series(this._data.map((v, idx) => v + val[idx]));
+      return new Series(this.values.map((v, idx) => v + val[idx]));
     else if (val instanceof Immutable.List)
-      return new Series(this._data.map((v, idx) => v + val.get(idx)));
+      return new Series(this.values.map((v, idx) => v + val.get(idx)));
 
     throw new Error('plus only supports numbers, Arrays, Immutable List and pandas.Series');
   }
@@ -148,13 +175,13 @@ export class Series {
    */
   minus(val) {
     if (typeof val === 'number')
-      return new Series(this._data.map(v => v - val));
+      return new Series(this.values.map(v => v - val));
     else if (val instanceof Series)
-      return new Series(this._data.map((v, idx) => v - val.values.get(idx)));
+      return new Series(this.values.map((v, idx) => v - val.values.get(idx)));
     else if (Array.isArray(val))
-      return new Series(this._data.map((v, idx) => v - val[idx]));
+      return new Series(this.values.map((v, idx) => v - val[idx]));
     else if (val instanceof Immutable.List)
-      return new Series(this._data.map((v, idx) => v - val.get(idx)));
+      return new Series(this.values.map((v, idx) => v - val.get(idx)));
 
     throw new Error('minus only supports numbers, Arrays, Immutable List and pandas.Series');
   }
@@ -168,13 +195,13 @@ export class Series {
    */
   times(val) {
     if (typeof val === 'number')
-      return new Series(this._data.map(v => v * val));
+      return new Series(this.values.map(v => v * val));
     else if (val instanceof Series)
-      return new Series(this._data.map((v, idx) => v * val.values.get(idx)));
+      return new Series(this.values.map((v, idx) => v * val.values.get(idx)));
     else if (Array.isArray(val))
-      return new Series(this._data.map((v, idx) => v * val[idx]));
+      return new Series(this.values.map((v, idx) => v * val[idx]));
     else if (val instanceof Immutable.List)
-      return new Series(this._data.map((v, idx) => v * val.get(idx)));
+      return new Series(this.values.map((v, idx) => v * val.get(idx)));
 
     throw new Error('plus only supports numbers, Arrays, Immutable List and pandas.Series');
   }
@@ -188,13 +215,13 @@ export class Series {
    */
   dividedBy(val) {
     if (typeof val === 'number')
-      return new Series(this._data.map(v => v / val));
+      return new Series(this.values.map(v => v / val));
     else if (val instanceof Series)
-      return new Series(this._data.map((v, idx) => v / val.values.get(idx)));
+      return new Series(this.values.map((v, idx) => v / val.values.get(idx)));
     else if (Array.isArray(val))
-      return new Series(this._data.map((v, idx) => v / val[idx]));
+      return new Series(this.values.map((v, idx) => v / val[idx]));
     else if (val instanceof Immutable.List)
-      return new Series(this._data.map((v, idx) => v / val.get(idx)));
+      return new Series(this.values.map((v, idx) => v / val.get(idx)));
 
     throw new Error('minus only supports numbers, Arrays, Immutable List and pandas.Series');
   }

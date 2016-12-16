@@ -2,8 +2,6 @@
 node_modules/
 
 # Compiled tests
-__tests__/**/*.js
-src/es6/core/**/*.js
 
 # IntelliJ project files
 .idea
