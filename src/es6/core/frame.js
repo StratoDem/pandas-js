@@ -78,6 +78,7 @@ export default class DataFrame {
         const row = {};
         this.columns.forEach((k) => {
           console.log(k);
+          console.log(this);
           console.log(this[k]);
           row[k] = this[k].values.get(index);
         });
