@@ -106,7 +106,7 @@ var DataFrame = function () {
       var _loop = function _loop(idx) {
         string += idx + '\t|';
         _this2.columns.forEach(function (k) {
-          string += '  ' + row[k].iloc(idx) + '  |';
+          string += '  ' + _this2[k].iloc(idx) + '  |';
         });
         string += '\n';
       };
@@ -136,6 +136,8 @@ var DataFrame = function () {
           index += 1;
           var row = {};
           _this3.columns.forEach(function (k) {
+            console.log(k);
+            console.log(_this3[k]);
             row[k] = _this3[k].values.get(index);
           });
           return {
