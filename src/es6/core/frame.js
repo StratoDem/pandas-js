@@ -56,7 +56,7 @@ export default class DataFrame {
     string += `\n${headerRow}\n`;
     for (let idx = 0; idx < this.length; idx += 1) {
       string += `${idx}\t|`;
-      this.columns.forEach((k) => { string += `  ${row[k].iloc(idx)}  |`; });
+      this.columns.forEach((k) => { string += `  ${this[k].iloc(idx)}  |`; });
       string += '\n';
     }
 
@@ -77,6 +77,8 @@ export default class DataFrame {
         index += 1;
         const row = {};
         this.columns.forEach((k) => {
+          console.log(k);
+          console.log(this[k]);
           row[k] = this[k].values.get(index);
         });
         return {

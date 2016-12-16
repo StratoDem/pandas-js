@@ -5,11 +5,25 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.mergeDataFrame = undefined;
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _toConsumableArray2 = require('babel-runtime/helpers/toConsumableArray');
+
+var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
+
+var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
+
+var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+var _createClass2 = require('babel-runtime/helpers/createClass');
+
+var _createClass3 = _interopRequireDefault(_createClass2);
+
+var _typeof2 = require('babel-runtime/helpers/typeof');
+
+var _typeof3 = _interopRequireDefault(_typeof2);
 
 var _immutable = require('immutable');
 
@@ -23,15 +37,11 @@ var _utils = require('./utils');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
 var parseArrayToSeriesObject = function parseArrayToSeriesObject(array) {
   var returnObject = {};
 
   array.forEach(function (el) {
-    if ((typeof el === 'undefined' ? 'undefined' : _typeof(el)) === 'object') {
+    if ((typeof el === 'undefined' ? 'undefined' : (0, _typeof3.default)(el)) === 'object') {
       Object.keys(el).forEach(function (k) {
         if (k in returnObject) {
           returnObject[k] = returnObject[k].push(el[k]);
@@ -62,8 +72,7 @@ var DataFrame = function () {
     var _this = this;
 
     var kwargs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-    _classCallCheck(this, DataFrame);
+    (0, _classCallCheck3.default)(this, DataFrame);
 
     if (Array.isArray(data)) {
       (function () {
@@ -81,7 +90,7 @@ var DataFrame = function () {
     }));
   }
 
-  _createClass(DataFrame, [{
+  (0, _createClass3.default)(DataFrame, [{
     key: 'toString',
     value: function toString() {
       var _this2 = this;
@@ -97,7 +106,7 @@ var DataFrame = function () {
       var _loop = function _loop(idx) {
         string += idx + '\t|';
         _this2.columns.forEach(function (k) {
-          string += '  ' + row[k].iloc(idx) + '  |';
+          string += '  ' + _this2[k].iloc(idx) + '  |';
         });
         string += '\n';
       };
@@ -127,6 +136,8 @@ var DataFrame = function () {
           index += 1;
           var row = {};
           _this3.columns.forEach(function (k) {
+            console.log(k);
+            console.log(_this3[k]);
             row[k] = _this3[k].values.get(index);
           });
           return {
@@ -194,12 +205,11 @@ var DataFrame = function () {
     get: function get() {
       var _this5 = this;
 
-      return Math.max.apply(Math, _toConsumableArray(this.columns.map(function (k) {
+      return Math.max.apply(Math, (0, _toConsumableArray3.default)(this.columns.map(function (k) {
         return _this5[k].length;
       })));
     }
   }]);
-
   return DataFrame;
 }();
 
@@ -228,7 +238,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
 
   try {
     var _loop2 = function _loop2() {
-      var _step$value = _slicedToArray(_step.value, 2),
+      var _step$value = (0, _slicedToArray3.default)(_step.value, 2),
           row1 = _step$value[0],
           _1 = _step$value[1];
 
@@ -238,7 +248,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
 
       try {
         var _loop3 = function _loop3() {
-          var _step2$value = _slicedToArray(_step2.value, 2),
+          var _step2$value = (0, _slicedToArray3.default)(_step2.value, 2),
               row2 = _step2$value[0],
               _2 = _step2$value[1];
 
