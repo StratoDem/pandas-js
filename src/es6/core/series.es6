@@ -11,14 +11,15 @@ export class Series {
    *
    * Operations between Series (+, -, /, *, **) align values based on their associated index values
    *
-   * @param {Array|Object} data
+   * @param data {Array|Object}
    *    Data to be stored in Series
-   * @param {Array|Object} index
-   *    Values must be unique, with the same length as _data
-   * @param {string} name
-   *    Name of the pandas.Series
+   * @param {Object} kwargs
+   *    Extra optional arguments for a Series
+   * @param {string} [kwargs.name='']
+   *    The _name to assign to the Series
+   * @param {Array|Object} [kwargs.index]
    */
-  constructor(data = null, index = null, name = '') {
+  constructor(data = null, kwargs = {}) {
     if (Array.isArray(data)) {
       this._data = Immutable.List(data);
       this._dtype = dtype.arrayToDType(data);
@@ -29,7 +30,8 @@ export class Series {
       this._data = Immutable.List.of(data);
     }
 
-    this.name = name;
+    this._name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
+    this._index = kwargs.index;
   }
 
   [Symbol.iterator]() {
@@ -43,6 +45,14 @@ export class Series {
       },
     };
   };
+
+  get dtype() {
+    return this._dtype;
+  }
+
+  get index() {
+    return this._index;
+  }
 
   get length() {
     return this._data.size;
@@ -60,8 +70,28 @@ export class Series {
     return this._data;
   }
 
-  astype() {
-    throw new Object('astype not implemented');
+  /**
+   * Convert the series to the desired type
+   *
+   * @param {DType} nextType
+   */
+  astype(nextType) {
+    if (!(nextType instanceof dtype.DType))
+      throw new Error('Next type must be a DType');
+
+    if (nextType.dtype === this.dtype)
+      return this;
+
+    switch (nextType.dtype) {
+      case 'int':
+        if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to int');
+        return new Series(this.values.map(v => Math.floor(v)), {name: this._name, index: this.index});
+      case 'float':
+        if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to float');
+        return this;
+      default:
+        throw new Error(`Invalid dtype ${nextType}`);
+    }
   }
 
   sum() {

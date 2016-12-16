@@ -8,6 +8,10 @@ var _series = require('../../core/series');
 
 var series = _interopRequireWildcard(_series);
 
+var _dtype = require('../../core/dtype');
+
+var dtype = _interopRequireWildcard(_dtype);
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -17,6 +21,18 @@ describe('series', function () {
     it('initializes properly with an Array', function () {
       expect(new series.Series([1, 2, 3]).values).toBeInstanceOf(_immutable2.default.List);
       expect(new series.Series([1, 2, 3]).values.toArray()).toEqual([1, 2, 3]);
+
+      expect(new series.Series([1, 2, 3], { name: 'Test name' })._name).toEqual('Test name');
+    });
+
+    describe('astype', function () {
+      it('converts a float Series to an integer Series', function () {
+        var ds1 = new series.Series([1.5, 2.1, 3.9]);
+        expect(ds1.dtype.dtype).toEqual('float');
+
+        var ds2 = ds1.astype(new dtype.DType('int'));
+        expect(ds2.values.toArray()).toEqual([1, 2, 3]);
+      });
     });
 
     describe('sum()', function () {

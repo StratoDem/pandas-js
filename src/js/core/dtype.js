@@ -22,13 +22,18 @@ var DType = exports.DType = function () {
 
     if (ALLOWED_DTYPES.indexOf(name) < 0) throw new Error('dtype ' + name + ' not allowed');
 
-    this.dtype = name;
+    this._name = name;
   }
 
   _createClass(DType, [{
     key: 'toString',
     value: function toString() {
       return 'dtype(' + this.dtype + ')';
+    }
+  }, {
+    key: 'dtype',
+    get: function get() {
+      return this._name;
     }
   }]);
 

@@ -1,6 +1,7 @@
 
 import Immutable from 'immutable';
 import * as series from '../../core/series';
+import * as dtype from '../../core/dtype';
 
 
 describe('series', () => {
@@ -8,6 +9,18 @@ describe('series', () => {
     it('initializes properly with an Array', () => {
       expect(new series.Series([1, 2, 3]).values).toBeInstanceOf(Immutable.List);
       expect(new series.Series([1, 2, 3]).values.toArray()).toEqual([1, 2, 3]);
+
+      expect(new series.Series([1, 2, 3], {name: 'Test name'})._name).toEqual('Test name');
+    });
+
+    describe('astype', () => {
+      it('converts a float Series to an integer Series', () => {
+        const ds1 = new series.Series([1.5, 2.1, 3.9]);
+        expect(ds1.dtype.dtype).toEqual('float');
+
+        const ds2 = ds1.astype(new dtype.DType('int'));
+        expect(ds2.values.toArray()).toEqual([1, 2, 3]);
+      });
     });
 
     describe('sum()', () => {

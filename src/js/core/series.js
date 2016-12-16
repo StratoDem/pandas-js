@@ -29,17 +29,17 @@ var Series = exports.Series = function () {
    *
    * Operations between Series (+, -, /, *, **) align values based on their associated index values
    *
-   * @param {Array|Object} data
+   * @param data {Array|Object}
    *    Data to be stored in Series
-   * @param {Array|Object} index
-   *    Values must be unique, with the same length as _data
-   * @param {string} name
-   *    Name of the pandas.Series
+   * @param {Object} kwargs
+   *    Extra optional arguments for a Series
+   * @param {string} [kwargs.name='']
+   *    The _name to assign to the Series
+   * @param {Array|Object} [kwargs.index]
    */
   function Series() {
     var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-    var index = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-    var name = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
+    var kwargs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     _classCallCheck(this, Series);
 
@@ -53,7 +53,8 @@ var Series = exports.Series = function () {
       this._data = _immutable2.default.List.of(data);
     }
 
-    this.name = name;
+    this._name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
+    this._index = kwargs.index;
   }
 
   _createClass(Series, [{
@@ -71,8 +72,30 @@ var Series = exports.Series = function () {
     }
   }, {
     key: 'astype',
-    value: function astype() {
-      throw new Object('astype not implemented');
+
+
+    /**
+     * Convert the series to the desired type
+     *
+     * @param {DType} nextType
+     */
+    value: function astype(nextType) {
+      if (!(nextType instanceof dtype.DType)) throw new Error('Next type must be a DType');
+
+      if (nextType.dtype === this.dtype) return this;
+
+      switch (nextType.dtype) {
+        case 'int':
+          if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to int');
+          return new Series(this.values.map(function (v) {
+            return Math.floor(v);
+          }), { name: this._name, index: this.index });
+        case 'float':
+          if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to float');
+          return this;
+        default:
+          throw new Error('Invalid dtype ' + nextType);
+      }
     }
   }, {
     key: 'sum',
@@ -193,6 +216,16 @@ var Series = exports.Series = function () {
       }));
 
       throw new Error('minus only supports numbers, Arrays, Immutable List and pandas.Series');
+    }
+  }, {
+    key: 'dtype',
+    get: function get() {
+      return this._dtype;
+    }
+  }, {
+    key: 'index',
+    get: function get() {
+      return this._index;
     }
   }, {
     key: 'length',
