@@ -22,10 +22,12 @@ export class Series {
     if (Array.isArray(data)) {
       this._data = Immutable.List(data);
       this._dtype = dtype.arrayToDType(data);
+    } else if (data instanceof Immutable.List) {
+      this._data = data;
+      this._dtype = dtype.arrayToDType(data);
     } else {
       this._data = Immutable.List.of(data);
     }
-
 
     this.name = name;
   }
@@ -85,15 +87,79 @@ export class Series {
   /**
    * Add another Iterable, Series, or number to the Series
    * @param {Iterable|Series|number} val
+   *
+   * @returns {Series}
    */
   plus(val) {
     if (typeof val === 'number')
-      return this._data.map(v => v + val);
+      return new Series(this._data.map(v => v + val));
     else if (val instanceof Series)
-      return this._data.map((v, idx) => v + val.values[idx]);
+      return new Series(this._data.map((v, idx) => v + val.values.get(idx)));
     else if (Array.isArray(val))
-      return this._data.map((v, idx) => v + val[idx]);
+      return new Series(this._data.map((v, idx) => v + val[idx]));
+    else if (val instanceof Immutable.List)
+      return new Series(this._data.map((v, idx) => v + val.get(idx)));
 
-    throw new Error('plus only supports numbers, Arrays and pandas.Series');
+    throw new Error('plus only supports numbers, Arrays, Immutable List and pandas.Series');
+  }
+
+  /**
+   * Subtract another Iterable, Series, or number from the Series
+   *
+   * @param {Iterable|Series|number} val
+   *
+   * @returns {Series}
+   */
+  minus(val) {
+    if (typeof val === 'number')
+      return new Series(this._data.map(v => v - val));
+    else if (val instanceof Series)
+      return new Series(this._data.map((v, idx) => v - val.values.get(idx)));
+    else if (Array.isArray(val))
+      return new Series(this._data.map((v, idx) => v - val[idx]));
+    else if (val instanceof Immutable.List)
+      return new Series(this._data.map((v, idx) => v - val.get(idx)));
+
+    throw new Error('minus only supports numbers, Arrays, Immutable List and pandas.Series');
+  }
+
+  /**
+   * Multiply by another Iterable, Series, or number
+   *
+   * @param {Iterable|Series|number} val
+   *
+   * @returns {Series}
+   */
+  times(val) {
+    if (typeof val === 'number')
+      return new Series(this._data.map(v => v * val));
+    else if (val instanceof Series)
+      return new Series(this._data.map((v, idx) => v * val.values.get(idx)));
+    else if (Array.isArray(val))
+      return new Series(this._data.map((v, idx) => v * val[idx]));
+    else if (val instanceof Immutable.List)
+      return new Series(this._data.map((v, idx) => v * val.get(idx)));
+
+    throw new Error('plus only supports numbers, Arrays, Immutable List and pandas.Series');
+  }
+
+  /**
+   * Divide by another Iterable, Series, or number
+   *
+   * @param {Iterable|Series|number} val
+   *
+   * @returns {Series}
+   */
+  dividedBy(val) {
+    if (typeof val === 'number')
+      return new Series(this._data.map(v => v / val));
+    else if (val instanceof Series)
+      return new Series(this._data.map((v, idx) => v / val.values.get(idx)));
+    else if (Array.isArray(val))
+      return new Series(this._data.map((v, idx) => v / val[idx]));
+    else if (val instanceof Immutable.List)
+      return new Series(this._data.map((v, idx) => v / val.get(idx)));
+
+    throw new Error('minus only supports numbers, Arrays, Immutable List and pandas.Series');
   }
 }
