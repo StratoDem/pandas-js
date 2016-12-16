@@ -137,6 +137,7 @@ var DataFrame = function () {
           var row = {};
           _this3.columns.forEach(function (k) {
             console.log(k);
+            console.log(_this3);
             console.log(_this3[k]);
             row[k] = _this3[k].values.get(index);
           });
