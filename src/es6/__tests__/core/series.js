@@ -48,6 +48,16 @@ describe('series', () => {
       });
     });
 
+    describe('map()', () => {
+      it('applies a function over the series and returns a new Series', () => {
+        const ds1 = new Series([1, 2, 3]);
+        const ds2 = ds1.map(v => v * 2);
+
+        expect(ds2).toBeInstanceOf(Series);
+        expect(ds2.values.toArray()).toEqual([2, 4, 6]);
+      });
+    });
+
     describe('sum()', () => {
       it('returns the sum of the Series', () => {
         expect(new Series([1, 2, 3]).sum()).toEqual(6);

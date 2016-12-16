@@ -2,6 +2,10 @@
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
+var _immutable = require('immutable');
+
+var _immutable2 = _interopRequireDefault(_immutable);
+
 var _frame = require('../../core/frame');
 
 var _frame2 = _interopRequireDefault(_frame);
@@ -92,6 +96,27 @@ describe('frame', function () {
       expect(df3.x.values.toArray()).toEqual([1, 2, 3]);
       expect(df3.y.values.toArray()).toEqual([2, 3, 4]);
       expect(df3.z.values.toArray()).toEqual([1, 6, 100]);
+    });
+  });
+
+  describe('values', function () {
+    it('values returns an Immutable.List of Immutable.Lists with [row][column] indexing', function () {
+      var vals1 = [{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 10 }];
+      var df1 = new _frame2.default(vals1);
+
+      expect(df1.values).toBeInstanceOf(_immutable2.default.List);
+      df1.values.forEach(function (r, idx) {
+        expect(r).toBeInstanceOf(_immutable2.default.List);
+        expect(r.get(0)).toEqual(vals1[idx].x);
+        expect(r.get(1)).toEqual(vals1[idx].y);
+      });
+    });
+
+    it('values equality check is true if data is unchanged', function () {
+      var vals1 = [{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 10 }];
+      var df1 = new _frame2.default(vals1);
+
+      expect(df1.values === df1.values).toEqual(true);
     });
   });
 

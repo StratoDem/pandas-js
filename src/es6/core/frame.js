@@ -45,6 +45,7 @@ export default class DataFrame {
       this._columns = [];
 
     this.index = kwargs.index;
+    this._values = Immutable.List(this._columns.map(k => this[k].values));
   }
 
   toString() {
@@ -87,6 +88,15 @@ export default class DataFrame {
 
   iterrows() {
     return enumerate(this);
+  }
+
+  /**
+   * Immutable.List of Immutable.List, with [row][column] indexing
+   *
+   * @returns {List.<List>}
+   */
+  get values() {
+    return this._values;
   }
 
   get columns() {

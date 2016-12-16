@@ -5,7 +5,7 @@
 
 import Immutable from 'immutable';
 
-import { sum } from './utils';
+import { enumerate, sum } from './utils';
 import { DType, arrayToDType } from './dtype';
 
 
@@ -25,13 +25,13 @@ export default class Series {
    */
   constructor(data = null, kwargs = {}) {
     if (Array.isArray(data)) {
-      this._data = Immutable.List(data);
+      this._values = Immutable.List(data);
       this._dtype = arrayToDType(data);
     } else if (data instanceof Immutable.List) {
-      this._data = data;
+      this._values = data;
       this._dtype = arrayToDType(data);
     } else {
-      this._data = Immutable.List.of(data);
+      this._values = Immutable.List.of(data);
     }
 
     this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
@@ -48,6 +48,13 @@ export default class Series {
         return {value: values.get(index), done: !(index >= 0 && index < values.size)};
       },
     };
+  }
+
+  map(func) {
+    const array = [];
+    for (const [val, idx] of enumerate(this)) { array.push(func(val, idx)); }
+
+    return new Series(array);
   }
 
   toString() {
@@ -81,7 +88,7 @@ export default class Series {
   }
 
   get values() {
-    return this._data;
+    return this._values;
   }
 
   /**
@@ -104,7 +111,7 @@ export default class Series {
       }
       case 'float': {
         if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to float');
-        this._dtype = new dtype.DType('float');
+        this._dtype = new DType('float');
         return this;
       }
       default:

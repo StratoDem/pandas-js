@@ -76,6 +76,9 @@ var DataFrame = function () {
     } else if (typeof data === 'undefined') this._columns = [];
 
     this.index = kwargs.index;
+    this._values = _immutable2.default.List(this._columns.map(function (k) {
+      return _this[k].values;
+    }));
   }
 
   _createClass(DataFrame, [{
@@ -137,6 +140,13 @@ var DataFrame = function () {
     value: function iterrows() {
       return (0, _utils.enumerate)(this);
     }
+
+    /**
+     * Immutable.List of Immutable.List, with [row][column] indexing
+     *
+     * @returns {List.<List>}
+     */
+
   }, {
     key: 'merge',
 
@@ -154,6 +164,11 @@ var DataFrame = function () {
       var how = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'inner';
 
       return mergeDataFrame(this, df, on, how);
+    }
+  }, {
+    key: 'values',
+    get: function get() {
+      return this._values;
     }
   }, {
     key: 'columns',

@@ -60,6 +60,18 @@ describe('series', function () {
       });
     });
 
+    describe('map()', function () {
+      it('applies a function over the series and returns a new Series', function () {
+        var ds1 = new _series2.default([1, 2, 3]);
+        var ds2 = ds1.map(function (v) {
+          return v * 2;
+        });
+
+        expect(ds2).toBeInstanceOf(_series2.default);
+        expect(ds2.values.toArray()).toEqual([2, 4, 6]);
+      });
+    });
+
     describe('sum()', function () {
       it('returns the sum of the Series', function () {
         expect(new _series2.default([1, 2, 3]).sum()).toEqual(6);

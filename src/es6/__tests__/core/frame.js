@@ -1,4 +1,6 @@
 
+import Immutable from 'immutable';
+
 import DataFrame, { mergeDataFrame } from '../../core/frame';
 import Series from '../../core/series';
 
@@ -60,6 +62,27 @@ describe('frame', () => {
       expect(df3.x.values.toArray()).toEqual([1, 2, 3]);
       expect(df3.y.values.toArray()).toEqual([2, 3, 4]);
       expect(df3.z.values.toArray()).toEqual([1, 6, 100]);
+    });
+  });
+
+  describe('values', () => {
+    it('values returns an Immutable.List of Immutable.Lists with [row][column] indexing', () => {
+      const vals1 = [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}, {x: 4, y: 10}];
+      const df1 = new DataFrame(vals1);
+
+      expect(df1.values).toBeInstanceOf(Immutable.List);
+      df1.values.forEach((r, idx) => {
+        expect(r).toBeInstanceOf(Immutable.List);
+        expect(r.get(0)).toEqual(vals1[idx].x);
+        expect(r.get(1)).toEqual(vals1[idx].y);
+      });
+    });
+
+    it('values equality check is true if data is unchanged', () => {
+      const vals1 = [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}, {x: 4, y: 10}];
+      const df1 = new DataFrame(vals1);
+
+      expect(df1.values === df1.values).toEqual(true);
     });
   });
 

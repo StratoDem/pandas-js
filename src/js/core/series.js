@@ -4,6 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       * A pandas.Series one-dimensional array with axis labels, with an Immutable.List instead of
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       * numpy.ndarray as the values
@@ -42,13 +44,13 @@ var Series = function () {
     _classCallCheck(this, Series);
 
     if (Array.isArray(data)) {
-      this._data = _immutable2.default.List(data);
+      this._values = _immutable2.default.List(data);
       this._dtype = (0, _dtype.arrayToDType)(data);
     } else if (data instanceof _immutable2.default.List) {
-      this._data = data;
+      this._values = data;
       this._dtype = (0, _dtype.arrayToDType)(data);
     } else {
-      this._data = _immutable2.default.List.of(data);
+      this._values = _immutable2.default.List.of(data);
     }
 
     this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
@@ -67,6 +69,39 @@ var Series = function () {
           return { value: values.get(index), done: !(index >= 0 && index < values.size) };
         }
       };
+    }
+  }, {
+    key: 'map',
+    value: function map(func) {
+      var array = [];
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = (0, _utils.enumerate)(this)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var _step$value = _slicedToArray(_step.value, 2),
+              val = _step$value[0],
+              idx = _step$value[1];
+
+          array.push(func(val, idx));
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      return new Series(array);
     }
   }, {
     key: 'toString',
@@ -106,7 +141,7 @@ var Series = function () {
         case 'float':
           {
             if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to float');
-            this._dtype = new dtype.DType('float');
+            this._dtype = new _dtype.DType('float');
             return this;
           }
         default:
@@ -276,7 +311,7 @@ var Series = function () {
   }, {
     key: 'values',
     get: function get() {
-      return this._data;
+      return this._values;
     }
   }]);
 
