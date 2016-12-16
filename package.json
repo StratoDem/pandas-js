@@ -1,5 +1,5 @@
 {
-  "dtype": "pandas.js",
+  "name": "pandas.js",
   "version": "0.1.0",
   "description": "Pandas for JavaScript",
   "main": "index.js",
