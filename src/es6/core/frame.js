@@ -5,29 +5,39 @@ import Series from './series';
 import { enumerate, nonMergeColumns, intersectingColumns } from './utils';
 
 
-const parseArrayToSeriesObject = (array) => {
-  const returnObject = {};
+/**
+ * Parse an array of data [{k1: v1, k2: v2}, ... ] into an Immutable.Map
+ *
+ * @param {Array} array
+ * @returns {Map<string, List>}
+ */
+const parseArrayToSeriesMap = (array) => {
+  const dataMap = {};
 
   array.forEach((el) => {
     if (typeof el === 'object') {
       Object.keys(el).forEach((k) => {
-        if (k in returnObject) {
-          returnObject[k] = returnObject[k].push(el[k]);
+        if (k in dataMap) {
+          dataMap[k] = dataMap[k].push(el[k]);
         } else {
-          returnObject[k] = Immutable.List.of(el[k]);
+          dataMap[k] = Immutable.List.of(el[k]);
         }
       });
     }
   });
 
-  return returnObject;
+  Object.keys(dataMap).forEach((k) => {
+    dataMap[k] = new Series(dataMap[k], {name: k});
+  });
+
+  return Immutable.Map(dataMap);
 };
 
 export default class DataFrame {
   /**
    * Two-dimensional size-mutable, potentially heterogeneous tabular data
    * structure with labeled axes (rows and columns). Arithmetic operations
-   * align on both row and column labels. Can be thought of as a Object-like
+   * align on both row and column labels. Can be thought of as a Immutable.Map-like
    * container for Series objects. The primary pandas data structure
    *
    * * @param data {Array|Object}
@@ -38,14 +48,13 @@ export default class DataFrame {
    */
   constructor(data, kwargs = {}) {
     if (Array.isArray(data)) {
-      const seriesObject = parseArrayToSeriesObject(data);
-      this._columns = Object.keys(seriesObject);
-      this._columns.forEach((k) => { this[k] = new Series(seriesObject[k], {name: k}); });
+      this._data = parseArrayToSeriesMap(data);
+      this._columns = this._data.keySeq();
     } else if (typeof data === 'undefined')
-      this._columns = [];
+      this._columns = Immutable.Seq.of();
 
     this.index = kwargs.index;
-    this._values = Immutable.List(this._columns.map(k => this[k].values));
+    this._values = Immutable.List(this._columns.map(k => this._data.get(k).values));
   }
 
   toString() {
@@ -77,7 +86,7 @@ export default class DataFrame {
         index += 1;
         const row = {};
         this.columns.forEach((k) => {
-          row[k] = this[k].values.get(index);
+          row[k] = this._data.get(k).iloc(index);
         });
         return {
           value: new DataFrame([row], this.kwargs),
@@ -99,27 +108,49 @@ export default class DataFrame {
     return this._values;
   }
 
+  /**
+   * Returns the indexed Immutable.Seq of columns
+   *
+   * @returns {Seq.Indexed<string>}
+   */
   get columns() {
     return this._columns;
   }
 
   set columns(columns) {
-    if (!Array.isArray(columns) || columns.length !== this.columns.length)
+    if (!Array.isArray(columns) || columns.length !== this.columns.size)
       throw new Error('Columns must be array of same dimension');
 
     columns.forEach((k, idx) => {
-      const prevColumn = this.columns[idx];
-      this[prevColumn].name = k;
-      this[k] = this[prevColumn];
+      const prevColumn = this.columns.get(idx);
+      const prevSeries = this.get(prevColumn);
+
+      prevSeries.name = k;
+      this._data = this._data.set(k, prevSeries);
 
       if (prevColumn !== k)
-        delete this[prevColumn];
+        this._data = this._data.delete(prevColumn);
     });
-    this._columns = columns;
+
+    this._columns = Immutable.Seq(columns);
   }
 
   get length() {
-    return Math.max(...this.columns.map(k => this[k].length));
+    return Math.max(...this._data.keySeq().map(k => this.get(k).length).toArray());
+  }
+
+  columnExists(col) {
+    return this._columns.indexOf(col) >= 0;
+  }
+
+  get(columns) {
+    if (typeof columns === 'string' && this.columnExists(columns))
+      return this._data.get(columns);
+    throw new Error(`KeyError: ${columns} not found`);
+  }
+
+  filter() {
+
   }
 
   /**
@@ -133,6 +164,21 @@ export default class DataFrame {
    */
   merge(df, on, how = 'inner') {
     return mergeDataFrame(this, df, on, how);
+  }
+
+  to_csv() {
+    let csvString = '';
+    this.columns.forEach((k) => {
+      csvString += `${k},`;
+    });
+    csvString += '\r\n';
+
+    for (let idx = 0; idx < this.length; idx += 1) {
+      this.columns.forEach((k) => { csvString += `${this.get(k).iloc(idx)},`; });
+      csvString += '\r\n';
+    }
+
+    return csvString;
   }
 }
 
@@ -153,35 +199,37 @@ const innerMerge = (df1, df2, on) => {
   const cols2 = nonMergeColumns(df2.columns, on);
 
   const intersectCols = intersectingColumns(cols1, cols2);
+  intersectCols.count();  // Cache intersectCols size
 
   for (const [row1, _1] of df1.iterrows()) {
     for (const [row2, _2] of df2.iterrows()) {
       let match = true;
       for (const c of on) {
-        if (row1[c].iloc(0) !== row2[c].iloc(0)) {
+        if (row1.get(c).iloc(0) !== row2.get(c).iloc(0)) {
           match = false;
           break;
         }
       }
+
       if (match) {
         const rowData = {};
 
         on.forEach((k) => {
-          rowData[k] = row1[k].iloc(0);
+          rowData[k] = row1.get(k).iloc(0);
         });
 
         cols1.forEach((k) => {
-          const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+          const nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
             ? `${k}_x`
             : k;
-          rowData[nextColName] = row1[k].iloc(0);
+          rowData[nextColName] = row1.get(k).iloc(0);
         });
 
         cols2.forEach((k) => {
-          const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+          const nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
             ? `${k}_y`
             : k;
-          rowData[nextColName] = row2[k].iloc(0);
+          rowData[nextColName] = row2.get(k).iloc(0);
         });
 
         data.push(rowData);
@@ -209,6 +257,7 @@ const outerMerge = (df1, df2, on) => {
   const cols2 = nonMergeColumns(df2.columns, on);
 
   const intersectCols = intersectingColumns(cols1, cols2);
+  intersectCols.count();  // Cache intersectCols size
 
   const matched1 = new Array(df1.length).fill(false);
   const matched2 = new Array(df2.length).fill(false);
@@ -217,7 +266,7 @@ const outerMerge = (df1, df2, on) => {
     for (const [row2, idx_2] of df2.iterrows()) {
       let match = true;
       for (const c of on) {
-        if (row1[c].iloc(0) !== row2[c].iloc(0)) {
+        if (row1.get(c).iloc(0) !== row2.get(c).iloc(0)) {
           match = false;
           break;
         }
@@ -225,22 +274,22 @@ const outerMerge = (df1, df2, on) => {
       const rowData = {};
 
       on.forEach((k) => {
-        rowData[k] = row1[k].iloc(0);
+        rowData[k] = row1.get(k).iloc(0);
       });
 
       cols1.forEach((k) => {
-        const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+        const nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
           ? `${k}_x`
           : k;
-        rowData[nextColName] = row1[k].iloc(0);
+        rowData[nextColName] = row1.get(k).iloc(0);
       });
 
       if (match) {
         cols2.forEach((k) => {
-          const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+          const nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
             ? `${k}_y`
             : k;
-          rowData[nextColName] = row2[k].iloc(0);
+          rowData[nextColName] = row2.get(k).iloc(0);
         });
         data.push(rowData);
         matched1[idx_1] = true;
@@ -253,18 +302,18 @@ const outerMerge = (df1, df2, on) => {
     if (!m) {
       const rowData = {};
       on.forEach((k) => {
-        rowData[k] = df1[k].iloc(idx);
+        rowData[k] = df1.get(k).iloc(idx);
       });
 
       cols1.forEach((k) => {
-        const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+        const nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
           ? `${k}_x`
           : k;
-        rowData[nextColName] = df1[k].iloc(idx);
+        rowData[nextColName] = df1.get(k).iloc(idx);
       });
 
       cols2.forEach((k) => {
-        const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+        const nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
           ? `${k}_y`
           : k;
         rowData[nextColName] = null;
@@ -277,21 +326,21 @@ const outerMerge = (df1, df2, on) => {
     if (!m) {
       const rowData = {};
       on.forEach((k) => {
-        rowData[k] = df2[k].iloc(idx);
+        rowData[k] = df2.get(k).iloc(idx);
       });
 
       cols1.forEach((k) => {
-        const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+        const nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
           ? `${k}_x`
           : k;
         rowData[nextColName] = null;
       });
 
       cols2.forEach((k) => {
-        const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+        const nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
           ? `${k}_y`
           : k;
-        rowData[nextColName] = df2[k].iloc(idx);
+        rowData[nextColName] = df2.get(k).iloc(idx);
       });
       data.push(rowData);
     }
@@ -314,12 +363,12 @@ const outerMerge = (df1, df2, on) => {
 export const mergeDataFrame = (df1, df2, on, how = 'inner') => {
   let mergeOn;
   if (typeof on === 'undefined') {
-    mergeOn = df1.columns.filter(c1 => df2.columns.filter(c2 => c1 === c2).length > 0);
-    if (mergeOn.length === 0)
+    mergeOn = df1.columns.filter(c1 => df2.columns.filter(c2 => c1 === c2).size > 0);
+    if (mergeOn.size === 0)
       throw new Error('No common keys');
   } else {
     on.forEach((col) => {
-      if (df1.columns.indexOf(col) < 0 || df2.columns.indexOf(col) < 0)
+      if (!df1.columnExists(col) || !df2.columnExists(col))
         throw new Error(`KeyError: ${col} not found`);
     });
     mergeOn = on;
