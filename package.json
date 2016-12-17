@@ -1,11 +1,15 @@
 {
   "name": "pandas-js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pandas for JavaScript",
   "author": "StratoDem Analytics tech@stratodem.com",
   "contributors": [
-    {"name": "Michael Clawar"},
-    {"name": "Raymond Mead"}
+    {
+      "name": "Michael Clawar"
+    },
+    {
+      "name": "Raymond Mead"
+    }
   ],
   "main": "./dist/index.js",
   "files": [
