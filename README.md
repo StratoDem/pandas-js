@@ -32,7 +32,7 @@ console.log(ds_1.plus(ds_2).toString());
 2	3
 Name: My Data 1, dtype: dtype(int)
 Sum: 10
-Standard deviation: 0.816496580927726
+Standard deviation: 1
 Summing two Series:
 0	3
 1	5
@@ -66,8 +66,82 @@ This is a DataFrame
 A `Series` is a one-dimensional `Immutable.List` with axis labels.
 
 #### Usage
-Create a new `Series` with an Array of data, an `Immutable.List` of data, or a single element. 
-`const ds = new Series `
+Create a new `Series` with an Array or `Immutable.List` of data, or a single element. 
+```
+const ds = new Series([1, 2, 3, 4, 5]);
+```
 
-### DataFrame
+### Utilities
+
+#### iloc(`startVal`, `endVal`)
+Return the `Series` between [`startVal`, `endVal`), or at `startVal` if `endVal` is undefined
+```
+ds.iloc(1);	// 2
+ds.iloc(1, 3);	// Series([2, 3])
+```
+
+#### length
+Return the length of the Series
+```
+ds.length	// 5
+```
+
+#### values
+Return the `Series` values as an `Immutable.List`
+```
+ds.values	// List[1, 2, 3, 4, 5]
+```
+
+### Mathematical/Statistical methods
+
+#### sum()
+Return the sum of all the values in the `Series`
+```
+ds.sum()	// 15 
+```
+
+#### mean()
+Return the mean of all the values in the `Series`
+```
+ds.mean()	// 3 
+```
+
+### std()
+Return the standard deviation of all the values in the `Series`
+```
+ds.std()	// 1
+```
+
+### plus(`series`)
+Add a second `Series` and return a new  `Series` object
+```
+ds.plus(new Series([2, 3, 4, 5, 6]));	// Series([3, 5, 7, 9, 11])
+```
+
+### minus(`series`)
+Subtract a second `Series` and return a new `Series` object
+```
+ds.minus(new Series([2, 3, 4, 5, 6]));	// Series([-1, -1, -1, -1, -1])
+```
+
+### times(`series`)
+Multiply by a second `Series` and return a new `Series` object
+```
+ds.times(new Series([2, 3, 4, 5, 6]));	// Series([2, 6, 12, 20, 30])
+```
+
+### dividedBy(`series`)
+Divide by a second `Series` and return a new `Series` object
+```
+ds.dividedBy(new Series([2, 3, 4, 5, 6]);	// Series([0.5, 2 / 3, 3 / 4, 4 / 5, 5 / 6])
+```
+
+## DataFrame
 A `DataFrame` is a two-dimensional `Immutable.Map` container for [`Series`](#series) objects. The `DataFrame` is the primary pandas data structure. 
+
+## Testing and build
+```
+$ npm run test
+$ npm run build
+```
+Testing uses [Jest](https://facebook.github.io/jest/). Building requires the babel compiler.
