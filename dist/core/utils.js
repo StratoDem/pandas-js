@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.sum = undefined;
+exports.intersectingColumns = exports.nonMergeColumns = exports.sum = undefined;
 
 var _regenerator = require("babel-runtime/regenerator");
 
@@ -105,3 +105,30 @@ function enumerate(iterable) {
     }
   }, _marked[0], this, [[4, 16, 20, 28], [21,, 23, 27]]);
 }
+
+// Merge utils
+/**
+ * Columns in DataFrame that will not be used as merge keys
+ *
+ * @param {Array<string>} columns
+ * @param {Array<string>} on
+ * @returns {Array<string>}
+ */
+var nonMergeColumns = exports.nonMergeColumns = function nonMergeColumns(columns, on) {
+  return columns.filter(function (k) {
+    return on.indexOf(k) < 0;
+  });
+};
+
+/**
+ * Columns appearing in both
+ *
+ * @param {Array<string>} cols1
+ * @param {Array<string>} cols2
+ * @returns {Array<string>}
+ */
+var intersectingColumns = exports.intersectingColumns = function intersectingColumns(cols1, cols2) {
+  return cols1.filter(function (k) {
+    return cols2.indexOf(k) >= 0;
+  });
+};
