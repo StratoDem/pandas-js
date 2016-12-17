@@ -1,7 +1,6 @@
 # Packages
 node_modules/
-
-# Compiled tests
+*.log
 
 # IntelliJ project files
 .idea
