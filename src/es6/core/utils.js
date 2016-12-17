@@ -20,3 +20,24 @@ export function* enumerate(iterable) {
     i += 1;
   }
 }
+
+
+// Merge utils
+/**
+ * Columns in DataFrame that will not be used as merge keys
+ *
+ * @param {Array<string>} columns
+ * @param {Array<string>} on
+ * @returns {Array<string>}
+ */
+export const nonMergeColumns = (columns, on) => columns.filter(k => on.indexOf(k) < 0);
+
+
+/**
+ * Columns appearing in both
+ *
+ * @param {Array<string>} cols1
+ * @param {Array<string>} cols2
+ * @returns {Array<string>}
+ */
+export const intersectingColumns = (cols1, cols2) => cols1.filter(k => cols2.indexOf(k) >= 0);

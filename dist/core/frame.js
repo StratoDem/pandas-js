@@ -226,9 +226,10 @@ exports.default = DataFrame;
 var innerMerge = function innerMerge(df1, df2, on) {
   var data = [];
 
-  var nonMergeCols1 = df1.columns.filter(function (k) {
-    return on.indexOf(k) < 0;
-  });
+  var cols1 = (0, _utils.nonMergeColumns)(df1.columns, on);
+  var cols2 = (0, _utils.nonMergeColumns)(df2.columns, on);
+
+  var intersectCols = (0, _utils.intersectingColumns)(cols1, cols2);
 
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
@@ -282,12 +283,21 @@ var innerMerge = function innerMerge(df1, df2, on) {
           if (match) {
             (function () {
               var rowData = {};
-              nonMergeCols1.forEach(function (k) {
+
+              on.forEach(function (k) {
                 rowData[k] = row1[k].iloc(0);
               });
-              df2.columns.forEach(function (k) {
-                rowData[k] = row2[k].iloc(0);
+
+              cols1.forEach(function (k) {
+                var nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0 ? k + '_x' : k;
+                rowData[nextColName] = row1[k].iloc(0);
               });
+
+              cols2.forEach(function (k) {
+                var nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0 ? k + '_y' : k;
+                rowData[nextColName] = row2[k].iloc(0);
+              });
+
               data.push(rowData);
             })();
           }
@@ -334,6 +344,181 @@ var innerMerge = function innerMerge(df1, df2, on) {
 };
 
 /**
+ * Perform an outer merge of two DataFrames
+ *
+ * @param {DataFrame} df1
+ * @param {DataFrame} df2
+ * @param {Array} on
+ *
+ * @returns {DataFrame}
+ */
+var outerMerge = function outerMerge(df1, df2, on) {
+  var data = [];
+
+  var cols1 = (0, _utils.nonMergeColumns)(df1.columns, on);
+  var cols2 = (0, _utils.nonMergeColumns)(df2.columns, on);
+
+  var intersectCols = (0, _utils.intersectingColumns)(cols1, cols2);
+
+  var matched1 = new Array(df1.length).fill(false);
+  var matched2 = new Array(df2.length).fill(false);
+
+  var _iteratorNormalCompletion4 = true;
+  var _didIteratorError4 = false;
+  var _iteratorError4 = undefined;
+
+  try {
+    var _loop4 = function _loop4() {
+      var _step4$value = (0, _slicedToArray3.default)(_step4.value, 2),
+          row1 = _step4$value[0],
+          idx_1 = _step4$value[1];
+
+      var _iteratorNormalCompletion5 = true;
+      var _didIteratorError5 = false;
+      var _iteratorError5 = undefined;
+
+      try {
+        var _loop5 = function _loop5() {
+          var _step5$value = (0, _slicedToArray3.default)(_step5.value, 2),
+              row2 = _step5$value[0],
+              idx_2 = _step5$value[1];
+
+          var match = true;
+          var _iteratorNormalCompletion6 = true;
+          var _didIteratorError6 = false;
+          var _iteratorError6 = undefined;
+
+          try {
+            for (var _iterator6 = on[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+              var c = _step6.value;
+
+              if (row1[c].iloc(0) !== row2[c].iloc(0)) {
+                match = false;
+                break;
+              }
+            }
+          } catch (err) {
+            _didIteratorError6 = true;
+            _iteratorError6 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                _iterator6.return();
+              }
+            } finally {
+              if (_didIteratorError6) {
+                throw _iteratorError6;
+              }
+            }
+          }
+
+          var rowData = {};
+
+          on.forEach(function (k) {
+            rowData[k] = row1[k].iloc(0);
+          });
+
+          cols1.forEach(function (k) {
+            var nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0 ? k + '_x' : k;
+            rowData[nextColName] = row1[k].iloc(0);
+          });
+
+          if (match) {
+            cols2.forEach(function (k) {
+              var nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0 ? k + '_y' : k;
+              rowData[nextColName] = row2[k].iloc(0);
+            });
+            data.push(rowData);
+            matched1[idx_1] = true;
+            matched2[idx_2] = true;
+          }
+        };
+
+        for (var _iterator5 = df2.iterrows()[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+          _loop5();
+        }
+      } catch (err) {
+        _didIteratorError5 = true;
+        _iteratorError5 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion5 && _iterator5.return) {
+            _iterator5.return();
+          }
+        } finally {
+          if (_didIteratorError5) {
+            throw _iteratorError5;
+          }
+        }
+      }
+    };
+
+    for (var _iterator4 = df1.iterrows()[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+      _loop4();
+    }
+  } catch (err) {
+    _didIteratorError4 = true;
+    _iteratorError4 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion4 && _iterator4.return) {
+        _iterator4.return();
+      }
+    } finally {
+      if (_didIteratorError4) {
+        throw _iteratorError4;
+      }
+    }
+  }
+
+  matched1.forEach(function (m, idx) {
+    if (!m) {
+      (function () {
+        var rowData = {};
+        on.forEach(function (k) {
+          rowData[k] = df1[k].iloc(idx);
+        });
+
+        cols1.forEach(function (k) {
+          var nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0 ? k + '_x' : k;
+          rowData[nextColName] = df1[k].iloc(idx);
+        });
+
+        cols2.forEach(function (k) {
+          var nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0 ? k + '_y' : k;
+          rowData[nextColName] = null;
+        });
+        data.push(rowData);
+      })();
+    }
+  });
+
+  matched2.forEach(function (m, idx) {
+    if (!m) {
+      (function () {
+        var rowData = {};
+        on.forEach(function (k) {
+          rowData[k] = df2[k].iloc(idx);
+        });
+
+        cols1.forEach(function (k) {
+          var nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0 ? k + '_x' : k;
+          rowData[nextColName] = null;
+        });
+
+        cols2.forEach(function (k) {
+          var nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0 ? k + '_y' : k;
+          rowData[nextColName] = df2[k].iloc(idx);
+        });
+        data.push(rowData);
+      })();
+    }
+  });
+
+  return new DataFrame(data);
+};
+
+/**
  * Perform a merge of two DataFrames
  *
  * @param {DataFrame} df1
@@ -364,6 +549,8 @@ var mergeDataFrame = exports.mergeDataFrame = function mergeDataFrame(df1, df2, 
   switch (how) {
     case 'inner':
       return innerMerge(df1, df2, mergeOn);
+    case 'outer':
+      return outerMerge(df1, df2, mergeOn);
     default:
       throw new Error('MergeError: ' + how + ' not a supported merge type');
   }

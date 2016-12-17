@@ -86,18 +86,50 @@ describe('frame', function () {
   });
 
   describe('mergeDataFrame', function () {
-    it('merges two DataFrames on a given key', function () {
-      var vals1 = [{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 10 }];
-      var df1 = new _frame2.default(vals1);
-      var vals2 = [{ x: 2, z: 6 }, { x: 1, z: 1 }, { x: 3, z: 100 }];
-      var df2 = new _frame2.default(vals2);
+    describe('innerMerge', function () {
+      it('merges two DataFrames on a given key', function () {
+        var vals1 = [{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 10 }];
+        var df1 = new _frame2.default(vals1);
+        var vals2 = [{ x: 2, z: 6 }, { x: 1, z: 1 }, { x: 3, z: 100 }];
+        var df2 = new _frame2.default(vals2);
 
-      var df3 = (0, _frame.mergeDataFrame)(df1, df2, ['x']);
-      expect(df3).toBeInstanceOf(_frame2.default);
-      expect(df3.length).toEqual(3);
-      expect(df3.x.values.toArray()).toEqual([1, 2, 3]);
-      expect(df3.y.values.toArray()).toEqual([2, 3, 4]);
-      expect(df3.z.values.toArray()).toEqual([1, 6, 100]);
+        var df3 = (0, _frame.mergeDataFrame)(df1, df2, ['x'], 'inner');
+        expect(df3).toBeInstanceOf(_frame2.default);
+        expect(df3.length).toEqual(3);
+        expect(df3.x.values.toArray()).toEqual([1, 2, 3]);
+        expect(df3.y.values.toArray()).toEqual([2, 3, 4]);
+        expect(df3.z.values.toArray()).toEqual([1, 6, 100]);
+      });
+
+      it('replaces a common column with _x and _y', function () {
+        var vals1 = [{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 10 }];
+        var df1 = new _frame2.default(vals1);
+        var vals2 = [{ x: 2, y: 6 }, { x: 1, y: 1 }, { x: 3, y: 100 }];
+        var df2 = new _frame2.default(vals2);
+
+        var df3 = (0, _frame.mergeDataFrame)(df1, df2, ['x'], 'inner');
+        expect(df3).toBeInstanceOf(_frame2.default);
+        expect(df3.length).toEqual(3);
+        expect(df3.x.values.toArray()).toEqual([1, 2, 3]);
+        expect(df3.y_x.values.toArray()).toEqual([2, 3, 4]);
+        expect(df3.y_y.values.toArray()).toEqual([1, 6, 100]);
+      });
+    });
+
+    describe('outerMerge', function () {
+      it('merges two DataFrames on a given key', function () {
+        var vals1 = [{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 10 }];
+        var df1 = new _frame2.default(vals1);
+        var vals2 = [{ x: 2, z: 6 }, { x: 1, z: 1 }, { x: 3, z: 100 }, { x: 5, z: 200 }];
+        var df2 = new _frame2.default(vals2);
+
+        var df3 = (0, _frame.mergeDataFrame)(df1, df2, ['x'], 'outer');
+        expect(df3).toBeInstanceOf(_frame2.default);
+        expect(df3.length).toEqual(5);
+        expect(df3.x.values.toArray()).toEqual([1, 2, 3, 4, 5]);
+        expect(df3.y.values.toArray()).toEqual([2, 3, 4, 10, null]);
+        expect(df3.z.values.toArray()).toEqual([1, 6, 100, null, 200]);
+      });
     });
   });
 

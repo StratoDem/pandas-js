@@ -3,9 +3,17 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.intersectingColumns = exports.nonMergeColumns = exports.sum = undefined;
+
+var _regenerator = require("babel-runtime/regenerator");
+
+var _regenerator2 = _interopRequireDefault(_regenerator);
+
 exports.enumerate = enumerate;
 
-var _marked = [enumerate].map(regeneratorRuntime.mark);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var _marked = [enumerate].map(_regenerator2.default.mark);
 
 /**
  * Calculate the sum of values in an iterable
@@ -27,7 +35,7 @@ var sum = exports.sum = function sum(iterable) {
 function enumerate(iterable) {
   var i, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, x;
 
-  return regeneratorRuntime.wrap(function enumerate$(_context) {
+  return _regenerator2.default.wrap(function enumerate$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
         case 0:
@@ -97,3 +105,30 @@ function enumerate(iterable) {
     }
   }, _marked[0], this, [[4, 16, 20, 28], [21,, 23, 27]]);
 }
+
+// Merge utils
+/**
+ * Columns in DataFrame that will not be used as merge keys
+ *
+ * @param {Array<string>} columns
+ * @param {Array<string>} on
+ * @returns {Array<string>}
+ */
+var nonMergeColumns = exports.nonMergeColumns = function nonMergeColumns(columns, on) {
+  return columns.filter(function (k) {
+    return on.indexOf(k) < 0;
+  });
+};
+
+/**
+ * Columns appearing in both
+ *
+ * @param {Array<string>} cols1
+ * @param {Array<string>} cols2
+ * @returns {Array<string>}
+ */
+var intersectingColumns = exports.intersectingColumns = function intersectingColumns(cols1, cols2) {
+  return cols1.filter(function (k) {
+    return cols2.indexOf(k) >= 0;
+  });
+};
