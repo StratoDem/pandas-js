@@ -2,7 +2,7 @@
 import Immutable from 'immutable';
 
 import Series from './series';
-import { enumerate } from './utils';
+import { enumerate, nonMergeColumns, intersectingColumns } from './utils';
 
 
 const parseArrayToSeriesObject = (array) => {
@@ -149,7 +149,10 @@ export default class DataFrame {
 const innerMerge = (df1, df2, on) => {
   const data = [];
 
-  const nonMergeCols1 = df1.columns.filter(k => on.indexOf(k) < 0);
+  const cols1 = nonMergeColumns(df1.columns, on);
+  const cols2 = nonMergeColumns(df2.columns, on);
+
+  const intersectCols = intersectingColumns(cols1, cols2);
 
   for (const [row1, _1] of df1.iterrows()) {
     for (const [row2, _2] of df2.iterrows()) {
@@ -162,12 +165,25 @@ const innerMerge = (df1, df2, on) => {
       }
       if (match) {
         const rowData = {};
-        nonMergeCols1.forEach((k) => {
+
+        on.forEach((k) => {
           rowData[k] = row1[k].iloc(0);
         });
-        df2.columns.forEach((k) => {
-          rowData[k] = row2[k].iloc(0);
+
+        cols1.forEach((k) => {
+          const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+            ? `${k}_x`
+            : k;
+          rowData[nextColName] = row1[k].iloc(0);
         });
+
+        cols2.forEach((k) => {
+          const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+            ? `${k}_y`
+            : k;
+          rowData[nextColName] = row2[k].iloc(0);
+        });
+
         data.push(rowData);
       }
     }
@@ -175,6 +191,115 @@ const innerMerge = (df1, df2, on) => {
 
   return new DataFrame(data);
 };
+
+
+/**
+ * Perform an outer merge of two DataFrames
+ *
+ * @param {DataFrame} df1
+ * @param {DataFrame} df2
+ * @param {Array} on
+ *
+ * @returns {DataFrame}
+ */
+const outerMerge = (df1, df2, on) => {
+  const data = [];
+
+  const cols1 = nonMergeColumns(df1.columns, on);
+  const cols2 = nonMergeColumns(df2.columns, on);
+
+  const intersectCols = intersectingColumns(cols1, cols2);
+
+  const matched1 = new Array(df1.length).fill(false);
+  const matched2 = new Array(df2.length).fill(false);
+
+  for (const [row1, idx_1] of df1.iterrows()) {
+    for (const [row2, idx_2] of df2.iterrows()) {
+      let match = true;
+      for (const c of on) {
+        if (row1[c].iloc(0) !== row2[c].iloc(0)) {
+          match = false;
+          break;
+        }
+      }
+      const rowData = {};
+
+      on.forEach((k) => {
+        rowData[k] = row1[k].iloc(0);
+      });
+
+      cols1.forEach((k) => {
+        const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+          ? `${k}_x`
+          : k;
+        rowData[nextColName] = row1[k].iloc(0);
+      });
+
+      if (match) {
+        cols2.forEach((k) => {
+          const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+            ? `${k}_y`
+            : k;
+          rowData[nextColName] = row2[k].iloc(0);
+        });
+        data.push(rowData);
+        matched1[idx_1] = true;
+        matched2[idx_2] = true;
+      }
+    }
+  }
+
+  matched1.forEach((m, idx) => {
+    if (!m) {
+      const rowData = {};
+      on.forEach((k) => {
+        rowData[k] = df1[k].iloc(idx);
+      });
+
+      cols1.forEach((k) => {
+        const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+          ? `${k}_x`
+          : k;
+        rowData[nextColName] = df1[k].iloc(idx);
+      });
+
+      cols2.forEach((k) => {
+        const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+          ? `${k}_y`
+          : k;
+        rowData[nextColName] = null;
+      });
+      data.push(rowData);
+    }
+  });
+
+  matched2.forEach((m, idx) => {
+    if (!m) {
+      const rowData = {};
+      on.forEach((k) => {
+        rowData[k] = df2[k].iloc(idx);
+      });
+
+      cols1.forEach((k) => {
+        const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+          ? `${k}_x`
+          : k;
+        rowData[nextColName] = null;
+      });
+
+      cols2.forEach((k) => {
+        const nextColName = intersectCols.length > 0 && intersectCols.indexOf(k) >= 0
+          ? `${k}_y`
+          : k;
+        rowData[nextColName] = df2[k].iloc(idx);
+      });
+      data.push(rowData);
+    }
+  });
+
+  return new DataFrame(data);
+};
+
 
 /**
  * Perform a merge of two DataFrames
@@ -203,6 +328,8 @@ export const mergeDataFrame = (df1, df2, on, how = 'inner') => {
   switch (how) {
     case 'inner':
       return innerMerge(df1, df2, mergeOn);
+    case 'outer':
+      return outerMerge(df1, df2, mergeOn);
     default:
       throw new Error(`MergeError: ${how} not a supported merge type`);
   }
