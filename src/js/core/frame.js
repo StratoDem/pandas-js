@@ -111,7 +111,7 @@ var DataFrame = function () {
       var _loop = function _loop(idx) {
         string += idx + '\t|';
         _this2.columns.forEach(function (k) {
-          string += '  ' + _this2[k].iloc(idx) + '  |';
+          string += '  ' + _this2._data.get(k).iloc(idx) + '  |';
         });
         string += '\n';
       };

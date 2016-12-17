@@ -65,7 +65,7 @@ export default class DataFrame {
     string += `\n${headerRow}\n`;
     for (let idx = 0; idx < this.length; idx += 1) {
       string += `${idx}\t|`;
-      this.columns.forEach((k) => { string += `  ${this[k].iloc(idx)}  |`; });
+      this.columns.forEach((k) => { string += `  ${this._data.get(k).iloc(idx)}  |`; });
       string += '\n';
     }
 
