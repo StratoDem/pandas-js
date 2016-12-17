@@ -80,6 +80,12 @@ ds.iloc(1);	// 2
 ds.iloc(1, 3);	// Series([2, 3])
 ```
 
+#### map(`func`)
+Return a new `Series` created by a map along the `Series`
+```
+ds.map((val, idx) => val ** 2)	// Series([1, 4, 9, 16, 25])
+```
+
 #### length
 Return the length of the Series
 ```
