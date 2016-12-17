@@ -86,7 +86,7 @@ describe('series', function () {
 
     describe('std()', function () {
       it('returns the standard deviation of the Series', function () {
-        expect(new _series2.default([1, 2, 3]).std()).toBeCloseTo(0.8164965809277, 12);
+        expect(new _series2.default([1, 2, 3]).std()).toBeCloseTo(1, 12);
       });
     });
 

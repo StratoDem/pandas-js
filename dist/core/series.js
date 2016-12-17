@@ -157,7 +157,7 @@ var Series = function () {
      * @param {int} startVal
      * @param {int} [endVal]
      *
-     * @returns {Series}
+     * @returns {Series|number|string}
      */
 
   }, {
@@ -187,7 +187,7 @@ var Series = function () {
       var meanSqDiff = 0;
       this.values.forEach(function (v) {
         var diff = v - mean;
-        meanSqDiff += diff * diff / _this.length;
+        meanSqDiff += diff * diff / (_this.length - 1);
       });
 
       return Math.sqrt(meanSqDiff);

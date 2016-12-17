@@ -2,13 +2,19 @@
   "name": "pandas-js",
   "version": "0.1.0",
   "description": "Pandas for JavaScript",
+  "author": "StratoDem Analytics tech@stratodem.com",
+  "contributors": [
+    {"name": "Michael Clawar"},
+    {"name": "Raymond Mead"}
+  ],
   "main": "./dist/index.js",
   "files": [
     "dist/",
     "src/"
   ],
   "dependencies": {
-    "immutable": "^3.8.1"
+    "immutable": "^3.8.1",
+    "babel-plugin-transform-runtime": "^6.15.0"
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
@@ -54,13 +60,13 @@
     "data-analysis",
     "analytics"
   ],
-  "author": "StratoDem Analytics",
   "bugs": {
     "url": "https://github.com/StratoDem/pandas.js/issues"
   },
   "homepage": "https://github.com/StratoDem/pandas.js#readme",
   "scripts": {
     "build": "babel src/es6 --out-dir dist",
-    "test": "jest --verbose"
-  }
+    "test": "jest --verbose --runInBand"
+  },
+  "license": "MIT"
 }

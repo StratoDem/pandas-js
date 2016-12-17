@@ -72,7 +72,7 @@ describe('series', () => {
 
     describe('std()', () => {
       it('returns the standard deviation of the Series', () => {
-        expect(new Series([1, 2, 3]).std()).toBeCloseTo(0.8164965809277, 12);
+        expect(new Series([1, 2, 3]).std()).toBeCloseTo(1, 12);
       });
     });
 

@@ -125,7 +125,7 @@ export default class Series {
    * @param {int} startVal
    * @param {int} [endVal]
    *
-   * @returns {Series}
+   * @returns {Series|number|string}
    */
   iloc(startVal, endVal) {
     if (typeof endVal === 'undefined')
@@ -148,7 +148,7 @@ export default class Series {
     let meanSqDiff = 0;
     this.values.forEach((v) => {
       const diff = v - mean;
-      meanSqDiff += ((diff * diff) / this.length);
+      meanSqDiff += ((diff * diff) / (this.length - 1));
     });
 
     return Math.sqrt(meanSqDiff);
