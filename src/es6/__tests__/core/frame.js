@@ -10,25 +10,25 @@ describe('frame', () => {
     it('initializes a DataFrame', () => {
       const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}]);
 
-      expect(df1.x).toBeInstanceOf(Series);
-      expect(df1.x.values.toArray()).toEqual([1, 2]);
-      expect(df1.y).toBeInstanceOf(Series);
-      expect(df1.y.values.toArray()).toEqual([2, 3]);
+      expect(df1.get('x')).toBeInstanceOf(Series);
+      expect(df1.get('x').values.toArray()).toEqual([1, 2]);
+      expect(df1.get('y')).toBeInstanceOf(Series);
+      expect(df1.get('y').values.toArray()).toEqual([2, 3]);
     });
 
     describe('columns', () => {
       it('columns are set properly', () => {
         const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}]);
-        expect(df1.columns).toEqual(['x', 'y']);
+        expect(df1.columns.toArray()).toEqual(['x', 'y']);
       });
 
       it('new columns of equal length can be set', () => {
         const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}]);
         df1.columns = ['a', 'b'];
 
-        expect(df1.columns).toEqual(['a', 'b']);
-        expect(df1.a).toBeInstanceOf(Series);
-        expect(df1.b).toBeInstanceOf(Series);
+        expect(df1.columns.toArray()).toEqual(['a', 'b']);
+        expect(df1.get('a')).toBeInstanceOf(Series);
+        expect(df1.get('b')).toBeInstanceOf(Series);
       });
     });
 
@@ -43,8 +43,8 @@ describe('frame', () => {
 
       for (const [row, idx] of df1.iterrows()) {
         expect(row).toBeInstanceOf(DataFrame);
-        expect(row.x.iloc(0)).toEqual(vals[idx].x);
-        expect(row.y.iloc(0)).toEqual(vals[idx].y);
+        expect(row.get('x').iloc(0)).toEqual(vals[idx].x);
+        expect(row.get('y').iloc(0)).toEqual(vals[idx].y);
       }
     });
   });
@@ -60,9 +60,9 @@ describe('frame', () => {
         const df3 = mergeDataFrame(df1, df2, ['x'], 'inner');
         expect(df3).toBeInstanceOf(DataFrame);
         expect(df3.length).toEqual(3);
-        expect(df3.x.values.toArray()).toEqual([1, 2, 3]);
-        expect(df3.y.values.toArray()).toEqual([2, 3, 4]);
-        expect(df3.z.values.toArray()).toEqual([1, 6, 100]);
+        expect(df3.get('x').values.toArray()).toEqual([1, 2, 3]);
+        expect(df3.get('y').values.toArray()).toEqual([2, 3, 4]);
+        expect(df3.get('z').values.toArray()).toEqual([1, 6, 100]);
       });
 
       it('replaces a common column with _x and _y', () => {
@@ -74,9 +74,9 @@ describe('frame', () => {
         const df3 = mergeDataFrame(df1, df2, ['x'], 'inner');
         expect(df3).toBeInstanceOf(DataFrame);
         expect(df3.length).toEqual(3);
-        expect(df3.x.values.toArray()).toEqual([1, 2, 3]);
-        expect(df3.y_x.values.toArray()).toEqual([2, 3, 4]);
-        expect(df3.y_y.values.toArray()).toEqual([1, 6, 100]);
+        expect(df3.get('x').values.toArray()).toEqual([1, 2, 3]);
+        expect(df3.get('y_x').values.toArray()).toEqual([2, 3, 4]);
+        expect(df3.get('y_y').values.toArray()).toEqual([1, 6, 100]);
       });
     });
 
@@ -90,15 +90,15 @@ describe('frame', () => {
         const df3 = mergeDataFrame(df1, df2, ['x'], 'outer');
         expect(df3).toBeInstanceOf(DataFrame);
         expect(df3.length).toEqual(5);
-        expect(df3.x.values.toArray()).toEqual([1, 2, 3, 4, 5]);
-        expect(df3.y.values.toArray()).toEqual([2, 3, 4, 10, null]);
-        expect(df3.z.values.toArray()).toEqual([1, 6, 100, null, 200]);
+        expect(df3.get('x').values.toArray()).toEqual([1, 2, 3, 4, 5]);
+        expect(df3.get('y').values.toArray()).toEqual([2, 3, 4, 10, null]);
+        expect(df3.get('z').values.toArray()).toEqual([1, 6, 100, null, 200]);
       });
     });
   });
 
   describe('values', () => {
-    it('values returns an Immutable.List of Immutable.Lists with [row][column] indexing', () => {
+    it('values returns an Immutable.List of Immutable.Lists with [column][row] indexing', () => {
       const vals1 = [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}, {x: 4, y: 10}];
       const df1 = new DataFrame(vals1);
 
@@ -128,9 +128,22 @@ describe('frame', () => {
       const df3 = df1.merge(df2, ['x']);
       expect(df3).toBeInstanceOf(DataFrame);
       expect(df3.length).toEqual(3);
-      expect(df3.x.values.toArray()).toEqual([1, 2, 3]);
-      expect(df3.y.values.toArray()).toEqual([2, 3, 4]);
-      expect(df3.z.values.toArray()).toEqual([1, 6, 100]);
+      expect(df3.get('x').values.toArray()).toEqual([1, 2, 3]);
+      expect(df3.get('y').values.toArray()).toEqual([2, 3, 4]);
+      expect(df3.get('z').values.toArray()).toEqual([1, 6, 100]);
+    });
+  });
+
+  describe('to_csv', () => {
+    it('converts a pandas.DataFrame to a properly formatted csv string', () => {
+      const vals1 = [{x: 1, y: 2}, {x: 3, y: 3}, {x: 4, y: 8}];
+      const df1 = new DataFrame(vals1);
+
+      expect(df1.to_csv()).toEqual('x,y,\r\n1,2,\r\n3,3,\r\n4,8,\r\n');
+
+      for (let [r, idx] of df1.iterrows()) {
+        // console.log(r.values);
+      }
     });
   });
 });
