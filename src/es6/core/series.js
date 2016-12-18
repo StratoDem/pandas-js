@@ -6,39 +6,9 @@
 import { autobind } from 'core-decorators';
 import Immutable from 'immutable';
 
-import { enumerate, sum } from './utils';
+import { enumerate, sum, parseIndex } from './utils';
 import { DType, arrayToDType } from './dtype';
-import { IndexMismatchError } from './exceptions';
 
-
-/**
- *
- * @param {Array|List|string|number} index
- *    Values to update the index in the Series
- * @param {List} values
- *    The values in the Series
- *
- * @returns {List}
- */
-const parseIndex = (index, values) => {
-  if (Array.isArray(index)) {
-    if (values.size !== index.length) throw new IndexMismatchError();
-
-    return Immutable.List(index);
-  } else if (index instanceof Immutable.List) {
-    if (values.size !== index.size) throw new IndexMismatchError();
-
-    return index;
-  } else if (typeof index !== 'undefined') {
-    if (values.size !== 1) throw new IndexMismatchError();
-
-    return Immutable.List([index]);
-  } else if (typeof index === 'undefined') {
-    return Immutable.Range(0, values.size).toList();
-  } else {
-    throw new IndexMismatchError();
-  }
-};
 
 export default class Series {
   /**
@@ -67,7 +37,7 @@ export default class Series {
 
     this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
 
-    this.index = parseIndex(kwargs.index, this.values);
+    this._index = parseIndex(kwargs.index, this.values);
   }
 
   [Symbol.iterator]() {

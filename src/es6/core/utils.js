@@ -1,3 +1,8 @@
+
+import Immutable from 'immutable';
+import { IndexMismatchError } from './exceptions';
+
+
 /**
  * Calculate the sum of values in an iterable
  *
@@ -44,34 +49,30 @@ export const intersectingColumns = (cols1, cols2) => cols1.filter(k => cols2.ind
 
 
 /**
- * Compares valueA and valueB for an Immutable.List sort ascending
- * Returns 0 if valueA and valueB should not be swapped
- * Returns -1 if valueA should come before valueB
- * Returns 1 if valueA should come after valueB
  *
- * @param valueA
- * @param valueB
- * @returns {number}
- */
-export const sortAscendingComparator = (valueA, valueB) => {
-  if (valueA < valueB) return -1;
-  else if (valueA === valueB) return 0;
-  return 1;
-};
-
-
-/**
- * Compares valueA and valueB for an Immutable.List sort descending
- * Returns 0 if valueA and valueB should not be swapped
- * Returns -1 if valueA should come before valueB
- * Returns 1 if valueA should come after valueB
+ * @param {Array|List|string|number} index
+ *    Values to update the index in the Series
+ * @param {List} values
+ *    The values in the Series
  *
- * @param valueA
- * @param valueB
- * @returns {number}
+ * @returns {List}
  */
-export const sortDescendingComparator = (valueA, valueB) => {
-  if (valueA > valueB) return -1;
-  else if (valueA === valueB) return 0;
-  return -1;
+export const parseIndex = (index, values) => {
+  if (Array.isArray(index)) {
+    if (values.size !== index.length) throw new IndexMismatchError();
+
+    return Immutable.List(index);
+  } else if (index instanceof Immutable.List) {
+    if (values.size !== index.size) throw new IndexMismatchError();
+
+    return index;
+  } else if (typeof index !== 'undefined') {
+    if (values.size !== 1) throw new IndexMismatchError();
+
+    return Immutable.List([index]);
+  } else if (typeof index === 'undefined') {
+    return Immutable.Range(0, values.size).toList();
+  } else {
+    throw new IndexMismatchError();
+  }
 };

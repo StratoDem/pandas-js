@@ -3,6 +3,7 @@ import Immutable from 'immutable';
 
 import DataFrame, { mergeDataFrame } from '../../core/frame';
 import Series from '../../core/series';
+import { IndexMismatchError } from '../../core/exceptions';
 
 
 describe('frame', () => {
@@ -24,6 +25,45 @@ describe('frame', () => {
         df2.columns = ['date', 'unemployment_rate_y'];
 
         df1.merge(df2, ['date']).toString();
+      });
+    });
+
+    describe('index', () => {
+      it('index is set properly as the [0, ..., length - 1] if not passed in constructor', () => {
+        const df1 = new DataFrame([{x: 1.5}, {x: 1.2}, {x: 1.3}]);
+        expect(df1.index.toArray()).toEqual([0, 1, 2]);
+      });
+
+      it('index is set properly as the index array passed in in constructor', () => {
+        const df1 = new DataFrame([{x: 1.5}, {x: 1.2}, {x: 1.3}], {index: [1, 2, 3]});
+        expect(df1.index.toArray()).toEqual([1, 2, 3]);
+      });
+
+      it('index is set properly as the index List passed in in constructor', () => {
+        const df1 = new DataFrame([{x: 1.5}, {x: 1.2}, {x: 1.3}],
+          {index: Immutable.List([1, 2, 3])});
+        expect(df1.index.toArray()).toEqual([1, 2, 3]);
+      });
+
+      it('throws IndexMismatchError if the index does not match', () => {
+        const f = () => new DataFrame([{x: 1.5}, {x: 1.2}, {x: 1.3}],
+          {index: Immutable.List([1, 2, 3, 4])});
+        expect(f).toThrowError(IndexMismatchError);
+      });
+
+      it('index setter updates the index if proper length array passed in', () => {
+        const df1 = new DataFrame([{x: 1.5}, {x: 1.2}, {x: 1.3}],
+          {index: Immutable.List([1, 2, 3])});
+        df1.index = Immutable.List([2, 3, 4]);
+
+        expect(df1.index.toArray()).toEqual([2, 3, 4]);
+      });
+
+      it('throws IndexMismatchError in setter if index does not match', () => {
+        const df1 = new DataFrame([{x: 1.5}, {x: 1.2}, {x: 1.3}],
+          {index: Immutable.List([1, 2, 3])});
+        const f = () => { df1.index = Immutable.List([2, 3, 4, 5]); };
+        expect(f).toThrowError(IndexMismatchError);
       });
     });
 

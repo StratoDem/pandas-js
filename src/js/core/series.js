@@ -32,8 +32,6 @@ var _utils = require('./utils');
 
 var _dtype = require('./dtype');
 
-var _exceptions = require('./exceptions');
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) {
@@ -64,35 +62,6 @@ function _applyDecoratedDescriptor(target, property, decorators, descriptor, con
 
   return desc;
 }
-
-/**
- *
- * @param {Array|List|string|number} index
- *    Values to update the index in the Series
- * @param {List} values
- *    The values in the Series
- *
- * @returns {List}
- */
-var parseIndex = function parseIndex(index, values) {
-  if (Array.isArray(index)) {
-    if (values.size !== index.length) throw new _exceptions.IndexMismatchError();
-
-    return _immutable2.default.List(index);
-  } else if (index instanceof _immutable2.default.List) {
-    if (values.size !== index.size) throw new _exceptions.IndexMismatchError();
-
-    return index;
-  } else if (typeof index !== 'undefined') {
-    if (values.size !== 1) throw new _exceptions.IndexMismatchError();
-
-    return _immutable2.default.List([index]);
-  } else if (typeof index === 'undefined') {
-    return _immutable2.default.Range(0, values.size).toList();
-  } else {
-    throw new _exceptions.IndexMismatchError();
-  }
-};
 
 var Series = (_class = function () {
   /**
@@ -125,7 +94,7 @@ var Series = (_class = function () {
 
     this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
 
-    this.index = parseIndex(kwargs.index, this.values);
+    this._index = (0, _utils.parseIndex)(kwargs.index, this.values);
   }
 
   (0, _createClass3.default)(Series, [{
@@ -424,7 +393,7 @@ var Series = (_class = function () {
       return this._index;
     },
     set: function set(index) {
-      this._index = parseIndex(index, this.values);
+      this._index = (0, _utils.parseIndex)(index, this.values);
     }
   }, {
     key: 'length',
