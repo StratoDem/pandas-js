@@ -144,7 +144,7 @@ var DataFrame = function () {
             row[k] = _this3._data.get(k).iloc(index);
           });
           return {
-            value: new DataFrame([row], _this3.kwargs),
+            value: new DataFrame([row], { name: _this3.name }),
             done: !(index >= 0 && index < _this3.length) };
         }
       };

@@ -89,7 +89,7 @@ export default class DataFrame {
           row[k] = this._data.get(k).iloc(index);
         });
         return {
-          value: new DataFrame([row], this.kwargs),
+          value: new DataFrame([row], {name: this.name}),
           done: !(index >= 0 && index < this.length)};
       },
     };
