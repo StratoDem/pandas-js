@@ -129,6 +129,7 @@ export default class DataFrame {
       this._data = this._data.set(k, prevSeries);
 
       console.log(k);
+      console.log(prevColumn);
       console.log(k === prevColumn);
       console.log(this._data);
       if (prevColumn.toString() !== k.toString())
