@@ -128,7 +128,7 @@ export default class DataFrame {
       prevSeries.name = k;
       this._data = this._data.set(k, prevSeries);
 
-      if (prevColumn !== k)
+      if (prevColumn.toString() !== k.toString())
         this._data = this._data.delete(prevColumn);
     });
 

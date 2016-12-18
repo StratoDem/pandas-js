@@ -129,6 +129,29 @@ describe('frame', () => {
         expect(df3.get('y_x').values.toArray()).toEqual([2, 3, 4]);
         expect(df3.get('y_y').values.toArray()).toEqual([1, 6, 100]);
       });
+
+      it('merges on a date column', () => {
+        const vals1 = [
+          {date: '01-01-2010', unemployment_rate: 2},
+          {date: '01-01-2011', unemployment_rate: 3},
+          {date: '01-01-2012', unemployment_rate: 4},
+          {date: '01-01-2013', unemployment_rate: 10}];
+        const df1 = new DataFrame(vals1);
+        const vals2 = [
+          {date: '01-01-2010', unemployment_rate: 5},
+          {date: '01-01-2011', unemployment_rate: 7},
+          {date: '01-01-2012', unemployment_rate: 20},
+          {date: '01-01-2013', unemployment_rate: 23}];
+        const df2 = new DataFrame(vals2);
+
+        const df3 = mergeDataFrame(df1, df2, ['date']);
+        expect(df3).toBeInstanceOf(DataFrame);
+        expect(df3.length).toEqual(4);
+        expect(df3.get('date').values.toArray()).toEqual(["01-01-2010", "01-01-2011",
+          "01-01-2012", "01-01-2013"]);
+        expect(df3.get('unemployment_rate_x').values.toArray()).toEqual([2, 3, 4, 10]);
+        expect(df3.get('unemployment_rate_y').values.toArray()).toEqual([5, 7, 20, 23]);
+      });
     });
 
     describe('outerMerge', () => {
@@ -182,6 +205,22 @@ describe('frame', () => {
       expect(df3.get('x').values.toArray()).toEqual([1, 2, 3]);
       expect(df3.get('y').values.toArray()).toEqual([2, 3, 4]);
       expect(df3.get('z').values.toArray()).toEqual([1, 6, 100]);
+    });
+
+    it('merges a second DataFrame after columns are renamed', () => {
+      const vals1 = [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}, {x: 4, y: 10}];
+      const df1 = new DataFrame(vals1);
+      df1.columns = ['x', 'a'];
+      const vals2 = [{x: 2, z: 6}, {x: 1, z: 1}, {x: 3, z: 100}];
+      const df2 = new DataFrame(vals2);
+      df2.columns = ['x', 'b'];
+
+      const df3 = df1.merge(df2, ['x']);
+      expect(df3).toBeInstanceOf(DataFrame);
+      expect(df3.length).toEqual(3);
+      expect(df3.get('x').values.toArray()).toEqual([1, 2, 3]);
+      expect(df3.get('a').values.toArray()).toEqual([2, 3, 4]);
+      expect(df3.get('b').values.toArray()).toEqual([1, 6, 100]);
     });
   });
 
