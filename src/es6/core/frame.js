@@ -128,14 +128,8 @@ export default class DataFrame {
       prevSeries.name = k;
       this._data = this._data.set(k, prevSeries);
 
-      console.log(k);
-      console.log(prevColumn);
-      console.log(k === prevColumn);
-      console.log(this._data);
       if (prevColumn.toString() !== k.toString())
         this._data = this._data.delete(prevColumn);
-
-      console.log(this._data);
     });
 
     this._columns = Immutable.Seq(columns);

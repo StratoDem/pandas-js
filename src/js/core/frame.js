@@ -246,13 +246,7 @@ var DataFrame = function () {
         prevSeries.name = k;
         _this5._data = _this5._data.set(k, prevSeries);
 
-        console.log(k);
-        console.log(prevColumn);
-        console.log(k === prevColumn);
-        console.log(_this5._data);
         if (prevColumn.toString() !== k.toString()) _this5._data = _this5._data.delete(prevColumn);
-
-        console.log(_this5._data);
       });
 
       this._columns = _immutable2.default.Seq(columns);
