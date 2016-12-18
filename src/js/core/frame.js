@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.mergeDataFrame = undefined;
+exports.mergeDataFrame = exports.default = undefined;
 
 var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
 

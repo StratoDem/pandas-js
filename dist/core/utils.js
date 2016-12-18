@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.intersectingColumns = exports.nonMergeColumns = exports.sum = undefined;
+exports.sortDescendingComparator = exports.sortAscendingComparator = exports.intersectingColumns = exports.nonMergeColumns = exports.sum = undefined;
 
 var _regenerator = require("babel-runtime/regenerator");
 
@@ -131,4 +131,34 @@ var intersectingColumns = exports.intersectingColumns = function intersectingCol
   return cols1.filter(function (k) {
     return cols2.indexOf(k) >= 0;
   });
+};
+
+/**
+ * Compares valueA and valueB for an Immutable.List sort ascending
+ * Returns 0 if valueA and valueB should not be swapped
+ * Returns -1 if valueA should come before valueB
+ * Returns 1 if valueA should come after valueB
+ *
+ * @param valueA
+ * @param valueB
+ * @returns {number}
+ */
+var sortAscendingComparator = exports.sortAscendingComparator = function sortAscendingComparator(valueA, valueB) {
+  if (valueA < valueB) return -1;else if (valueA === valueB) return 0;
+  return 1;
+};
+
+/**
+ * Compares valueA and valueB for an Immutable.List sort descending
+ * Returns 0 if valueA and valueB should not be swapped
+ * Returns -1 if valueA should come before valueB
+ * Returns 1 if valueA should come after valueB
+ *
+ * @param valueA
+ * @param valueB
+ * @returns {number}
+ */
+var sortDescendingComparator = exports.sortDescendingComparator = function sortDescendingComparator(valueA, valueB) {
+  if (valueA > valueB) return -1;else if (valueA === valueB) return 0;
+  return -1;
 };

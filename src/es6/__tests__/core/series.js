@@ -2,6 +2,7 @@
 import Immutable from 'immutable';
 import Series from '../../core/series';
 import * as dtype from '../../core/dtype';
+import { IndexMismatchError } from '../../core/exceptions';
 
 
 describe('series', () => {
@@ -26,6 +27,41 @@ describe('series', () => {
 
         const ds2 = ds1.astype(new dtype.DType('int'));
         expect(ds2.values.toArray()).toEqual([1, 2, 3]);
+      });
+    });
+
+    describe('index', () => {
+      it('index is set properly as the [0, ..., length - 1] if not passed in constructor', () => {
+        const ds1 = new Series([1.5, 2.1, 3.9]);
+        expect(ds1.index.toArray()).toEqual([0, 1, 2]);
+      });
+
+      it('index is set properly as the index array passed in in constructor', () => {
+        const ds1 = new Series([1.5, 2.1, 3.9], {index: [1, 2, 3]});
+        expect(ds1.index.toArray()).toEqual([1, 2, 3]);
+      });
+
+      it('index is set properly as the index List passed in in constructor', () => {
+        const ds1 = new Series([1.5, 2.1, 3.9], {index: Immutable.List([1, 2, 3])});
+        expect(ds1.index.toArray()).toEqual([1, 2, 3]);
+      });
+
+      it('throws IndexMismatchError if the index does not match', () => {
+        const f = () => new Series([1.5, 2.1, 3.9], {index: Immutable.List([1, 2, 3, 4])});
+        expect(f).toThrowError(IndexMismatchError);
+      });
+
+      it('index setter updates the index if proper length array passed in', () => {
+        const ds1 = new Series([1.5, 2.1, 3.9], {index: Immutable.List([1, 2, 3])});
+        ds1.index = Immutable.List([2, 3, 4]);
+
+        expect(ds1.index.toArray()).toEqual([2, 3, 4]);
+      });
+
+      it('throws IndexMismatchError in setter if index does not match', () => {
+        const ds1 = new Series([1.5, 2.1, 3.9], {index: Immutable.List([1, 2, 3])});
+        const f = () => { ds1.index = Immutable.List([2, 3, 4, 5]); };
+        expect(f).toThrowError(IndexMismatchError);
       });
     });
 
@@ -133,6 +169,39 @@ describe('series', () => {
         expect(ds3).toBeInstanceOf(Series);
         expect(ds3.values.size).toEqual(3);
         expect(ds3.values.toJS()).toEqual([0.5, 2 / 3, 0.6]);
+      });
+    });
+
+    describe('sort_values', () => {
+      it('sorts the Series by the values in ascending order', () => {
+        const ds1 = new Series([2, 3, 4, 1]).sort_values();
+
+        expect(ds1.values.toArray()).toEqual([1, 2, 3, 4]);
+        expect(ds1.index.toArray()).toEqual([3, 0, 1, 2]);
+      });
+
+      it('sorts the Series by the values in descending order', () => {
+        const ds = new Series([2, 3, 4, 1]);
+        const ds1 = ds.sort_values(false);
+
+        expect(ds1.values.toArray()).toEqual([4, 3, 2, 1]);
+        expect(ds1.index.toArray()).toEqual([2, 1, 0, 3]);
+      });
+
+      it('sorts the Series by the values in ascending order for strings', () => {
+        const ds = new Series(['hi', 'bye', 'test', 'foo', 'bar']);
+        const ds1 = ds.sort_values(true);
+
+        expect(ds1.values.toArray()).toEqual(['bar', 'bye', 'foo', 'hi', 'test']);
+        expect(ds1.index.toArray()).toEqual([4, 1, 3, 0, 2]);
+      });
+
+      it('sorts the Series by the values in descending order for strings', () => {
+        const ds = new Series(['hi', 'bye', 'test', 'foo', 'bar']);
+        const ds1 = ds.sort_values(false);
+
+        expect(ds1.values.toArray()).toEqual(['test', 'hi', 'foo', 'bye', 'bar']);
+        expect(ds1.index.toArray()).toEqual([2, 0, 3, 1, 4]);
       });
     });
   });
