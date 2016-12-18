@@ -16,6 +16,17 @@ describe('frame', () => {
       expect(df1.get('y').values.toArray()).toEqual([2, 3]);
     });
 
+    describe('toString', () => {
+      it('logs the DataFrame properly', () => {
+        const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}]);
+        df1.columns = ['date', 'unemployment_rate_x'];
+        const df2 = new DataFrame([{x: 1, y: 3}, {x: 2, y: 4}]);
+        df2.columns = ['date', 'unemployment_rate_y'];
+
+        df1.merge(df2, ['date']).toString();
+      });
+    });
+
     describe('columns', () => {
       it('columns are set properly', () => {
         const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}]);
