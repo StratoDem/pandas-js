@@ -1,15 +1,21 @@
-"use strict";
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.sortDescendingComparator = exports.sortAscendingComparator = exports.intersectingColumns = exports.nonMergeColumns = exports.sum = undefined;
+exports.parseIndex = exports.intersectingColumns = exports.nonMergeColumns = exports.sum = undefined;
 
-var _regenerator = require("babel-runtime/regenerator");
+var _regenerator = require('babel-runtime/regenerator');
 
 var _regenerator2 = _interopRequireDefault(_regenerator);
 
 exports.enumerate = enumerate;
+
+var _immutable = require('immutable');
+
+var _immutable2 = _interopRequireDefault(_immutable);
+
+var _exceptions = require('./exceptions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -70,7 +76,7 @@ function enumerate(iterable) {
 
         case 16:
           _context.prev = 16;
-          _context.t0 = _context["catch"](4);
+          _context.t0 = _context['catch'](4);
           _didIteratorError = true;
           _iteratorError = _context.t0;
 
@@ -99,7 +105,7 @@ function enumerate(iterable) {
           return _context.finish(20);
 
         case 28:
-        case "end":
+        case 'end':
           return _context.stop();
       }
     }
@@ -134,31 +140,30 @@ var intersectingColumns = exports.intersectingColumns = function intersectingCol
 };
 
 /**
- * Compares valueA and valueB for an Immutable.List sort ascending
- * Returns 0 if valueA and valueB should not be swapped
- * Returns -1 if valueA should come before valueB
- * Returns 1 if valueA should come after valueB
  *
- * @param valueA
- * @param valueB
- * @returns {number}
+ * @param {Array|List|string|number} index
+ *    Values to update the index in the Series
+ * @param {List} values
+ *    The values in the Series
+ *
+ * @returns {List}
  */
-var sortAscendingComparator = exports.sortAscendingComparator = function sortAscendingComparator(valueA, valueB) {
-  if (valueA < valueB) return -1;else if (valueA === valueB) return 0;
-  return 1;
-};
+var parseIndex = exports.parseIndex = function parseIndex(index, values) {
+  if (Array.isArray(index)) {
+    if (values.size !== index.length) throw new _exceptions.IndexMismatchError();
 
-/**
- * Compares valueA and valueB for an Immutable.List sort descending
- * Returns 0 if valueA and valueB should not be swapped
- * Returns -1 if valueA should come before valueB
- * Returns 1 if valueA should come after valueB
- *
- * @param valueA
- * @param valueB
- * @returns {number}
- */
-var sortDescendingComparator = exports.sortDescendingComparator = function sortDescendingComparator(valueA, valueB) {
-  if (valueA > valueB) return -1;else if (valueA === valueB) return 0;
-  return -1;
+    return _immutable2.default.List(index);
+  } else if (index instanceof _immutable2.default.List) {
+    if (values.size !== index.size) throw new _exceptions.IndexMismatchError();
+
+    return index;
+  } else if (typeof index !== 'undefined') {
+    if (values.size !== 1) throw new _exceptions.IndexMismatchError();
+
+    return _immutable2.default.List([index]);
+  } else if (typeof index === 'undefined') {
+    return _immutable2.default.Range(0, values.size).toList();
+  } else {
+    throw new _exceptions.IndexMismatchError();
+  }
 };
