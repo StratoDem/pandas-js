@@ -16,6 +16,8 @@ var _series = require('../../core/series');
 
 var _series2 = _interopRequireDefault(_series);
 
+var _exceptions = require('../../core/exceptions');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 describe('frame', function () {
@@ -27,6 +29,56 @@ describe('frame', function () {
       expect(df1.get('x').values.toArray()).toEqual([1, 2]);
       expect(df1.get('y')).toBeInstanceOf(_series2.default);
       expect(df1.get('y').values.toArray()).toEqual([2, 3]);
+    });
+
+    describe('toString', function () {
+      it('logs the DataFrame properly', function () {
+        var df1 = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+        df1.columns = ['date', 'unemployment_rate_x'];
+        var df2 = new _frame2.default([{ x: 1, y: 3 }, { x: 2, y: 4 }]);
+        df2.columns = ['date', 'unemployment_rate_y'];
+
+        df1.merge(df2, ['date']).toString();
+      });
+    });
+
+    describe('index', function () {
+      it('index is set properly as the [0, ..., length - 1] if not passed in constructor', function () {
+        var df1 = new _frame2.default([{ x: 1.5 }, { x: 1.2 }, { x: 1.3 }]);
+        expect(df1.index.toArray()).toEqual([0, 1, 2]);
+      });
+
+      it('index is set properly as the index array passed in in constructor', function () {
+        var df1 = new _frame2.default([{ x: 1.5 }, { x: 1.2 }, { x: 1.3 }], { index: [1, 2, 3] });
+        expect(df1.index.toArray()).toEqual([1, 2, 3]);
+      });
+
+      it('index is set properly as the index List passed in in constructor', function () {
+        var df1 = new _frame2.default([{ x: 1.5 }, { x: 1.2 }, { x: 1.3 }], { index: _immutable2.default.List([1, 2, 3]) });
+        expect(df1.index.toArray()).toEqual([1, 2, 3]);
+      });
+
+      it('throws IndexMismatchError if the index does not match', function () {
+        var f = function f() {
+          return new _frame2.default([{ x: 1.5 }, { x: 1.2 }, { x: 1.3 }], { index: _immutable2.default.List([1, 2, 3, 4]) });
+        };
+        expect(f).toThrowError(_exceptions.IndexMismatchError);
+      });
+
+      it('index setter updates the index if proper length array passed in', function () {
+        var df1 = new _frame2.default([{ x: 1.5 }, { x: 1.2 }, { x: 1.3 }], { index: _immutable2.default.List([1, 2, 3]) });
+        df1.index = _immutable2.default.List([2, 3, 4]);
+
+        expect(df1.index.toArray()).toEqual([2, 3, 4]);
+      });
+
+      it('throws IndexMismatchError in setter if index does not match', function () {
+        var df1 = new _frame2.default([{ x: 1.5 }, { x: 1.2 }, { x: 1.3 }], { index: _immutable2.default.List([1, 2, 3]) });
+        var f = function f() {
+          df1.index = _immutable2.default.List([2, 3, 4, 5]);
+        };
+        expect(f).toThrowError(_exceptions.IndexMismatchError);
+      });
     });
 
     describe('columns', function () {

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.mergeDataFrame = undefined;
+exports.mergeDataFrame = exports.default = undefined;
 
 var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
 
@@ -89,10 +89,10 @@ var DataFrame = function () {
       this._columns = this._data.keySeq();
     } else if (typeof data === 'undefined') this._columns = _immutable2.default.Seq.of();
 
-    this.index = kwargs.index;
     this._values = _immutable2.default.List(this._columns.map(function (k) {
       return _this._data.get(k).values;
     }));
+    this._index = (0, _utils.parseIndex)(kwargs.index, this._data.get(this._columns.get(0)).values);
   }
 
   (0, _createClass3.default)(DataFrame, [{
@@ -109,7 +109,7 @@ var DataFrame = function () {
       string += '\n' + headerRow + '\n';
 
       var _loop = function _loop(idx) {
-        string += idx + '\t|';
+        string += _this2.index.get(idx) + '\t|';
         _this2.columns.forEach(function (k) {
           string += '  ' + _this2._data.get(k).iloc(idx) + '  |';
         });
@@ -250,6 +250,19 @@ var DataFrame = function () {
       });
 
       this._columns = _immutable2.default.Seq(columns);
+    }
+
+    /**
+     * @returns {List}
+     */
+
+  }, {
+    key: 'index',
+    get: function get() {
+      return this._index;
+    },
+    set: function set(index) {
+      this._index = (0, _utils.parseIndex)(index, this._data.get(this._columns.get(0)).values);
     }
   }, {
     key: 'length',

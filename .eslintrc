@@ -9,6 +9,7 @@
         "SwitchCase": 1
       }
     ],
+    "camelcase": "off",
     "no-undef": "off",
     "import/extensions": "off",
     "no-underscore-dangle": "off",
@@ -35,5 +36,6 @@
     "ecmaFeatures": {
       "experimentalObjectRestSpread": true
     }
-  }
+  },
+  "parser": "babel-eslint"
 }

@@ -3,9 +3,10 @@
  * numpy.ndarray as the values
  */
 
+import { autobind } from 'core-decorators';
 import Immutable from 'immutable';
 
-import { enumerate, sum } from './utils';
+import { enumerate, sum, parseIndex } from './utils';
 import { DType, arrayToDType } from './dtype';
 
 
@@ -15,13 +16,13 @@ export default class Series {
    *
    * Operations between Series (+, -, /, *, **) align values based on their associated index values
    *
-   * @param data {Array|Object}
+   * @param data {Array|List}
    *    Data to be stored in Series
    * @param {Object} kwargs
    *    Extra optional arguments for a Series
    * @param {string} [kwargs.name='']
    *    The _name to assign to the Series
-   * @param {Array|Object} [kwargs.index]
+   * @param {Array|List} [kwargs.index]
    */
   constructor(data = null, kwargs = {}) {
     if (Array.isArray(data)) {
@@ -35,7 +36,8 @@ export default class Series {
     }
 
     this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
-    this._index = kwargs.index;
+
+    this._index = parseIndex(kwargs.index, this.values);
   }
 
   [Symbol.iterator]() {
@@ -62,7 +64,7 @@ export default class Series {
 
     let valString = '';
     vals.forEach((v, idx) => {
-      valString += `${idx}\t${v}\n`;
+      valString += `${this.index.get(idx)}\t${v}\n`;
     });
 
     return `${valString}Name: ${this.name}, dtype: ${this.dtype}`;
@@ -79,8 +81,15 @@ export default class Series {
     return this._dtype;
   }
 
+  /**
+   * @returns {List}
+   */
   get index() {
     return this._index;
+  }
+
+  set index(index) {
+    this._index = parseIndex(index, this.values);
   }
 
   get length() {
@@ -131,7 +140,10 @@ export default class Series {
     if (typeof endVal === 'undefined')
       return this.values.get(startVal);
 
-    return new Series(this.values.slice(startVal, endVal), this.kwargs);
+    const { name } = this.kwargs;
+    const index = this.index.slice(startVal, endVal);
+
+    return new Series(this.values.slice(startVal, endVal), {name, index});
   }
 
   sum() {
@@ -210,7 +222,7 @@ export default class Series {
     else if (val instanceof Immutable.List)
       return new Series(this.values.map((v, idx) => v * val.get(idx)));
 
-    throw new Error('plus only supports numbers, Arrays, Immutable List and pandas.Series');
+    throw new Error('times only supports numbers, Arrays, Immutable List and pandas.Series');
   }
 
   /**
@@ -230,6 +242,39 @@ export default class Series {
     else if (val instanceof Immutable.List)
       return new Series(this.values.map((v, idx) => v / val.get(idx)));
 
-    throw new Error('minus only supports numbers, Arrays, Immutable List and pandas.Series');
+    throw new Error('dividedBy only supports numbers, Arrays, Immutable List and pandas.Series');
+  }
+
+  @autobind
+  _sort_ascending(valueA, valueB) {
+    const valA = this.iloc(valueA);
+    const valB = this.iloc(valueB);
+
+    if (valA < valB) return -1;
+    else if (valA > valB) return 1;
+    return 0;
+  }
+
+  @autobind
+  _sort_descending(valueA, valueB) {
+    const valA = this.iloc(valueA);
+    const valB = this.iloc(valueB);
+
+    if (valA > valB) return -1;
+    else if (valA < valB) return 1;
+    return 0;
+  }
+
+  /**
+   * @param {boolean} ascending
+   *
+   * @returns {Series}
+   */
+  sort_values(ascending = true) {
+    const sortedIndex = ascending
+      ? this.index.sort(this._sort_ascending)
+      : this.index.sort(this._sort_descending);
+
+    return new Series(sortedIndex.map(i => this.iloc(i)), {name: this.name, index: sortedIndex});
   }
 }

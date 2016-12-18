@@ -12,6 +12,8 @@ var _dtype = require('../../core/dtype');
 
 var dtype = _interopRequireWildcard(_dtype);
 
+var _exceptions = require('../../core/exceptions');
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -38,6 +40,45 @@ describe('series', function () {
 
         var ds2 = ds1.astype(new dtype.DType('int'));
         expect(ds2.values.toArray()).toEqual([1, 2, 3]);
+      });
+    });
+
+    describe('index', function () {
+      it('index is set properly as the [0, ..., length - 1] if not passed in constructor', function () {
+        var ds1 = new _series2.default([1.5, 2.1, 3.9]);
+        expect(ds1.index.toArray()).toEqual([0, 1, 2]);
+      });
+
+      it('index is set properly as the index array passed in in constructor', function () {
+        var ds1 = new _series2.default([1.5, 2.1, 3.9], { index: [1, 2, 3] });
+        expect(ds1.index.toArray()).toEqual([1, 2, 3]);
+      });
+
+      it('index is set properly as the index List passed in in constructor', function () {
+        var ds1 = new _series2.default([1.5, 2.1, 3.9], { index: _immutable2.default.List([1, 2, 3]) });
+        expect(ds1.index.toArray()).toEqual([1, 2, 3]);
+      });
+
+      it('throws IndexMismatchError if the index does not match', function () {
+        var f = function f() {
+          return new _series2.default([1.5, 2.1, 3.9], { index: _immutable2.default.List([1, 2, 3, 4]) });
+        };
+        expect(f).toThrowError(_exceptions.IndexMismatchError);
+      });
+
+      it('index setter updates the index if proper length array passed in', function () {
+        var ds1 = new _series2.default([1.5, 2.1, 3.9], { index: _immutable2.default.List([1, 2, 3]) });
+        ds1.index = _immutable2.default.List([2, 3, 4]);
+
+        expect(ds1.index.toArray()).toEqual([2, 3, 4]);
+      });
+
+      it('throws IndexMismatchError in setter if index does not match', function () {
+        var ds1 = new _series2.default([1.5, 2.1, 3.9], { index: _immutable2.default.List([1, 2, 3]) });
+        var f = function f() {
+          ds1.index = _immutable2.default.List([2, 3, 4, 5]);
+        };
+        expect(f).toThrowError(_exceptions.IndexMismatchError);
       });
     });
 
@@ -147,6 +188,39 @@ describe('series', function () {
         expect(ds3).toBeInstanceOf(_series2.default);
         expect(ds3.values.size).toEqual(3);
         expect(ds3.values.toJS()).toEqual([0.5, 2 / 3, 0.6]);
+      });
+    });
+
+    describe('sort_values', function () {
+      it('sorts the Series by the values in ascending order', function () {
+        var ds1 = new _series2.default([2, 3, 4, 1]).sort_values();
+
+        expect(ds1.values.toArray()).toEqual([1, 2, 3, 4]);
+        expect(ds1.index.toArray()).toEqual([3, 0, 1, 2]);
+      });
+
+      it('sorts the Series by the values in descending order', function () {
+        var ds = new _series2.default([2, 3, 4, 1]);
+        var ds1 = ds.sort_values(false);
+
+        expect(ds1.values.toArray()).toEqual([4, 3, 2, 1]);
+        expect(ds1.index.toArray()).toEqual([2, 1, 0, 3]);
+      });
+
+      it('sorts the Series by the values in ascending order for strings', function () {
+        var ds = new _series2.default(['hi', 'bye', 'test', 'foo', 'bar']);
+        var ds1 = ds.sort_values(true);
+
+        expect(ds1.values.toArray()).toEqual(['bar', 'bye', 'foo', 'hi', 'test']);
+        expect(ds1.index.toArray()).toEqual([4, 1, 3, 0, 2]);
+      });
+
+      it('sorts the Series by the values in descending order for strings', function () {
+        var ds = new _series2.default(['hi', 'bye', 'test', 'foo', 'bar']);
+        var ds1 = ds.sort_values(false);
+
+        expect(ds1.values.toArray()).toEqual(['test', 'hi', 'foo', 'bye', 'bar']);
+        expect(ds1.index.toArray()).toEqual([2, 0, 3, 1, 4]);
       });
     });
   });

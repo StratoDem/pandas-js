@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.default = undefined;
 
 var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
 
@@ -16,6 +17,13 @@ var _createClass2 = require('babel-runtime/helpers/createClass');
 
 var _createClass3 = _interopRequireDefault(_createClass2);
 
+var _desc, _value, _class; /**
+                            * A pandas.Series one-dimensional array with axis labels, with an Immutable.List instead of
+                            * numpy.ndarray as the values
+                            */
+
+var _coreDecorators = require('core-decorators');
+
 var _immutable = require('immutable');
 
 var _immutable2 = _interopRequireDefault(_immutable);
@@ -26,19 +34,48 @@ var _dtype = require('./dtype');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var Series = function () {
+function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) {
+  var desc = {};
+  Object['ke' + 'ys'](descriptor).forEach(function (key) {
+    desc[key] = descriptor[key];
+  });
+  desc.enumerable = !!desc.enumerable;
+  desc.configurable = !!desc.configurable;
+
+  if ('value' in desc || desc.initializer) {
+    desc.writable = true;
+  }
+
+  desc = decorators.slice().reverse().reduce(function (desc, decorator) {
+    return decorator(target, property, desc) || desc;
+  }, desc);
+
+  if (context && desc.initializer !== void 0) {
+    desc.value = desc.initializer ? desc.initializer.call(context) : void 0;
+    desc.initializer = undefined;
+  }
+
+  if (desc.initializer === void 0) {
+    Object['define' + 'Property'](target, property, desc);
+    desc = null;
+  }
+
+  return desc;
+}
+
+var Series = (_class = function () {
   /**
    * One dimensional array with axis labels
    *
    * Operations between Series (+, -, /, *, **) align values based on their associated index values
    *
-   * @param data {Array|Object}
+   * @param data {Array|List}
    *    Data to be stored in Series
    * @param {Object} kwargs
    *    Extra optional arguments for a Series
    * @param {string} [kwargs.name='']
    *    The _name to assign to the Series
-   * @param {Array|Object} [kwargs.index]
+   * @param {Array|List} [kwargs.index]
    */
   function Series() {
     var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
@@ -56,7 +93,8 @@ var Series = function () {
     }
 
     this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
-    this._index = kwargs.index;
+
+    this._index = (0, _utils.parseIndex)(kwargs.index, this.values);
   }
 
   (0, _createClass3.default)(Series, [{
@@ -108,11 +146,13 @@ var Series = function () {
   }, {
     key: 'toString',
     value: function toString() {
+      var _this = this;
+
       var vals = this.iloc(0, 10).values;
 
       var valString = '';
       vals.forEach(function (v, idx) {
-        valString += idx + '\t' + v + '\n';
+        valString += _this.index.get(idx) + '\t' + v + '\n';
       });
 
       return valString + 'Name: ' + this.name + ', dtype: ' + this.dtype;
@@ -165,7 +205,11 @@ var Series = function () {
     value: function iloc(startVal, endVal) {
       if (typeof endVal === 'undefined') return this.values.get(startVal);
 
-      return new Series(this.values.slice(startVal, endVal), this.kwargs);
+      var name = this.kwargs.name;
+
+      var index = this.index.slice(startVal, endVal);
+
+      return new Series(this.values.slice(startVal, endVal), { name: name, index: index });
     }
   }, {
     key: 'sum',
@@ -180,14 +224,14 @@ var Series = function () {
   }, {
     key: 'std',
     value: function std() {
-      var _this = this;
+      var _this2 = this;
 
       var mean = this.mean();
 
       var meanSqDiff = 0;
       this.values.forEach(function (v) {
         var diff = v - mean;
-        meanSqDiff += diff * diff / (_this.length - 1);
+        meanSqDiff += diff * diff / (_this2.length - 1);
       });
 
       return Math.sqrt(meanSqDiff);
@@ -261,7 +305,7 @@ var Series = function () {
         return v * val.get(idx);
       }));
 
-      throw new Error('plus only supports numbers, Arrays, Immutable List and pandas.Series');
+      throw new Error('times only supports numbers, Arrays, Immutable List and pandas.Series');
     }
 
     /**
@@ -285,7 +329,45 @@ var Series = function () {
         return v / val.get(idx);
       }));
 
-      throw new Error('minus only supports numbers, Arrays, Immutable List and pandas.Series');
+      throw new Error('dividedBy only supports numbers, Arrays, Immutable List and pandas.Series');
+    }
+  }, {
+    key: '_sort_ascending',
+    value: function _sort_ascending(valueA, valueB) {
+      var valA = this.iloc(valueA);
+      var valB = this.iloc(valueB);
+
+      if (valA < valB) return -1;else if (valA > valB) return 1;
+      return 0;
+    }
+  }, {
+    key: '_sort_descending',
+    value: function _sort_descending(valueA, valueB) {
+      var valA = this.iloc(valueA);
+      var valB = this.iloc(valueB);
+
+      if (valA > valB) return -1;else if (valA < valB) return 1;
+      return 0;
+    }
+
+    /**
+     * @param {boolean} ascending
+     *
+     * @returns {Series}
+     */
+
+  }, {
+    key: 'sort_values',
+    value: function sort_values() {
+      var _this3 = this;
+
+      var ascending = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+
+      var sortedIndex = ascending ? this.index.sort(this._sort_ascending) : this.index.sort(this._sort_descending);
+
+      return new Series(sortedIndex.map(function (i) {
+        return _this3.iloc(i);
+      }), { name: this.name, index: sortedIndex });
     }
   }, {
     key: 'kwargs',
@@ -300,10 +382,18 @@ var Series = function () {
     get: function get() {
       return this._dtype;
     }
+
+    /**
+     * @returns {List}
+     */
+
   }, {
     key: 'index',
     get: function get() {
       return this._index;
+    },
+    set: function set(index) {
+      this._index = (0, _utils.parseIndex)(index, this.values);
     }
   }, {
     key: 'length',
@@ -317,9 +407,5 @@ var Series = function () {
     }
   }]);
   return Series;
-}(); /**
-      * A pandas.Series one-dimensional array with axis labels, with an Immutable.List instead of
-      * numpy.ndarray as the values
-      */
-
+}(), (_applyDecoratedDescriptor(_class.prototype, '_sort_ascending', [_coreDecorators.autobind], Object.getOwnPropertyDescriptor(_class.prototype, '_sort_ascending'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, '_sort_descending', [_coreDecorators.autobind], Object.getOwnPropertyDescriptor(_class.prototype, '_sort_descending'), _class.prototype)), _class);
 exports.default = Series;

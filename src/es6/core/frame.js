@@ -2,7 +2,7 @@
 import Immutable from 'immutable';
 
 import Series from './series';
-import { enumerate, nonMergeColumns, intersectingColumns } from './utils';
+import { enumerate, nonMergeColumns, intersectingColumns, parseIndex } from './utils';
 
 
 /**
@@ -53,8 +53,8 @@ export default class DataFrame {
     } else if (typeof data === 'undefined')
       this._columns = Immutable.Seq.of();
 
-    this.index = kwargs.index;
     this._values = Immutable.List(this._columns.map(k => this._data.get(k).values));
+    this._index = parseIndex(kwargs.index, this._data.get(this._columns.get(0)).values);
   }
 
   toString() {
@@ -64,7 +64,7 @@ export default class DataFrame {
 
     string += `\n${headerRow}\n`;
     for (let idx = 0; idx < this.length; idx += 1) {
-      string += `${idx}\t|`;
+      string += `${this.index.get(idx)}\t|`;
       this.columns.forEach((k) => { string += `  ${this._data.get(k).iloc(idx)}  |`; });
       string += '\n';
     }
@@ -133,6 +133,17 @@ export default class DataFrame {
     });
 
     this._columns = Immutable.Seq(columns);
+  }
+
+  /**
+   * @returns {List}
+   */
+  get index() {
+    return this._index;
+  }
+
+  set index(index) {
+    this._index = parseIndex(index, this._data.get(this._columns.get(0)).values);
   }
 
   get length() {

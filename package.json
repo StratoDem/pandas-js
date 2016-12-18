@@ -17,8 +17,9 @@
     "src/"
   ],
   "dependencies": {
-    "immutable": "^3.8.1",
-    "babel-plugin-transform-runtime": "^6.15.0"
+    "babel-plugin-transform-runtime": "^6.15.0",
+    "core-decorators": "^0.15.0",
+    "immutable": "^3.8.1"
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
