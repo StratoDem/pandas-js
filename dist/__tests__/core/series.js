@@ -33,6 +33,22 @@ describe('series', function () {
       expect(ds1.toString()).toEqual('0\t1.5\n1\t2.1\n2\t3.9\nName: , dtype: dtype(float)');
     });
 
+    it('copy', function () {
+      var ds1 = new _series2.default([1, 2, 3, 4], { index: [2, 3, 4, 5], name: 'Test name' });
+      var ds2 = ds1.copy();
+
+      expect(ds2).toBeInstanceOf(_series2.default);
+      expect(ds2.values.toArray()).toEqual([1, 2, 3, 4]);
+
+      ds2.name = 'test';
+      expect(ds1.name).toEqual('Test name');
+      expect(ds2.name).toEqual('test');
+
+      ds2.index = [1, 2, 3, 4];
+      expect(ds1.index.toArray()).toEqual([2, 3, 4, 5]);
+      expect(ds2.index.toArray()).toEqual([1, 2, 3, 4]);
+    });
+
     describe('astype', function () {
       it('converts a float Series to an integer Series', function () {
         var ds1 = new _series2.default([1.5, 2.1, 3.9]);
@@ -188,6 +204,18 @@ describe('series', function () {
         expect(ds3).toBeInstanceOf(_series2.default);
         expect(ds3.values.size).toEqual(3);
         expect(ds3.values.toJS()).toEqual([0.5, 2 / 3, 0.6]);
+      });
+    });
+
+    describe('pct_change', function () {
+      it('calculates the percent change for 1 period', function () {
+        var ds = new _series2.default([1, 2, 3, 4, 5]);
+        expect(ds.pct_change(1).values.toArray()).toEqual([null, 1, 0.5, 4 / 3 - 1, 0.25]);
+      });
+
+      it('calculates the percent change for 2 periods', function () {
+        var ds = new _series2.default([1, 2, 3, 4, 5]);
+        expect(ds.pct_change(2).values.toArray()).toEqual([null, null, 2, 1, 5 / 3 - 1]);
       });
     });
 

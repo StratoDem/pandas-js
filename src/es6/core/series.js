@@ -70,6 +70,10 @@ export default class Series {
     return `${valString}Name: ${this.name}, dtype: ${this.dtype}`;
   }
 
+  copy() {
+    return new Series(this.values, {index: this.index, name: this.name});
+  }
+
   get kwargs() {
     return {
       name: this.name,
@@ -159,7 +163,7 @@ export default class Series {
 
     return this.values.reduce((s, v) => {
       const diff = v - mean;
-      return s + ((diff * diff) / (this.length - 1))
+      return s + ((diff * diff) / (this.length - 1));
     }, 0);
   }
 

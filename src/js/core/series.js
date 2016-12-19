@@ -158,6 +158,11 @@ var Series = (_class = function () {
       return valString + 'Name: ' + this.name + ', dtype: ' + this.dtype;
     }
   }, {
+    key: 'copy',
+    value: function copy() {
+      return new Series(this.values, { index: this.index, name: this.name });
+    }
+  }, {
     key: 'astype',
 
 

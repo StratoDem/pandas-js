@@ -10,9 +10,10 @@ import { enumerate, nonMergeColumns, intersectingColumns, parseIndex } from './u
  * Parse an array of data [{k1: v1, k2: v2}, ... ] into an Immutable.Map
  *
  * @param {Array} array
+ * @param {List} index
  * @returns {Map<string, List>}
  */
-const parseArrayToSeriesMap = (array) => {
+const parseArrayToSeriesMap = (array, index) => {
   const dataMap = {};
 
   array.forEach((el) => {
@@ -28,7 +29,7 @@ const parseArrayToSeriesMap = (array) => {
   });
 
   Object.keys(dataMap).forEach((k) => {
-    dataMap[k] = new Series(dataMap[k], {name: k});
+    dataMap[k] = new Series(dataMap[k], {name: k, index});
   });
 
   return Immutable.Map(dataMap);
@@ -49,13 +50,25 @@ export default class DataFrame {
    */
   constructor(data, kwargs = {}) {
     if (Array.isArray(data)) {
-      this._data = parseArrayToSeriesMap(data);
+      this._index = parseIndex(kwargs.index, Immutable.List(data));
+      this._data = parseArrayToSeriesMap(data, this._index);
       this._columns = this._data.keySeq();
-    } else if (typeof data === 'undefined')
+    } else if (data instanceof Immutable.Map) {
+      data.keySeq().forEach((k) => {
+        if (!(data.get(k) instanceof Series))
+          throw new Error('Map must have Series as values');
+        data.set(k, data.get(k).copy());
+      });
+      this._data = data;
+      this._columns = data.keySeq();
+      this._index = data.get(data.keySeq().get(0)).index;
+    } else if (typeof data === 'undefined') {
+      this._data = Immutable.Map({});
       this._columns = Immutable.Seq.of();
+      this._index = Immutable.List.of();
+    }
 
     this._values = Immutable.List(this._columns.map(k => this._data.get(k).values));
-    this._index = parseIndex(kwargs.index, this._data.get(this._columns.get(0)).values);
   }
 
   toString() {
@@ -64,13 +77,27 @@ export default class DataFrame {
     const headerRow = '-'.repeat(string.length);
 
     string += `\n${headerRow}\n`;
+
+    const stringUpdate = (idx) => {
+      let s = '';
+      this.columns.forEach((k) => { s += `  ${this._data.get(k).iloc(idx)}  |`; });
+      return s;
+    };
+
     for (let idx = 0; idx < this.length; idx += 1) {
       string += `${this.index.get(idx)}\t|`;
-      this.columns.forEach((k) => { string += `  ${this._data.get(k).iloc(idx)}  |`; });
+      string += stringUpdate(idx);
       string += '\n';
     }
 
     return string;
+  }
+
+  /**
+   * @returns {DataFrame}
+   */
+  copy() {
+    return new DataFrame(this._data, {index: this.index});
   }
 
   kwargs() {
@@ -184,8 +211,13 @@ export default class DataFrame {
     });
     csvString += '\r\n';
 
+    const updateString = (idx) => {
+      let s = '';
+      this.columns.forEach((k) => { s += `${this.get(k).iloc(idx)},`; });
+      return s;
+    };
     for (let idx = 0; idx < this.length; idx += 1) {
-      this.columns.forEach((k) => { csvString += `${this.get(k).iloc(idx)},`; });
+      csvString += updateString(idx);
       csvString += '\r\n';
     }
 
@@ -268,9 +300,11 @@ export default class DataFrame {
       throw new Error('periods must be positive');
 
     if (axis === 0) {
-
+      let data = Immutable.Map.of();
+      this._columns.forEach((k) => { data = data.set(k, this._data.get(k).pct_change(periods)); });
+      return new DataFrame(data, {index: this.index});
     } else if (axis === 1) {
-
+      throw new Error('Not implemented');
     }
 
     throw new InvalidAxisError();

@@ -43,9 +43,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * Parse an array of data [{k1: v1, k2: v2}, ... ] into an Immutable.Map
  *
  * @param {Array} array
+ * @param {List} index
  * @returns {Map<string, List>}
  */
-var parseArrayToSeriesMap = function parseArrayToSeriesMap(array) {
+var parseArrayToSeriesMap = function parseArrayToSeriesMap(array, index) {
   var dataMap = {};
 
   array.forEach(function (el) {
@@ -61,7 +62,7 @@ var parseArrayToSeriesMap = function parseArrayToSeriesMap(array) {
   });
 
   Object.keys(dataMap).forEach(function (k) {
-    dataMap[k] = new _series2.default(dataMap[k], { name: k });
+    dataMap[k] = new _series2.default(dataMap[k], { name: k, index: index });
   });
 
   return _immutable2.default.Map(dataMap);
@@ -87,14 +88,26 @@ var DataFrame = function () {
     (0, _classCallCheck3.default)(this, DataFrame);
 
     if (Array.isArray(data)) {
-      this._data = parseArrayToSeriesMap(data);
+      this._index = (0, _utils.parseIndex)(kwargs.index, _immutable2.default.List(data));
+      this._data = parseArrayToSeriesMap(data, this._index);
       this._columns = this._data.keySeq();
-    } else if (typeof data === 'undefined') this._columns = _immutable2.default.Seq.of();
+    } else if (data instanceof _immutable2.default.Map) {
+      data.keySeq().forEach(function (k) {
+        if (!(data.get(k) instanceof _series2.default)) throw new Error('Map must have Series as values');
+        data.set(k, data.get(k).copy());
+      });
+      this._data = data;
+      this._columns = data.keySeq();
+      this._index = data.get(data.keySeq().get(0)).index;
+    } else if (typeof data === 'undefined') {
+      this._data = _immutable2.default.Map({});
+      this._columns = _immutable2.default.Seq.of();
+      this._index = _immutable2.default.List.of();
+    }
 
     this._values = _immutable2.default.List(this._columns.map(function (k) {
       return _this._data.get(k).values;
     }));
-    this._index = (0, _utils.parseIndex)(kwargs.index, this._data.get(this._columns.get(0)).values);
   }
 
   (0, _createClass3.default)(DataFrame, [{
@@ -110,19 +123,31 @@ var DataFrame = function () {
 
       string += '\n' + headerRow + '\n';
 
-      var _loop = function _loop(idx) {
-        string += _this2.index.get(idx) + '\t|';
+      var stringUpdate = function stringUpdate(idx) {
+        var s = '';
         _this2.columns.forEach(function (k) {
-          string += '  ' + _this2._data.get(k).iloc(idx) + '  |';
+          s += '  ' + _this2._data.get(k).iloc(idx) + '  |';
         });
-        string += '\n';
+        return s;
       };
 
       for (var idx = 0; idx < this.length; idx += 1) {
-        _loop(idx);
+        string += this.index.get(idx) + '\t|';
+        string += stringUpdate(idx);
+        string += '\n';
       }
 
       return string;
+    }
+
+    /**
+     * @returns {DataFrame}
+     */
+
+  }, {
+    key: 'copy',
+    value: function copy() {
+      return new DataFrame(this._data, { index: this.index });
     }
   }, {
     key: 'kwargs',
@@ -208,15 +233,16 @@ var DataFrame = function () {
       });
       csvString += '\r\n';
 
-      var _loop2 = function _loop2(idx) {
+      var updateString = function updateString(idx) {
+        var s = '';
         _this4.columns.forEach(function (k) {
-          csvString += _this4.get(k).iloc(idx) + ',';
+          s += _this4.get(k).iloc(idx) + ',';
         });
-        csvString += '\r\n';
+        return s;
       };
-
       for (var idx = 0; idx < this.length; idx += 1) {
-        _loop2(idx);
+        csvString += updateString(idx);
+        csvString += '\r\n';
       }
 
       return csvString;
@@ -295,7 +321,7 @@ var DataFrame = function () {
           return _this8.get(k).variance();
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
-        var _ret3 = function () {
+        var _ret = function () {
           var means = _this8.mean(axis).values;
           return {
             v: new _series2.default(_immutable2.default.Range(0, _this8.length).map(function (idx) {
@@ -307,7 +333,7 @@ var DataFrame = function () {
           };
         }();
 
-        if ((typeof _ret3 === 'undefined' ? 'undefined' : (0, _typeof3.default)(_ret3)) === "object") return _ret3.v;
+        if ((typeof _ret === 'undefined' ? 'undefined' : (0, _typeof3.default)(_ret)) === "object") return _ret.v;
       }
 
       throw new _exceptions.InvalidAxisError();
@@ -323,13 +349,29 @@ var DataFrame = function () {
   }, {
     key: 'pct_change',
     value: function pct_change() {
+      var _this9 = this;
+
       var periods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
       var axis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
       if (typeof periods !== 'number' || !Number.isInteger(periods)) throw new Error('periods must be an integer');
       if (periods <= 0) throw new Error('periods must be positive');
 
-      if (axis === 0) {} else if (axis === 1) {}
+      if (axis === 0) {
+        var _ret2 = function () {
+          var data = _immutable2.default.Map.of();
+          _this9._columns.forEach(function (k) {
+            data = data.set(k, _this9._data.get(k).pct_change(periods));
+          });
+          return {
+            v: new DataFrame(data, { index: _this9.index })
+          };
+        }();
+
+        if ((typeof _ret2 === 'undefined' ? 'undefined' : (0, _typeof3.default)(_ret2)) === "object") return _ret2.v;
+      } else if (axis === 1) {
+        throw new Error('Not implemented');
+      }
 
       throw new _exceptions.InvalidAxisError();
     }
@@ -351,14 +393,14 @@ var DataFrame = function () {
       return this._columns;
     },
     set: function set(columns) {
-      var _this9 = this;
+      var _this10 = this;
 
       if (!Array.isArray(columns) || columns.length !== this.columns.size) throw new Error('Columns must be array of same dimension');
 
       var nextData = {};
       columns.forEach(function (k, idx) {
-        var prevColumn = _this9.columns.get(idx);
-        var prevSeries = _this9.get(prevColumn);
+        var prevColumn = _this10.columns.get(idx);
+        var prevSeries = _this10.get(prevColumn);
 
         prevSeries.name = k;
         nextData[k] = prevSeries;
@@ -383,10 +425,10 @@ var DataFrame = function () {
   }, {
     key: 'length',
     get: function get() {
-      var _this10 = this;
+      var _this11 = this;
 
       return Math.max.apply(Math, (0, _toConsumableArray3.default)(this._data.keySeq().map(function (k) {
-        return _this10.get(k).length;
+        return _this11.get(k).length;
       }).toArray()));
     }
   }]);
@@ -419,7 +461,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
   var _iteratorError = undefined;
 
   try {
-    var _loop3 = function _loop3() {
+    var _loop = function _loop() {
       var _step$value = (0, _slicedToArray3.default)(_step.value, 2),
           row1 = _step$value[0],
           _1 = _step$value[1];
@@ -429,7 +471,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
       var _iteratorError2 = undefined;
 
       try {
-        var _loop4 = function _loop4() {
+        var _loop2 = function _loop2() {
           var _step2$value = (0, _slicedToArray3.default)(_step2.value, 2),
               row2 = _step2$value[0],
               _2 = _step2$value[1];
@@ -487,7 +529,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
         };
 
         for (var _iterator2 = df2.iterrows()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          _loop4();
+          _loop2();
         }
       } catch (err) {
         _didIteratorError2 = true;
@@ -506,7 +548,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
     };
 
     for (var _iterator = df1.iterrows()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      _loop3();
+      _loop();
     }
   } catch (err) {
     _didIteratorError = true;
@@ -552,7 +594,7 @@ var outerMerge = function outerMerge(df1, df2, on) {
   var _iteratorError4 = undefined;
 
   try {
-    var _loop5 = function _loop5() {
+    var _loop3 = function _loop3() {
       var _step4$value = (0, _slicedToArray3.default)(_step4.value, 2),
           row1 = _step4$value[0],
           idx_1 = _step4$value[1];
@@ -562,7 +604,7 @@ var outerMerge = function outerMerge(df1, df2, on) {
       var _iteratorError5 = undefined;
 
       try {
-        var _loop6 = function _loop6() {
+        var _loop4 = function _loop4() {
           var _step5$value = (0, _slicedToArray3.default)(_step5.value, 2),
               row2 = _step5$value[0],
               idx_2 = _step5$value[1];
@@ -619,7 +661,7 @@ var outerMerge = function outerMerge(df1, df2, on) {
         };
 
         for (var _iterator5 = df2.iterrows()[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-          _loop6();
+          _loop4();
         }
       } catch (err) {
         _didIteratorError5 = true;
@@ -638,7 +680,7 @@ var outerMerge = function outerMerge(df1, df2, on) {
     };
 
     for (var _iterator4 = df1.iterrows()[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-      _loop5();
+      _loop3();
     }
   } catch (err) {
     _didIteratorError4 = true;

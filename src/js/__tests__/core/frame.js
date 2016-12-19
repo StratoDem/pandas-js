@@ -360,4 +360,15 @@ describe('frame', function () {
       }
     });
   });
+
+  describe('pct_change', function () {
+    it('calculates the pct_change along axis 0', function () {
+      var df1 = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [2, 3, 4] });
+
+      var df2 = df1.pct_change();
+      expect(df2.get('x').values.toArray()).toEqual([null, 1, 0.5]);
+      expect(df2.get('y').values.toArray()).toEqual([null, 0.5, 4 / 3 - 1]);
+      expect(df2.index.toArray()).toEqual([2, 3, 4]);
+    });
+  });
 });
