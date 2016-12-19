@@ -128,60 +128,60 @@ describe('series', () => {
       });
     });
 
-    describe('plus()', () => {
+    describe('add()', () => {
       it('adds a second Series and returns a new Series', () => {
         const ds1 = new Series([1, 2, 3]);
         const ds2 = new Series([2, 3, 4]);
 
-        const ds3 = ds1.plus(ds2);
+        const ds3 = ds1.add(ds2);
         expect(ds3).toBeInstanceOf(Series);
         expect(ds3.values.size).toEqual(3);
         expect(ds3.values.toJS()).toEqual([3, 5, 7]);
       });
     });
 
-    describe('minus()', () => {
+    describe('sub()', () => {
       it('subtracts a second Series and returns a new Series', () => {
         const ds1 = new Series([1, 2, 3]);
         const ds2 = new Series([2, 3, 5]);
 
-        const ds3 = ds1.minus(ds2);
+        const ds3 = ds1.sub(ds2);
         expect(ds3).toBeInstanceOf(Series);
         expect(ds3.values.size).toEqual(3);
         expect(ds3.values.toJS()).toEqual([-1, -1, -2]);
       });
     });
 
-    describe('minus()', () => {
+    describe('sub()', () => {
       it('subtracts a second Series and returns a new Series', () => {
         const ds1 = new Series([1, 2, 3]);
         const ds2 = new Series([2, 3, 5]);
 
-        const ds3 = ds1.minus(ds2);
+        const ds3 = ds1.sub(ds2);
         expect(ds3).toBeInstanceOf(Series);
         expect(ds3.values.size).toEqual(3);
         expect(ds3.values.toJS()).toEqual([-1, -1, -2]);
       });
     });
 
-    describe('times()', () => {
+    describe('mul()', () => {
       it('multiplies by a second Series and returns a new Series', () => {
         const ds1 = new Series([1, 2, 3]);
         const ds2 = new Series([2, 3, 5]);
 
-        const ds3 = ds1.times(ds2);
+        const ds3 = ds1.mul(ds2);
         expect(ds3).toBeInstanceOf(Series);
         expect(ds3.values.size).toEqual(3);
         expect(ds3.values.toJS()).toEqual([2, 6, 15]);
       });
     });
 
-    describe('dividedBy()', () => {
+    describe('div()', () => {
       it('divides by a second Series and returns a new Series', () => {
         const ds1 = new Series([1, 2, 3]);
         const ds2 = new Series([2, 3, 5]);
 
-        const ds3 = ds1.dividedBy(ds2);
+        const ds3 = ds1.div(ds2);
         expect(ds3).toBeInstanceOf(Series);
         expect(ds3.values.size).toEqual(3);
         expect(ds3.values.toJS()).toEqual([0.5, 2 / 3, 0.6]);

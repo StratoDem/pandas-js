@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.mergeDataFrame = exports.default = undefined;
+exports.mergeDataFrame = undefined;
 
 var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
 
@@ -39,13 +39,6 @@ var _utils = require('./utils');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/**
- * Parse an array of data [{k1: v1, k2: v2}, ... ] into an Immutable.Map
- *
- * @param {Array} array
- * @param {List} index
- * @returns {Map<string, List>}
- */
 var parseArrayToSeriesMap = function parseArrayToSeriesMap(array, index) {
   var dataMap = {};
 
@@ -75,11 +68,21 @@ var DataFrame = function () {
    * align on both row and column labels. Can be thought of as a Immutable.Map-like
    * container for Series objects. The primary pandas data structure
    *
-   * * @param data {Array|Object}
+   * @param data {Array|Object}
    *    Data to be stored in DataFrame
    * @param {Object} kwargs
    *    Extra optional arguments for a DataFrame
    * @param {Array|Object} [kwargs.index]
+   *
+   * @example
+   * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}])
+   *
+   * // Returns:
+   * //    x  |  y
+   * // 0  1  |  2
+   * // 1  2  |  3
+   * // 2  3  |  4
+   * df.toString();
    */
   function DataFrame(data) {
     var _this = this;
@@ -141,7 +144,18 @@ var DataFrame = function () {
     }
 
     /**
+     * Return a new deep copy of the `DataFrame`
+     *
+     * pandas equivalent: [DataFrame.copy](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.copy.html)
+     *
      * @returns {DataFrame}
+     *
+     * @example
+     * const df = const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     * const df2 = df.copy();
+     * df2.index = [1, 2, 3];
+     * df.index   // [0, 1, 2];
+     * df2.index  // [1, 2, 3];
      */
 
   }, {
@@ -176,6 +190,23 @@ var DataFrame = function () {
         }
       };
     }
+
+    /**
+     * A generator which returns [row, index location] tuples
+     *
+     * pandas equivalent: [DataFrame.iterrows](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.iterrows.html)
+     *
+     * @returns {*}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Logs 2 4 6
+     * for(const [row, idx] of df) {
+     *   console.log(row.get('x').iloc(0) * 2);
+     * }
+     */
+
   }, {
     key: 'iterrows',
     value: function iterrows() {
@@ -185,7 +216,15 @@ var DataFrame = function () {
     /**
      * Immutable.List of Immutable.List, with [row][column] indexing
      *
+     * pandas equivalent: [DataFrame.values](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.values.html)
+     *
      * @returns {List.<List>}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns List [ List[1, 2, 3], List[2, 3, 4]]
+     * df.values;
      */
 
   }, {
@@ -193,6 +232,24 @@ var DataFrame = function () {
     value: function columnExists(col) {
       return this._columns.indexOf(col) >= 0;
     }
+
+    /**
+     * Return the `Series` at the column
+     *
+     * pandas equivalent: df['column_name']
+     *
+     * @param {string} columns
+     *    Name of the column to retrieve
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns Series([1, 2, 3], {name: 'x', index: [0, 1, 2]})
+     * df.get('x');
+     */
+
   }, {
     key: 'get',
     value: function get(columns) {
@@ -206,13 +263,29 @@ var DataFrame = function () {
     }
 
     /**
-     * Merge this DataFrame with another DataFrame, optionally on some set of columns
+     * Merge this `DataFrame` with another `DataFrame`, optionally on some set of columns
+     *
+     * pandas equivalent: `DataFrame.merge`
      *
      * @param {DataFrame} df
+     *    `DataFrame` with which to merge this `DataFrame`
      * @param {Array} on
+     *    Array of columns on which to merge
      * @param {string} how='inner'
+     *    Merge method, either 'inner' or 'outer'
      *
      * @returns {DataFrame}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     * const df2 = new DataFrame([{x: 1, z: 3}, {x: 3, z: 5}, {x: 2, z: 10}]);
+     *
+     * // Returns
+     * //    x  |  y  |  z
+     * // 0  1  |  2  |  3
+     * // 1  2  |  3  |  10
+     * // 2  3  |  4  |  5
+     * df.merge(df2, ['x'], 'inner');
      */
 
   }, {
@@ -222,6 +295,21 @@ var DataFrame = function () {
 
       return mergeDataFrame(this, df, on, how);
     }
+
+    /**
+     * Convert the `DataFrame` to a csv string
+     *
+     * pandas equivalent: [DataFrame.to_csv](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.to_csv.html)
+     *
+     * @returns {string}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns x,y,\r\n1,2,\r\n2,3\r\n3,4\r\n
+     * df.to_csv();
+     */
+
   }, {
     key: 'to_csv',
     value: function to_csv() {
@@ -247,6 +335,37 @@ var DataFrame = function () {
 
       return csvString;
     }
+
+    /**
+     * Return the sum of the values in the `DataFrame` along the axis
+     *
+     * pandas equivalent: [DataFrame.sum](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.sum.html)
+     *
+     * @param {number} axis=0
+     *    Axis along which to sum values
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns
+     * // x  6
+     * // y  9
+     * // Name: , dtype: dtype(int)
+     * df.sum().toString();
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns
+     * // 0  3
+     * // 1  5
+     * // 2  7
+     * // Name: , dtype: dtype('int')
+     * df.sum(1).toString();
+     */
+
   }, {
     key: 'sum',
     value: function sum() {
@@ -268,6 +387,37 @@ var DataFrame = function () {
 
       throw new _exceptions.InvalidAxisError();
     }
+
+    /**
+     * Return the mean of the values in the `DataFrame` along the axis
+     *
+     * pandas equivalent: [DataFrame.mean](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.mean.html)
+     *
+     * @param {number} axis=0
+     *    Axis along which to average values
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns
+     * // x  2
+     * // y  3
+     * // Name: , dtype: dtype('int')
+     * df.mean().toString();
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns
+     * // 0  1.5
+     * // 1  2.5
+     * // 2  3.5
+     * // Name: , dtype: dtype('float')
+     * df.mean(1).toString();
+     */
+
   }, {
     key: 'mean',
     value: function mean() {
@@ -289,6 +439,37 @@ var DataFrame = function () {
 
       throw new _exceptions.InvalidAxisError();
     }
+
+    /**
+     * Return the standard deviation of the values in the `DataFrame` along the axis
+     *
+     * pandas equivalent: [DataFrame.std](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.std.html)
+     *
+     * @param {number} axis=0
+     *    Axis along which to calculate the standard deviation
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns
+     * // x  1
+     * // y  1
+     * // Name: , dtype: dtype('int')
+     * df.std().toString();
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 3}]);
+     *
+     * // Returns
+     * // 0  0
+     * // 1  0
+     * // 2  0
+     * // Name: , dtype: dtype('int')
+     * df.std(1).toString();
+     */
+
   }, {
     key: 'std',
     value: function std() {
@@ -309,6 +490,37 @@ var DataFrame = function () {
 
       throw new _exceptions.InvalidAxisError();
     }
+
+    /**
+     * Return the variance of the values in the `DataFrame` along the axis
+     *
+     * pandas equivalent: [DataFrame.var](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.var.html)
+     *
+     * @param {number} axis=0
+     *    Axis along which to calculate the variance
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns
+     * // x  1
+     * // y  1
+     * // Name: , dtype: dtype('int')
+     * df.std().toString();
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 3}]);
+     *
+     * // Returns
+     * // 0  0
+     * // 1  0
+     * // 2  0
+     * // Name: , dtype: dtype('int')
+     * df.std(1).toString();
+     */
+
   }, {
     key: 'variance',
     value: function variance() {
@@ -340,10 +552,26 @@ var DataFrame = function () {
     }
 
     /**
+     * Return the percentage change over a given number of periods along the axis
      *
-     * @param periods=1
-     * @param axis=0
+     * pandas equivalent: [DataFrame.pct_change](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.pct_change.html)
+     *
+     * @param {number} periods=1
+     *    Number of periods to use for percentage change calculation
+     * @param {number} axis=0
+     *    Axis along which to calculate percentage change
+     *
      * @returns {DataFrame}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns
+     * //    x    |  y
+     * // 0  null |  null
+     * // 1  1    |  0.5
+     * // 2  0.5  |  0.3333
+     * df.pct_change().toString();
      */
 
   }, {
@@ -384,14 +612,39 @@ var DataFrame = function () {
     /**
      * Returns the indexed Immutable.Seq of columns
      *
+     * pandas equivalent: [DataFrame.columns](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.columns.html)
+     *
      * @returns {Seq.Indexed<string>}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns Seq ['x', 'y']
+     * df.columns;
      */
 
   }, {
     key: 'columns',
     get: function get() {
       return this._columns;
-    },
+    }
+
+    /**
+     * Sets columns
+     *
+     * pandas equivalent: [DataFrame.columns](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.columns.html)
+     *
+     * @param {Array} columns
+     *    Next column names
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * df.columns = ['a', 'b'];
+     * // Returns Seq ['a', 'b']
+     * df.columns;
+     */
+    ,
     set: function set(columns) {
       var _this10 = this;
 
@@ -411,17 +664,57 @@ var DataFrame = function () {
     }
 
     /**
+     * Return the index values of the `DataFrame`
+     *
      * @returns {List}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns List [0, 1, 2, 3]
+     * df.index;
      */
 
   }, {
     key: 'index',
     get: function get() {
       return this._index;
-    },
+    }
+
+    /**
+     * Set the index values of the `DataFrame`
+     *
+     * @param {List|Array} index
+     *    Next index values
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns List [0, 1, 2, 3]
+     * df.index;
+     * df.index = Immutable.List([2, 3, 4, 5]);
+     * // Returns List [2, 3, 4, 5]
+     * df.index;
+     */
+    ,
     set: function set(index) {
       this._index = (0, _utils.parseIndex)(index, this._data.get(this._columns.get(0)).values);
     }
+
+    /**
+     * Return the length of the `DataFrame`
+     *
+     * pandas equivalent: len(df);
+     *
+     * @returns {number}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns 3
+     * df.length;
+     */
+
   }, {
     key: 'length',
     get: function get() {
@@ -435,18 +728,9 @@ var DataFrame = function () {
   return DataFrame;
 }();
 
-/**
- * Perform an inner merge of two DataFrames
- *
- * @param {DataFrame} df1
- * @param {DataFrame} df2
- * @param {Array} on
- *
- * @returns {DataFrame}
- */
-
-
 exports.default = DataFrame;
+
+
 var innerMerge = function innerMerge(df1, df2, on) {
   var data = [];
 
@@ -568,15 +852,6 @@ var innerMerge = function innerMerge(df1, df2, on) {
   return new DataFrame(data);
 };
 
-/**
- * Perform an outer merge of two DataFrames
- *
- * @param {DataFrame} df1
- * @param {DataFrame} df2
- * @param {Array} on
- *
- * @returns {DataFrame}
- */
 var outerMerge = function outerMerge(df1, df2, on) {
   var data = [];
 
@@ -744,16 +1019,6 @@ var outerMerge = function outerMerge(df1, df2, on) {
   return new DataFrame(data);
 };
 
-/**
- * Perform a merge of two DataFrames
- *
- * @param {DataFrame} df1
- * @param {DataFrame} df2
- * @param {Array} on
- * @param {string} how='inner'
- *
- * @returns {DataFrame}
- */
 var mergeDataFrame = exports.mergeDataFrame = function mergeDataFrame(df1, df2, on) {
   var how = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'inner';
 

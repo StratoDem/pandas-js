@@ -3,7 +3,6 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = undefined;
 
 var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
 
@@ -17,13 +16,6 @@ var _createClass2 = require('babel-runtime/helpers/createClass');
 
 var _createClass3 = _interopRequireDefault(_createClass2);
 
-var _desc, _value, _class; /**
-                            * A pandas.Series one-dimensional array with axis labels, with an Immutable.List instead of
-                            * numpy.ndarray as the values
-                            */
-
-var _coreDecorators = require('core-decorators');
-
 var _immutable = require('immutable');
 
 var _immutable2 = _interopRequireDefault(_immutable);
@@ -34,40 +26,13 @@ var _dtype = require('./dtype');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) {
-  var desc = {};
-  Object['ke' + 'ys'](descriptor).forEach(function (key) {
-    desc[key] = descriptor[key];
-  });
-  desc.enumerable = !!desc.enumerable;
-  desc.configurable = !!desc.configurable;
-
-  if ('value' in desc || desc.initializer) {
-    desc.writable = true;
-  }
-
-  desc = decorators.slice().reverse().reduce(function (desc, decorator) {
-    return decorator(target, property, desc) || desc;
-  }, desc);
-
-  if (context && desc.initializer !== void 0) {
-    desc.value = desc.initializer ? desc.initializer.call(context) : void 0;
-    desc.initializer = undefined;
-  }
-
-  if (desc.initializer === void 0) {
-    Object['define' + 'Property'](target, property, desc);
-    desc = null;
-  }
-
-  return desc;
-}
-
-var Series = (_class = function () {
+var Series = function () {
   /**
-   * One dimensional array with axis labels
+   * One dimensional array with axis labels. An `Immutable.List` serves as the numpy.ndarray for
+   * values.
    *
-   * Operations between Series (+, -, /, *, **) align values based on their associated index values
+   * Operations between `Series` (+, -, /, *, **) align values based on their associated index
+   * values
    *
    * @param data {Array|List}
    *    Data to be stored in Series
@@ -76,6 +41,16 @@ var Series = (_class = function () {
    * @param {string} [kwargs.name='']
    *    The _name to assign to the Series
    * @param {Array|List} [kwargs.index]
+   *
+   * @example
+   * const ds = new Series([1, 2, 3, 4], {name: 'My test name', index: [2, 3, 4, 5]})
+   * ds.toString()
+   * // Returns:
+   * // 2  1
+   * // 3  2
+   * // 4  3
+   * // 5  4
+   * // Name: My test name, dtype: dtype(int)
    */
   function Series() {
     var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
@@ -95,6 +70,9 @@ var Series = (_class = function () {
     this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
 
     this._index = (0, _utils.parseIndex)(kwargs.index, this.values);
+
+    this._sort_ascending = this._sort_ascending.bind(this);
+    this._sort_descending = this._sort_descending.bind(this);
   }
 
   (0, _createClass3.default)(Series, [{
@@ -110,6 +88,24 @@ var Series = (_class = function () {
         }
       };
     }
+
+    /**
+     * Return a new `Series` created by a map along a `Series`
+     *
+     * pandas equivalent: [Series.map](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.map.html)
+     *
+     * @param {function} func
+     *  Function to apply along the values
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3, 4], {name: 'New Series'})
+     *
+     * // Returns Series([1, 4, 9, 16], {name: 'New Series', index: [1, 2]})
+     * ds.map((val, idx) => val ** 2;
+     */
+
   }, {
     key: 'map',
     value: function map(func) {
@@ -143,6 +139,23 @@ var Series = (_class = function () {
 
       return new Series(array);
     }
+
+    /**
+     * Return the `Series` as a string
+     *
+     * @returns {string}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3, 4], {name: 'My test name', index: [2, 3, 4, 5]})
+     * ds.toString()
+     * // Returns:
+     * // 2  1
+     * // 3  2
+     * // 4  3
+     * // 5  4
+     * // Name: My test name, dtype: dtype(int)
+     */
+
   }, {
     key: 'toString',
     value: function toString() {
@@ -157,6 +170,22 @@ var Series = (_class = function () {
 
       return valString + 'Name: ' + this.name + ', dtype: ' + this.dtype;
     }
+
+    /**
+     * Return a new deep copy of the `Series`
+     *
+     * pandas equivalent: [Series.copy](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.copy.html)
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'Test 1'});
+     * const ds2 = ds.copy();
+     * ds2.index = [1, 2, 3];
+     * ds.index   // [0, 1, 2];
+     * ds2.index  // [1, 2, 3];
+     */
+
   }, {
     key: 'copy',
     value: function copy() {
@@ -169,7 +198,18 @@ var Series = (_class = function () {
     /**
      * Convert the series to the desired type
      *
+     * pandas equivalent: [Series.astype](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.astype.html)
+     *
      * @param {DType} nextType
+     *
+     * @example
+     * const ds = new Series([1.5, 2, 3], {name: 'Series name'});
+     *
+     * // dtype('float')
+     * ds.dtype;
+     *
+     * // Series([1, 2, 3])
+     * ds.astype(new DType('int'))
      */
     value: function astype(nextType) {
       if (!(nextType instanceof _dtype.DType)) throw new Error('Next type must be a DType');
@@ -188,8 +228,10 @@ var Series = (_class = function () {
         case 'float':
           {
             if (this.dtype.dtype === 'object') throw new Error('Cannot convert object to float');
-            this._dtype = new _dtype.DType('float');
-            return this;
+            var _kwargs = { name: this.name, index: this.index };
+            return new Series(this.values.map(function (v) {
+              return parseFloat(v);
+            }), _kwargs);
           }
         default:
           throw new Error('Invalid dtype ' + nextType);
@@ -199,10 +241,17 @@ var Series = (_class = function () {
     /**
      * Return the Series between [startVal, endVal), or at startVal if endVal is undefined
      *
+     * pandas equivalent: [Series.iloc](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.iloc.html)
+     *
      * @param {int} startVal
      * @param {int} [endVal]
      *
      * @returns {Series|number|string}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3, 4], {name: 'New Series'})
+     * ds.iloc(1)      // 2
+     * ds.iloc(1, 3)   // Series([2, 3], {name: 'New Series', index: [1, 2]})
      */
 
   }, {
@@ -216,16 +265,61 @@ var Series = (_class = function () {
 
       return new Series(this.values.slice(startVal, endVal), { name: name, index: index });
     }
+
+    /**
+     * Return the sum of the values in the `Series`
+     *
+     * pandas equivalent: [Series.sum](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.sum.html)
+     *
+     * @returns {number}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3, 4], {name: 'New Series'})
+     *
+     * // Returns 10
+     * ds.sum();
+     */
+
   }, {
     key: 'sum',
     value: function sum() {
       return (0, _utils.sum)(this.values);
     }
+
+    /**
+     * Return the mean of the values in the `Series`
+     *
+     * pandas equivalent: [Series.mean](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.mean.html)
+     *
+     * @returns {number}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3, 4], {name: 'New Series'})
+     *
+     * // Returns 2.5
+     * ds.mean();
+     */
+
   }, {
     key: 'mean',
     value: function mean() {
       return this.sum() / this.length;
     }
+
+    /**
+     * Return the variance of the values in the `Series`
+     *
+     * pandas equivalent: [Series.var](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.var.html)
+     *
+     * @returns {number}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'New Series'})
+     *
+     * // Returns 1
+     * ds.variance();
+     */
+
   }, {
     key: 'variance',
     value: function variance() {
@@ -238,6 +332,21 @@ var Series = (_class = function () {
         return s + diff * diff / (_this2.length - 1);
       }, 0);
     }
+
+    /**
+     * Return the standard deviation of the values in the `Series`
+     *
+     * pandas equivalent: [Series.std](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.std.html)
+     *
+     * @returns {number}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'New Series'})
+     *
+     * // Returns 1
+     * ds.std();
+     */
+
   }, {
     key: 'std',
     value: function std() {
@@ -245,15 +354,26 @@ var Series = (_class = function () {
     }
 
     /**
-     * Add another Iterable, Series, or number to the Series
+     * Add another Iterable, `Series`, or number to the `Series`
+     *
+     * pandas equivalent: [Series.add](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.add.html)
+     *
      * @param {Iterable|Series|number} val
+     *  Value to add to the `Series`
      *
      * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'New Series'})
+     * ds.add(5)                           // Series([6, 7, 8], {name: 'New Series'})
+     * ds.add(new Series([2, 3, 4]))       // Series([3, 5, 7], {name: 'New Series'})
+     * ds.add([2, 3, 4])                   // Series([3, 5, 7], {name: 'New Series'})
+     * ds.add(Immutable.List([2, 3, 4]))   // Series([3, 5, 7], {name: 'New Series'})
      */
 
   }, {
-    key: 'plus',
-    value: function plus(val) {
+    key: 'add',
+    value: function add(val) {
       if (typeof val === 'number') return new Series(this.values.map(function (v) {
         return v + val;
       }));else if (val instanceof Series) return new Series(this.values.map(function (v, idx) {
@@ -264,20 +384,31 @@ var Series = (_class = function () {
         return v + val.get(idx);
       }));
 
-      throw new Error('plus only supports numbers, Arrays, Immutable List and pandas.Series');
+      throw new Error('add only supports numbers, Arrays, Immutable List and pandas.Series');
     }
 
     /**
-     * Subtract another Iterable, Series, or number from the Series
+     * Subtract another Iterable, `Series`, or number from the `Series`
+     *
+     * pandas equivalent: [Series.sub](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.sub.html)
      *
      * @param {Iterable|Series|number} val
+     *  Value to subtract from the `Series`
      *
      * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'New Series'})
+     *
+     * ds.sub(5)                           // Series([-4, -3, -2], {name: 'New Series'})
+     * ds.sub(new Series([2, 3, 4]))       // Series([-1, -1, -1], {name: 'New Series'})
+     * ds.sub([2, 3, 4])                   // Series([-1, -1, -1], {name: 'New Series'})
+     * ds.sub(Immutable.List([2, 3, 4]))   // Series([-1, -1, -1], {name: 'New Series'})
      */
 
   }, {
-    key: 'minus',
-    value: function minus(val) {
+    key: 'sub',
+    value: function sub(val) {
       if (typeof val === 'number') return new Series(this.values.map(function (v) {
         return v - val;
       }));else if (val instanceof Series) return new Series(this.values.map(function (v, idx) {
@@ -288,20 +419,31 @@ var Series = (_class = function () {
         return v - val.get(idx);
       }));
 
-      throw new Error('minus only supports numbers, Arrays, Immutable List and pandas.Series');
+      throw new Error('sub only supports numbers, Arrays, Immutable List and pandas.Series');
     }
 
     /**
-     * Multiply by another Iterable, Series, or number
+     * Multiply by another Iterable, `Series`, or number from the `Series`
+     *
+     * pandas equivalent: [Series.mul](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.mul.html)
      *
      * @param {Iterable|Series|number} val
+     *  Value to multiply by the `Series`
      *
      * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'New Series'})
+     *
+     * ds.mul(5)                           // Series([5, 10, 15], {name: 'New Series'})
+     * ds.mul(new Series([2, 3, 4]))       // Series([2, 6, 12], {name: 'New Series'})
+     * ds.mul([2, 3, 4])                   // Series([2, 6, 12], {name: 'New Series'})
+     * ds.mul(Immutable.List([2, 3, 4]))   // Series([2, 6, 12], {name: 'New Series'})
      */
 
   }, {
-    key: 'times',
-    value: function times(val) {
+    key: 'mul',
+    value: function mul(val) {
       if (typeof val === 'number') return new Series(this.values.map(function (v) {
         return v * val;
       }));else if (val instanceof Series) return new Series(this.values.map(function (v, idx) {
@@ -312,20 +454,31 @@ var Series = (_class = function () {
         return v * val.get(idx);
       }));
 
-      throw new Error('times only supports numbers, Arrays, Immutable List and pandas.Series');
+      throw new Error('mul only supports numbers, Arrays, Immutable List and pandas.Series');
     }
 
     /**
-     * Divide by another Iterable, Series, or number
+     * Divide by another Iterable, `Series`, or number from the `Series`
+     *
+     * pandas equivalent: [Series.div](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.div.html)
      *
      * @param {Iterable|Series|number} val
+     *  Value by which to divide the `Series`
      *
      * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'New Series'})
+     *
+     * ds.div(5)                           // Series([0.2, 0.4, 0.6], {name: 'New Series'})
+     * ds.div(new Series([4, 2, 1]))       // Series([0.25, 1, 3], {name: 'New Series'})
+     * ds.div([4, 2, 1])                   // Series([0.25, 1, 3], {name: 'New Series'})
+     * ds.div(Immutable.List([4, 2, 1]))   // Series([0.25, 1, 3], {name: 'New Series'})
      */
 
   }, {
-    key: 'dividedBy',
-    value: function dividedBy(val) {
+    key: 'div',
+    value: function div(val) {
       if (typeof val === 'number') return new Series(this.values.map(function (v) {
         return v / val;
       }));else if (val instanceof Series) return new Series(this.values.map(function (v, idx) {
@@ -336,14 +489,24 @@ var Series = (_class = function () {
         return v / val.get(idx);
       }));
 
-      throw new Error('dividedBy only supports numbers, Arrays, Immutable List and pandas.Series');
+      throw new Error('div only supports numbers, Arrays, Immutable List and pandas.Series');
     }
 
     /**
      * Return the percentage change over a given number of periods
      *
-     * @param {number} periods
+     * pandas equivalent: [Series.pct_change](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.pct_change.html)
+     *
+     * @param {number} periods=1
+     *  Number of periods to use for percentage change calculation
+     *
      * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3, 4, 5], {name: 'New Series'})
+     *
+     * ds.pct_change(1)    // Series([null, 1, 0.5, 0.333, 0.25], {name: 'New Series'})
+     * ds.pct_change(2)    // Series([null, null, 2, 1, 0.66666], {name: 'New Series'})
      */
 
   }, {
@@ -380,9 +543,20 @@ var Series = (_class = function () {
     }
 
     /**
+     * Return a sorted `Series` in either ascending or descending order
+     *
+     * pandas equivalent: [Series.sort_values](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.sort_values.html)
+     *
      * @param {boolean} ascending
+     *    Sort in ascending (true) or descending (false) order
      *
      * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([2, 1, 0, 3], {name: 'New Series', index: [0, 1, 2, 3]})
+     *
+     * ds.sort_values(true)    // Series([0, 1, 2, 3], {name: 'New Series', index: [2, 1, 0, 3]})
+     * ds.sort_values(false)   // Series([3, 2, 1, 0], {name: 'New Series', index: [3, 0, 1, 2]})
      */
 
   }, {
@@ -406,6 +580,19 @@ var Series = (_class = function () {
         index: this._index
       };
     }
+
+    /**
+     * Return the dtype of the underlying data
+     *
+     * pandas equivalent [Series.dtype](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.dtype.html)
+     *
+     * @returns {DType}
+     *
+     * @example
+     * const ds = new Series([1.5, 2, 3], {name: 'Series name'});
+     * ds.dtype;    // dtype('float');
+      */
+
   }, {
     key: 'dtype',
     get: function get() {
@@ -413,22 +600,75 @@ var Series = (_class = function () {
     }
 
     /**
+     * Return the index of the `Series`, an `Immutable.List`
+     *
      * @returns {List}
+     *
+     * @example
+     * const ds = new Series([1.5, 2, 3], {name: 'Series name'});
+     *
+     * // Returns List [0, 1, 2]
+     * ds.index;
      */
 
   }, {
     key: 'index',
     get: function get() {
       return this._index;
-    },
+    }
+
+    /**
+     * Set the index of the `Series`, an `Immutable.List`
+     *
+     * @param {List|Array} index
+     *    The next values for the index of the `Series`
+     *
+     * @example
+     * const ds = new Series([1.5, 2, 3], {name: 'Series name'});
+     * ds.index = [1, 2, 3];
+     *
+     * // Returns List [1, 2, 3]
+     * ds.index;
+     */
+    ,
     set: function set(index) {
       this._index = (0, _utils.parseIndex)(index, this.values);
     }
+
+    /**
+     * Return the length of the `Series`
+     *
+     * pandas equivalent: len(series);
+     *
+     * @returns {number}
+     *
+     * @example
+     * const ds = new Series([1.5, 2, 3], {name: 'Series name'});
+     *
+     * // Returns 3
+     * ds.length;
+     */
+
   }, {
     key: 'length',
     get: function get() {
       return this.values.size;
     }
+
+    /**
+     * Return the values of the `Series` as an `Immutable.List`
+     *
+     * pandas equivalent: [Series.values](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.values.html);
+     *
+     * @returns {List}
+     *
+     * @example
+     * const ds = new Series([1.5, 2, 3], {name: 'Series name'});
+     *
+     * // Returns List [1.5, 2, 3]
+     * ds.values;
+     */
+
   }, {
     key: 'values',
     get: function get() {
@@ -436,5 +676,9 @@ var Series = (_class = function () {
     }
   }]);
   return Series;
-}(), (_applyDecoratedDescriptor(_class.prototype, '_sort_ascending', [_coreDecorators.autobind], Object.getOwnPropertyDescriptor(_class.prototype, '_sort_ascending'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, '_sort_descending', [_coreDecorators.autobind], Object.getOwnPropertyDescriptor(_class.prototype, '_sort_descending'), _class.prototype)), _class);
+}(); /**
+      * A pandas.Series one-dimensional array with axis labels, with an Immutable.List instead of
+      * numpy.ndarray as the values
+      */
+
 exports.default = Series;

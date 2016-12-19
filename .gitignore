@@ -4,3 +4,6 @@ node_modules/
 
 # IntelliJ project files
 .idea
+
+# Documentation
+docs/
