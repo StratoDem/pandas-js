@@ -139,7 +139,7 @@ ds.times(new Series([2, 3, 4, 5, 6]));	// Series([2, 6, 12, 20, 30])
 ### dividedBy(`series`)
 Divide by a second `Series` and return a new `Series` object
 ```
-ds.dividedBy(new Series([2, 3, 4, 5, 6]);	// Series([0.5, 2 / 3, 3 / 4, 4 / 5, 5 / 6])
+ds.dividedBy(new Series([2, 3, 4, 5, 6]));	// Series([0.5, 2 / 3, 3 / 4, 4 / 5, 5 / 6])
 ```
 
 ## DataFrame
@@ -159,8 +159,16 @@ Returns an `Immutable.Seq` of the column names. Also functions as a setter like 
 df.columns	// Seq['x', 'y']
 df.columns = ['a', 'b'];
 df.columns	// Seq['a', 'b']
-df.get('x')	// undefined
+df.get('x')	// new Error('KeyError: "x" not found');
 df.get('a')	// Series([1, 2, 3, 4], {name: 'a'});
+```
+
+#### index
+Returns an `Immutable.List` of the index values. Also functions as a setter like Python pandas
+```
+df.index	// List[0, 1, 2, 3]
+df.index = Immutable.List([1, 2, 3, 4])
+df.index 	// List[1, 2, 3, 4]
 ```
 
 #### length
