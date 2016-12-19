@@ -5,7 +5,7 @@ pandas.js is an open source (experimental) library mimicking the Python [pandas]
 
 ## Installation and use
 ```
-$ npm install git+https://github.com/StratoDem/pandas.js
+$ npm install pandas-js
 ```
 
 Importing [`pandas.Series`](#series) and [`pandas.DataFrame`](#dataframe)
