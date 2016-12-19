@@ -20,6 +20,22 @@ describe('series', () => {
       expect(ds1.toString()).toEqual('0\t1.5\n1\t2.1\n2\t3.9\nName: , dtype: dtype(float)');
     });
 
+    it('copy', () => {
+      const ds1 = new Series([1, 2, 3, 4], {index: [2, 3, 4, 5], name: 'Test name'});
+      const ds2 = ds1.copy();
+
+      expect(ds2).toBeInstanceOf(Series);
+      expect(ds2.values.toArray()).toEqual([1, 2, 3, 4]);
+
+      ds2.name = 'test';
+      expect(ds1.name).toEqual('Test name');
+      expect(ds2.name).toEqual('test');
+
+      ds2.index = [1, 2, 3, 4];
+      expect(ds1.index.toArray()).toEqual([2, 3, 4, 5]);
+      expect(ds2.index.toArray()).toEqual([1, 2, 3, 4]);
+    });
+
     describe('astype', () => {
       it('converts a float Series to an integer Series', () => {
         const ds1 = new Series([1.5, 2.1, 3.9]);
@@ -112,63 +128,75 @@ describe('series', () => {
       });
     });
 
-    describe('plus()', () => {
+    describe('add()', () => {
       it('adds a second Series and returns a new Series', () => {
         const ds1 = new Series([1, 2, 3]);
         const ds2 = new Series([2, 3, 4]);
 
-        const ds3 = ds1.plus(ds2);
+        const ds3 = ds1.add(ds2);
         expect(ds3).toBeInstanceOf(Series);
         expect(ds3.values.size).toEqual(3);
         expect(ds3.values.toJS()).toEqual([3, 5, 7]);
       });
     });
 
-    describe('minus()', () => {
+    describe('sub()', () => {
       it('subtracts a second Series and returns a new Series', () => {
         const ds1 = new Series([1, 2, 3]);
         const ds2 = new Series([2, 3, 5]);
 
-        const ds3 = ds1.minus(ds2);
+        const ds3 = ds1.sub(ds2);
         expect(ds3).toBeInstanceOf(Series);
         expect(ds3.values.size).toEqual(3);
         expect(ds3.values.toJS()).toEqual([-1, -1, -2]);
       });
     });
 
-    describe('minus()', () => {
+    describe('sub()', () => {
       it('subtracts a second Series and returns a new Series', () => {
         const ds1 = new Series([1, 2, 3]);
         const ds2 = new Series([2, 3, 5]);
 
-        const ds3 = ds1.minus(ds2);
+        const ds3 = ds1.sub(ds2);
         expect(ds3).toBeInstanceOf(Series);
         expect(ds3.values.size).toEqual(3);
         expect(ds3.values.toJS()).toEqual([-1, -1, -2]);
       });
     });
 
-    describe('times()', () => {
+    describe('mul()', () => {
       it('multiplies by a second Series and returns a new Series', () => {
         const ds1 = new Series([1, 2, 3]);
         const ds2 = new Series([2, 3, 5]);
 
-        const ds3 = ds1.times(ds2);
+        const ds3 = ds1.mul(ds2);
         expect(ds3).toBeInstanceOf(Series);
         expect(ds3.values.size).toEqual(3);
         expect(ds3.values.toJS()).toEqual([2, 6, 15]);
       });
     });
 
-    describe('dividedBy()', () => {
+    describe('div()', () => {
       it('divides by a second Series and returns a new Series', () => {
         const ds1 = new Series([1, 2, 3]);
         const ds2 = new Series([2, 3, 5]);
 
-        const ds3 = ds1.dividedBy(ds2);
+        const ds3 = ds1.div(ds2);
         expect(ds3).toBeInstanceOf(Series);
         expect(ds3.values.size).toEqual(3);
         expect(ds3.values.toJS()).toEqual([0.5, 2 / 3, 0.6]);
+      });
+    });
+
+    describe('pct_change', () => {
+      it('calculates the percent change for 1 period', () => {
+        const ds = new Series([1, 2, 3, 4, 5]);
+        expect(ds.pct_change(1).values.toArray()).toEqual([null, 1, 0.5, (4 / 3) - 1, 0.25]);
+      });
+
+      it('calculates the percent change for 2 periods', () => {
+        const ds = new Series([1, 2, 3, 4, 5]);
+        expect(ds.pct_change(2).values.toArray()).toEqual([null, null, 2, 1, (5 / 3) - 1]);
       });
     });
 

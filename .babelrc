@@ -5,6 +5,5 @@
          "polyfill": false,
          "regenerator": true
     }],
-    "transform-decorators-legacy"
   ]
 }
