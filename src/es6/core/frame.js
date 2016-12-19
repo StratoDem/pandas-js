@@ -1,6 +1,7 @@
 
 import Immutable from 'immutable';
 
+import { InvalidAxisError } from './exceptions';
 import Series from './series';
 import { enumerate, nonMergeColumns, intersectingColumns, parseIndex } from './utils';
 
@@ -121,17 +122,16 @@ export default class DataFrame {
     if (!Array.isArray(columns) || columns.length !== this.columns.size)
       throw new Error('Columns must be array of same dimension');
 
+    const nextData = {};
     columns.forEach((k, idx) => {
       const prevColumn = this.columns.get(idx);
       const prevSeries = this.get(prevColumn);
 
       prevSeries.name = k;
-      this._data = this._data.set(k, prevSeries);
-
-      if (prevColumn.toString() !== k.toString())
-        this._data = this._data.delete(prevColumn);
+      nextData[k] = prevSeries;
     });
 
+    this._data = Immutable.Map(nextData);
     this._columns = Immutable.Seq(columns);
   }
 
@@ -161,7 +161,7 @@ export default class DataFrame {
   }
 
   filter() {
-
+    throw new Error('not implemented');
   }
 
   /**
@@ -190,6 +190,90 @@ export default class DataFrame {
     }
 
     return csvString;
+  }
+
+  sum(axis = 0) {
+    if (axis === 0) {
+      return new Series(
+        this.columns.toArray().map(k => this.get(k).sum()),
+        {index: this.columns.toArray()});
+    } else if (axis === 1) {
+      return new Series(
+        Immutable.Range(0, this.length).map(idx =>
+          this.columns.toArray().reduce((s, k) => s + this.get(k).iloc(idx), 0)).toList(),
+        {index: this.index});
+    }
+
+    throw new InvalidAxisError();
+  }
+
+  mean(axis = 0) {
+    if (axis === 0) {
+      return new Series(
+        this.columns.toArray().map(k => this.get(k).mean()),
+        {index: this.columns.toArray()});
+    } else if (axis === 1) {
+      return new Series(
+        Immutable.Range(0, this.length).map(idx =>
+          this.columns.toArray().reduce((s, k) =>
+            s + (this.get(k).iloc(idx) / this.columns.size), 0)).toList(),
+          {index: this.index});
+    }
+
+    throw new InvalidAxisError();
+  }
+
+  std(axis = 0) {
+    if (axis === 0) {
+      return new Series(
+        this.columns.toArray().map(k => this.get(k).std()),
+        {index: this.columns.toArray()});
+    } else if (axis === 1) {
+      const variances = this.variance(axis);
+      return new Series(variances.values.map(v => Math.sqrt(v)), {index: this.index});
+    }
+
+    throw new InvalidAxisError();
+  }
+
+  variance(axis = 0) {
+    if (axis === 0) {
+      return new Series(
+        this.columns.toArray().map(k => this.get(k).variance()),
+        {index: this.columns.toArray()});
+    } else if (axis === 1) {
+      const means = this.mean(axis).values;
+      return new Series(
+        Immutable.Range(0, this.length).map(idx =>
+          this.columns.toArray().reduce((s, k) => {
+            const diff = this.get(k).iloc(idx) - means.get(idx);
+            return s + ((diff * diff) / (this.columns.size - 1));
+          }, 0)).toArray(),
+        {index: this.index});
+    }
+
+    throw new InvalidAxisError();
+  }
+
+  /**
+   *
+   * @param periods=1
+   * @param axis=0
+   * @returns {DataFrame}
+   */
+  pct_change(periods = 1, axis = 0) {
+    if (typeof periods !== 'number' || !Number.isInteger(periods))
+      throw new Error('periods must be an integer');
+    if (periods <= 0)
+      throw new Error('periods must be positive');
+
+    if (axis === 0) {
+
+    } else if (axis === 1) {
+
+    }
+
+    throw new InvalidAxisError();
   }
 }
 

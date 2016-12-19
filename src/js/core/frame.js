@@ -29,6 +29,8 @@ var _immutable = require('immutable');
 
 var _immutable2 = _interopRequireDefault(_immutable);
 
+var _exceptions = require('./exceptions');
+
 var _series = require('./series');
 
 var _series2 = _interopRequireDefault(_series);
@@ -174,7 +176,9 @@ var DataFrame = function () {
     }
   }, {
     key: 'filter',
-    value: function filter() {}
+    value: function filter() {
+      throw new Error('not implemented');
+    }
 
     /**
      * Merge this DataFrame with another DataFrame, optionally on some set of columns
@@ -218,6 +222,118 @@ var DataFrame = function () {
       return csvString;
     }
   }, {
+    key: 'sum',
+    value: function sum() {
+      var _this5 = this;
+
+      var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      if (axis === 0) {
+        return new _series2.default(this.columns.toArray().map(function (k) {
+          return _this5.get(k).sum();
+        }), { index: this.columns.toArray() });
+      } else if (axis === 1) {
+        return new _series2.default(_immutable2.default.Range(0, this.length).map(function (idx) {
+          return _this5.columns.toArray().reduce(function (s, k) {
+            return s + _this5.get(k).iloc(idx);
+          }, 0);
+        }).toList(), { index: this.index });
+      }
+
+      throw new _exceptions.InvalidAxisError();
+    }
+  }, {
+    key: 'mean',
+    value: function mean() {
+      var _this6 = this;
+
+      var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      if (axis === 0) {
+        return new _series2.default(this.columns.toArray().map(function (k) {
+          return _this6.get(k).mean();
+        }), { index: this.columns.toArray() });
+      } else if (axis === 1) {
+        return new _series2.default(_immutable2.default.Range(0, this.length).map(function (idx) {
+          return _this6.columns.toArray().reduce(function (s, k) {
+            return s + _this6.get(k).iloc(idx) / _this6.columns.size;
+          }, 0);
+        }).toList(), { index: this.index });
+      }
+
+      throw new _exceptions.InvalidAxisError();
+    }
+  }, {
+    key: 'std',
+    value: function std() {
+      var _this7 = this;
+
+      var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      if (axis === 0) {
+        return new _series2.default(this.columns.toArray().map(function (k) {
+          return _this7.get(k).std();
+        }), { index: this.columns.toArray() });
+      } else if (axis === 1) {
+        var variances = this.variance(axis);
+        return new _series2.default(variances.values.map(function (v) {
+          return Math.sqrt(v);
+        }), { index: this.index });
+      }
+
+      throw new _exceptions.InvalidAxisError();
+    }
+  }, {
+    key: 'variance',
+    value: function variance() {
+      var _this8 = this;
+
+      var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      if (axis === 0) {
+        return new _series2.default(this.columns.toArray().map(function (k) {
+          return _this8.get(k).variance();
+        }), { index: this.columns.toArray() });
+      } else if (axis === 1) {
+        var _ret3 = function () {
+          var means = _this8.mean(axis).values;
+          return {
+            v: new _series2.default(_immutable2.default.Range(0, _this8.length).map(function (idx) {
+              return _this8.columns.toArray().reduce(function (s, k) {
+                var diff = _this8.get(k).iloc(idx) - means.get(idx);
+                return s + diff * diff / (_this8.columns.size - 1);
+              }, 0);
+            }).toArray(), { index: _this8.index })
+          };
+        }();
+
+        if ((typeof _ret3 === 'undefined' ? 'undefined' : (0, _typeof3.default)(_ret3)) === "object") return _ret3.v;
+      }
+
+      throw new _exceptions.InvalidAxisError();
+    }
+
+    /**
+     *
+     * @param periods=1
+     * @param axis=0
+     * @returns {DataFrame}
+     */
+
+  }, {
+    key: 'pct_change',
+    value: function pct_change() {
+      var periods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+      var axis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+      if (typeof periods !== 'number' || !Number.isInteger(periods)) throw new Error('periods must be an integer');
+      if (periods <= 0) throw new Error('periods must be positive');
+
+      if (axis === 0) {} else if (axis === 1) {}
+
+      throw new _exceptions.InvalidAxisError();
+    }
+  }, {
     key: 'values',
     get: function get() {
       return this._values;
@@ -235,20 +351,20 @@ var DataFrame = function () {
       return this._columns;
     },
     set: function set(columns) {
-      var _this5 = this;
+      var _this9 = this;
 
       if (!Array.isArray(columns) || columns.length !== this.columns.size) throw new Error('Columns must be array of same dimension');
 
+      var nextData = {};
       columns.forEach(function (k, idx) {
-        var prevColumn = _this5.columns.get(idx);
-        var prevSeries = _this5.get(prevColumn);
+        var prevColumn = _this9.columns.get(idx);
+        var prevSeries = _this9.get(prevColumn);
 
         prevSeries.name = k;
-        _this5._data = _this5._data.set(k, prevSeries);
-
-        if (prevColumn.toString() !== k.toString()) _this5._data = _this5._data.delete(prevColumn);
+        nextData[k] = prevSeries;
       });
 
+      this._data = _immutable2.default.Map(nextData);
       this._columns = _immutable2.default.Seq(columns);
     }
 
@@ -267,10 +383,10 @@ var DataFrame = function () {
   }, {
     key: 'length',
     get: function get() {
-      var _this6 = this;
+      var _this10 = this;
 
       return Math.max.apply(Math, (0, _toConsumableArray3.default)(this._data.keySeq().map(function (k) {
-        return _this6.get(k).length;
+        return _this10.get(k).length;
       }).toArray()));
     }
   }]);

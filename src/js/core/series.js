@@ -222,19 +222,21 @@ var Series = (_class = function () {
       return this.sum() / this.length;
     }
   }, {
-    key: 'std',
-    value: function std() {
+    key: 'variance',
+    value: function variance() {
       var _this2 = this;
 
       var mean = this.mean();
 
-      var meanSqDiff = 0;
-      this.values.forEach(function (v) {
+      return this.values.reduce(function (s, v) {
         var diff = v - mean;
-        meanSqDiff += diff * diff / (_this2.length - 1);
-      });
-
-      return Math.sqrt(meanSqDiff);
+        return s + diff * diff / (_this2.length - 1);
+      }, 0);
+    }
+  }, {
+    key: 'std',
+    value: function std() {
+      return Math.sqrt(this.variance());
     }
 
     /**
@@ -331,6 +333,28 @@ var Series = (_class = function () {
 
       throw new Error('dividedBy only supports numbers, Arrays, Immutable List and pandas.Series');
     }
+
+    /**
+     * Return the percentage change over a given number of periods
+     *
+     * @param {number} periods
+     * @returns {Series}
+     */
+
+  }, {
+    key: 'pct_change',
+    value: function pct_change() {
+      var _this3 = this;
+
+      var periods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+
+      if (typeof periods !== 'number' || !Number.isInteger(periods)) throw new Error('periods must be an integer');
+      if (periods <= 0) throw new Error('periods must be positive');
+
+      return new Series(_immutable2.default.Repeat(null, periods).toList().concat(_immutable2.default.Range(periods, this.length).map(function (idx) {
+        return _this3.values.get(idx) / _this3.values.get(idx - periods) - 1;
+      }).toList()), { index: this.index, name: this.name });
+    }
   }, {
     key: '_sort_ascending',
     value: function _sort_ascending(valueA, valueB) {
@@ -359,14 +383,14 @@ var Series = (_class = function () {
   }, {
     key: 'sort_values',
     value: function sort_values() {
-      var _this3 = this;
+      var _this4 = this;
 
       var ascending = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 
       var sortedIndex = ascending ? this.index.sort(this._sort_ascending) : this.index.sort(this._sort_descending);
 
       return new Series(sortedIndex.map(function (i) {
-        return _this3.iloc(i);
+        return _this4.iloc(i);
       }), { name: this.name, index: sortedIndex });
     }
   }, {

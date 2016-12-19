@@ -154,16 +154,17 @@ export default class Series {
     return this.sum() / this.length;
   }
 
-  std() {
+  variance() {
     const mean = this.mean();
 
-    let meanSqDiff = 0;
-    this.values.forEach((v) => {
+    return this.values.reduce((s, v) => {
       const diff = v - mean;
-      meanSqDiff += ((diff * diff) / (this.length - 1));
-    });
+      return s + ((diff * diff) / (this.length - 1))
+    }, 0);
+  }
 
-    return Math.sqrt(meanSqDiff);
+  std() {
+    return Math.sqrt(this.variance());
   }
 
   /**
@@ -243,6 +244,25 @@ export default class Series {
       return new Series(this.values.map((v, idx) => v / val.get(idx)));
 
     throw new Error('dividedBy only supports numbers, Arrays, Immutable List and pandas.Series');
+  }
+
+  /**
+   * Return the percentage change over a given number of periods
+   *
+   * @param {number} periods
+   * @returns {Series}
+   */
+  pct_change(periods = 1) {
+    if (typeof periods !== 'number' || !Number.isInteger(periods))
+      throw new Error('periods must be an integer');
+    if (periods <= 0)
+      throw new Error('periods must be positive');
+
+    return new Series(
+      Immutable.Repeat(null, periods).toList().concat(
+        Immutable.Range(periods, this.length).map(idx =>
+        (this.values.get(idx) / this.values.get(idx - periods)) - 1).toList()),
+      {index: this.index, name: this.name});
   }
 
   @autobind

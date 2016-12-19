@@ -191,6 +191,18 @@ describe('series', function () {
       });
     });
 
+    describe('pct_change', function () {
+      it('calculates the percent change for 1 period', function () {
+        var ds = new _series2.default([1, 2, 3, 4, 5]);
+        expect(ds.pct_change(1).values.toArray()).toEqual([null, 1, 0.5, 4 / 3 - 1, 0.25]);
+      });
+
+      it('calculates the percent change for 2 periods', function () {
+        var ds = new _series2.default([1, 2, 3, 4, 5]);
+        expect(ds.pct_change(2).values.toArray()).toEqual([null, null, 2, 1, 5 / 3 - 1]);
+      });
+    });
+
     describe('sort_values', function () {
       it('sorts the Series by the values in ascending order', function () {
         var ds1 = new _series2.default([2, 3, 4, 1]).sort_values();

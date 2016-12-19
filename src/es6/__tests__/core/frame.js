@@ -75,11 +75,12 @@ describe('frame', () => {
 
       it('new columns of equal length can be set', () => {
         const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}]);
-        df1.columns = ['a', 'b'];
+        df1.columns = ['a', 'x'];
 
-        expect(df1.columns.toArray()).toEqual(['a', 'b']);
+        expect(df1.columns.toArray()).toEqual(['a', 'x']);
         expect(df1.get('a')).toBeInstanceOf(Series);
-        expect(df1.get('b')).toBeInstanceOf(Series);
+        expect(df1.get('x')).toBeInstanceOf(Series);
+        expect(df1.get('x').values.toArray()).toEqual([2, 3]);
       });
     });
 
@@ -97,6 +98,86 @@ describe('frame', () => {
         expect(row.get('x').iloc(0)).toEqual(vals[idx].x);
         expect(row.get('y').iloc(0)).toEqual(vals[idx].y);
       }
+    });
+
+    describe('sum', () => {
+      it('sums along axis 0', () => {
+        const df1 = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 3, z: 10}]);
+        const ds_sum = df1.sum();
+        expect(ds_sum).toBeInstanceOf(Series);
+        expect(ds_sum.values.toArray()).toEqual([3, 5, 13]);
+        expect(ds_sum.index.toArray()).toEqual(['x', 'y', 'z']);
+      });
+
+      it('sums along axis 1', () => {
+        const df1 = new DataFrame(
+          [{x: 1, y: 2, z: 3}, {x: 2, y: 3, z: 10}],
+          {index: [2, 3]});
+        const ds_sum = df1.sum(1);
+        expect(ds_sum).toBeInstanceOf(Series);
+        expect(ds_sum.values.toArray()).toEqual([6, 15]);
+        expect(ds_sum.index.toArray()).toEqual([2, 3]);
+      });
+    });
+
+    describe('mean', () => {
+      it('takes mean along axis 0', () => {
+        const df1 = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 3, z: 10}]);
+        const ds_sum = df1.mean();
+        expect(ds_sum).toBeInstanceOf(Series);
+        expect(ds_sum.values.toArray()).toEqual([1.5, 2.5, 6.5]);
+        expect(ds_sum.index.toArray()).toEqual(['x', 'y', 'z']);
+      });
+
+      it('takes mean along axis 1', () => {
+        const df1 = new DataFrame(
+          [{x: 1, y: 2, z: 3}, {x: 2, y: 3, z: 10}],
+          {index: [2, 3]});
+        const ds_mean = df1.mean(1);
+        expect(ds_mean).toBeInstanceOf(Series);
+        expect(ds_mean.values.toArray()).toEqual([2, 5]);
+        expect(ds_mean.index.toArray()).toEqual([2, 3]);
+      });
+    });
+
+    describe('variance', () => {
+      it('takes variance along axis 0', () => {
+        const df1 = new DataFrame([{x: 1, y: 1}, {x: 2, y: 3}, {x: 3, y: 5}]);
+        const ds_var = df1.variance();
+        expect(ds_var).toBeInstanceOf(Series);
+        expect(ds_var.values.toArray()).toEqual([1, 4]);
+        expect(ds_var.index.toArray()).toEqual(['x', 'y']);
+      });
+
+      it('takes variance along axis 1', () => {
+        const df1 = new DataFrame(
+          [{x: 1, y: 1, z: 1}, {x: 2, y: 3, z: 4}],
+          {index: [2, 3]});
+        const ds_var = df1.variance(1);
+        expect(ds_var).toBeInstanceOf(Series);
+        expect(ds_var.values.toArray()).toEqual([0, 1]);
+        expect(ds_var.index.toArray()).toEqual([2, 3]);
+      });
+    });
+
+    describe('std', () => {
+      it('takes standard deviation along axis 0', () => {
+        const df1 = new DataFrame([{x: 1, y: 1}, {x: 2, y: 3}, {x: 3, y: 5}]);
+        const ds_std = df1.std();
+        expect(ds_std).toBeInstanceOf(Series);
+        expect(ds_std.values.toArray()).toEqual([1, 2]);
+        expect(ds_std.index.toArray()).toEqual(['x', 'y']);
+      });
+
+      it('takes standard deviation along axis 1', () => {
+        const df1 = new DataFrame(
+          [{x: 1, y: 1, z: 1}, {x: 2, y: 3, z: 4}],
+          {index: [2, 3]});
+        const ds_std = df1.std(1);
+        expect(ds_std).toBeInstanceOf(Series);
+        expect(ds_std.values.toArray()).toEqual([0, 1]);
+        expect(ds_std.index.toArray()).toEqual([2, 3]);
+      });
     });
   });
 

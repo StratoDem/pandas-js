@@ -172,6 +172,18 @@ describe('series', () => {
       });
     });
 
+    describe('pct_change', () => {
+      it('calculates the percent change for 1 period', () => {
+        const ds = new Series([1, 2, 3, 4, 5]);
+        expect(ds.pct_change(1).values.toArray()).toEqual([null, 1, 0.5, (4 / 3) - 1, 0.25]);
+      });
+
+      it('calculates the percent change for 2 periods', () => {
+        const ds = new Series([1, 2, 3, 4, 5]);
+        expect(ds.pct_change(2).values.toArray()).toEqual([null, null, 2, 1, (5 / 3) - 1]);
+      });
+    });
+
     describe('sort_values', () => {
       it('sorts the Series by the values in ascending order', () => {
         const ds1 = new Series([2, 3, 4, 1]).sort_values();
