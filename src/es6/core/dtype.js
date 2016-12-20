@@ -3,11 +3,13 @@
 const int = 'int';
 const float = 'float';
 const object = 'object';
+const bool = 'bool';
 
 const ALLOWED_DTYPES = [
   int,
   float,
   object,
+  bool,
 ];
 
 export class DType {
@@ -36,12 +38,14 @@ export class DType {
 export const elementToDType = (el) => {
   let arrayDType = int;
 
-  if (typeof el === 'object') {
+  if (typeof el === 'string') {
     arrayDType = object;
-  } else if (typeof el === 'string') {
-    arrayDType = object;
-  } else if (!Number.isInteger(el)) {
+  } else if (!Number.isInteger(el) && typeof el === 'number') {
     arrayDType = float;
+  } else if (typeof el === 'boolean') {
+    arrayDType = bool;
+  } else if (typeof el === 'object') {
+    arrayDType = object;
   }
 
   return new DType(arrayDType);

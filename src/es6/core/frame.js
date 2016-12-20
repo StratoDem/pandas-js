@@ -273,6 +273,23 @@ export default class DataFrame {
     return Math.max(...this._data.keySeq().map(k => this.get(k).length).toArray());
   }
 
+  /**
+   * Return a List representing the dimensionality of the DataFrame
+   *
+   * pandas equivalent: [DataFrame.shape](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.shape.html)
+   *
+   * @returns {List<number>}
+   *
+   * @example
+   * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}];
+   *
+   * // Returns List [3, 2]
+   * df.shape;
+   */
+  get shape() {
+    return Immutable.List([this.length, this.columns.size]);
+  }
+
   columnExists(col) {
     return this._columns.indexOf(col) >= 0;
   }
@@ -299,8 +316,184 @@ export default class DataFrame {
     throw new Error(`KeyError: ${columns} not found`);
   }
 
-  filter() {
-    throw new Error('not implemented');
+  /**
+   * Return an object of same shape as self and whose corresponding entries are from self
+   * where cond is True and otherwise are from other.
+   *
+   * pandas equivalent [DataFrame.where](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.where.html)
+   *
+   * @param {Array|List|Series|DataFrame|number|string} other
+   *  Iterable or value to compare to DataFrame
+   * @param {function} op
+   *  Function which takes (a, b) values and returns a boolean
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}]);
+   *
+   * // Returns DataFrame(Map({x: Series([true, false]), y: Series([false, true])})
+   * df.where(new Series([1, 3]), (a, b) => a === b);
+   *
+   * // Returns DataFrame(Map({x: Series([true, false]), y: Series([false, true])})
+   * df.where(new DataFrame(Map({
+   *    a: new Series([1, 1]),
+   *    b: new Series([3, 3])})),
+   *    (a, b) => a === b);
+   */
+  where(other, op) {
+    if (!(Array.isArray(other))
+      && !(other instanceof Immutable.List)
+      && !(other instanceof Series)
+      && !(other instanceof DataFrame)) {
+      // noinspection Eslint
+      return new DataFrame(Immutable.Map(this._data.mapEntries(([k, v]) => {
+        return [k, v.where(other, op)];
+      })));
+    } else if (Array.isArray(other) || other instanceof Series || other instanceof Immutable.List) {
+      if ((Array.isArray(other) || other instanceof Series) && other.length !== this.length)
+        throw new Error('Array or Series must be same length as DataFrame');
+      if (other instanceof Immutable.List && other.size !== this.length)
+        throw new Error('Immutable List must be same size as DataFrame');
+      // noinspection Eslint
+      return new DataFrame(Immutable.Map(this._data.mapEntries(([k, v]) => {
+        return [k, v.where(other, op)];
+      })));
+    } else if (other instanceof DataFrame) {
+      if (!other.shape.equals(this.shape))
+        throw new Error('DataFrame must have the same shape');
+      // noinspection Eslint
+      return new DataFrame(Immutable.Map(this._data.mapEntries(([k, v], idx) => {
+        return [k, v.where(other.get(other.columns.get(idx)), op)];
+      })));
+    }
+
+    throw new Error('Unsupported comparison value, or non-matching lengths');
+  }
+
+  /**
+   * Equal to `DataFrame` and other, element wise
+   *
+   * pandas equivalent: df == val
+   *
+   * @param {Array|List|Series|DataFrame|number|string} other
+   *  Other Iterable or scalar value to check for equal to
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame(Map({x: new Series([1, 2]), y: new Series([2, 3])}));
+   *
+   * // Returns DataFrame(Map({x: Series([true, false]), y: Series([false, true])})
+   * df.eq(new Series([1, 3]));
+   *
+   * // Returns DataFrame(Map({x: Series([true, false]), y: Series([false, false])})
+   * df.gt(new DataFrame(Map({
+   *    a: new Series([1, 1]),
+   *    b: new Series([1, 2])})));
+   */
+  eq(other) {
+    return this.where(other, (a, b) => a === b);
+  }
+
+  /**
+   * Greater than of `DataFrame` and other, element wise
+   *
+   * pandas equivalent: df > val
+   *
+   * @param {Array|List|Series|DataFrame|number|string} other
+   *  Other Iterable or scalar value to check for greater than
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame(Map({x: new Series([1, 2]), y: new Series([2, 3])}));
+   *
+   * // Returns DataFrame(Map({x: Series([false, false]), y: Series([true, false])})
+   * df.gt(new Series([1, 3]));
+   *
+   * // Returns DataFrame(Map({x: Series([false, true]), y: Series([true, true])})
+   * df.gt(new DataFrame(Map({
+   *    a: new Series([1, 1]),
+   *    b: new Series([1, 2])})));
+   */
+  gt(other) {
+    return this.where(other, (a, b) => a > b);
+  }
+
+  /**
+   * Greater than or equal to of `DataFrame` and other, element wise
+   *
+   * pandas equivalent: df >= val
+   *
+   * @param {Array|List|Series|DataFrame|number|string} other
+   *  Other Iterable or scalar value to check for greater than or equal to
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame(Map({x: new Series([1, 2]), y: new Series([2, 3])}));
+   *
+   * // Returns DataFrame(Map({x: Series([true, false]), y: Series([true, true])})
+   * df.gte(new Series([1, 3]));
+   *
+   * // Returns DataFrame(Map({x: Series([true, true]), y: Series([true, true])})
+   * df.gte(new DataFrame(Map({
+   *    a: new Series([1, 1]),
+   *    b: new Series([1, 2])})));
+   */
+  gte(other) {
+    return this.where(other, (a, b) => a >= b);
+  }
+
+  /**
+   * Less than of `DataFrame` and other, element wise
+   *
+   * pandas equivalent: df < val
+   *
+   * @param {Array|List|Series|DataFrame|number|string} other
+   *  Other Iterable or scalar value to check for less than
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame(Map({x: new Series([1, 2]), y: new Series([2, 3])}));
+   *
+   * // Returns DataFrame(Map({x: Series([false, true]), y: Series([false, false])})
+   * df.lt(new Series([1, 3]));
+   *
+   * // Returns DataFrame(Map({x: Series([false, false]), y: Series([false, false])})
+   * df.lt(new DataFrame(Map({
+   *    a: new Series([1, 1]),
+   *    b: new Series([1, 2])})));
+   */
+  lt(other) {
+    return this.where(other, (a, b) => a < b);
+  }
+
+  /**
+   * Less than or equal to of `DataFrame` and other, element wise
+   *
+   * pandas equivalent: df <= val
+   *
+   * @param {Array|List|Series|DataFrame|number|string} other
+   *  Other Iterable or scalar value to check for less than or equal to
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame(Map({x: new Series([1, 2]), y: new Series([2, 3])}));
+   *
+   * // Returns DataFrame(Map({x: Series([true, true]), y: Series([false, true])})
+   * df.lte(new Series([1, 3]));
+   *
+   * // Returns DataFrame(Map({x: Series([true, false]), y: Series([false, false])})
+   * df.lte(new DataFrame(Map({
+   *    a: new Series([1, 1]),
+   *    b: new Series([1, 2])})));
+   */
+  lte(other) {
+    return this.where(other, (a, b) => a <= b);
   }
 
   /**
@@ -582,8 +775,48 @@ export default class DataFrame {
 
     throw new InvalidAxisError();
   }
-}
 
+  /**
+   * Filter the DataFrame by an Iterable (Series, Array, or List) of booleans and return the subset
+   *
+   * pandas equivalent: df[df condition]
+   *
+   * @param {Series|Array|List} iterBool
+   *    Iterable of booleans
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame(Immutable.Map({x: new Series([1, 2]), y: new Series([2, 3])}));
+   *
+   * // Returns DataFrame(Immutable.Map({x: Series([2]), y: Series([3]));
+   * df.filter(df.get('x').gt(1));
+   *
+   * // Returns DataFrame(Immutable.Map({x: Series([2]), y: Series([3]));
+   * df.filter([false, true]);
+   *
+   * // Returns DataFrame(Immutable.Map({x: Series([2]), y: Series([3]));
+   * df.filter(Immutable.Map([false, true]));
+   */
+  filter(iterBool) {
+    if (!Array.isArray(iterBool)
+      && !(iterBool instanceof Immutable.List)
+      && !(iterBool instanceof Series))
+      throw new Error('filter must be an Array, List, or Series');
+
+    if (Array.isArray(iterBool) && iterBool.length !== this.length)
+      throw new Error('Array must be of equal length to DataFrame');
+    else if (iterBool instanceof Immutable.List && iterBool.size !== this.length)
+      throw new Error('List must be of equal length to DataFrame');
+    else if (iterBool instanceof Series && iterBool.length !== this.length)
+      throw new Error('Series must be of equal length to DataFrame');
+
+    // noinspection Eslint
+    return new DataFrame(Immutable.Map(this._data.mapEntries(([k, v]) => {
+      return [k, v.filter(iterBool)];
+    })));
+  }
+}
 
 const innerMerge = (df1, df2, on) => {
   const data = [];

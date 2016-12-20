@@ -22,8 +22,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var int = 'int';
 var float = 'float';
 var object = 'object';
+var bool = 'bool';
 
-var ALLOWED_DTYPES = [int, float, object];
+var ALLOWED_DTYPES = [int, float, object, bool];
 
 var DType = exports.DType = function () {
   function DType(name) {
@@ -58,12 +59,14 @@ var DType = exports.DType = function () {
 var elementToDType = exports.elementToDType = function elementToDType(el) {
   var arrayDType = int;
 
-  if ((typeof el === 'undefined' ? 'undefined' : (0, _typeof3.default)(el)) === 'object') {
+  if (typeof el === 'string') {
     arrayDType = object;
-  } else if (typeof el === 'string') {
-    arrayDType = object;
-  } else if (!Number.isInteger(el)) {
+  } else if (!Number.isInteger(el) && typeof el === 'number') {
     arrayDType = float;
+  } else if (typeof el === 'boolean') {
+    arrayDType = bool;
+  } else if ((typeof el === 'undefined' ? 'undefined' : (0, _typeof3.default)(el)) === 'object') {
+    arrayDType = object;
   }
 
   return new DType(arrayDType);

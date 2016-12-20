@@ -19,4 +19,23 @@ describe('utils', () => {
       }
     });
   });
+
+  describe('round10', () => {
+    it('rounds a decimal to the nearest tenth', () => {
+      const val = 1.14;
+      expect(utils.round10(val, -1)).toEqual(1.1);
+
+
+      const val2 = 1.16;
+      expect(utils.round10(val2, -1)).toEqual(1.2);
+    });
+
+    it('rounds a decimal to the nearest hundredth', () => {
+      const val = 1.144;
+      expect(utils.round10(val, -2)).toEqual(1.14);
+
+      const val2 = 1.146;
+      expect(utils.round10(val2, -2)).toEqual(1.15);
+    });
+  });
 });

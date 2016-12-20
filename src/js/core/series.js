@@ -34,7 +34,7 @@ var Series = function () {
    * Operations between `Series` (+, -, /, *, **) align values based on their associated index
    * values
    *
-   * @param data {Array|List}
+   * @param {Array|List} data
    *    Data to be stored in Series
    * @param {Object} kwargs
    *    Extra optional arguments for a Series
@@ -65,6 +65,7 @@ var Series = function () {
       this._dtype = (0, _dtype.arrayToDType)(data);
     } else {
       this._values = _immutable2.default.List.of(data);
+      this._dtype = (0, _dtype.arrayToDType)([data]);
     }
 
     this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
@@ -169,6 +170,58 @@ var Series = function () {
       });
 
       return valString + 'Name: ' + this.name + ', dtype: ' + this.dtype;
+    }
+
+    /**
+     * Return first n rows
+     *
+     * pandas equivalent: [Series.head](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.head.html)
+     *
+     * @param {number} n=5
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3, 4, 5, 6, 7, 8]);
+     *
+     * // Returns Series([1, 2, 3, 4, 5])
+     * ds.head();
+     *
+     * // Returns Series([1, 2, 3])
+     * ds.head(3);
+     */
+
+  }, {
+    key: 'head',
+    value: function head() {
+      var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 5;
+
+      return this.iloc(0, n);
+    }
+
+    /**
+     * Return last n rows
+     *
+     * pandas equivalent: [Series.tail](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.tail.html)
+     *
+     * @param {number} n=5
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3, 4, 5, 6, 7, 8]);
+     *
+     * // Returns Series([4, 5, 6, 7, 8])
+     * ds.tail();
+     *
+     * // Returns Series([6, 7, 8])
+     * ds.tail(3);
+     */
+
+  }, {
+    key: 'tail',
+    value: function tail() {
+      var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 5;
+
+      return this.iloc(this.length - n, this.length);
     }
 
     /**
@@ -307,6 +360,31 @@ var Series = function () {
     }
 
     /**
+     * Return the median of the values in the `Series`
+     *
+     * pandas equivalent: [Series.median](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.median.html)
+     *
+     * @returns {number}
+     *
+     * @example
+     * const ds = new Series([2, 3, 1, 4, 5], {name: 'New Series'})
+     *
+     * // Returns 3
+     * ds.median();
+     */
+
+  }, {
+    key: 'median',
+    value: function median() {
+      var sortedVals = this.values.sort();
+
+      if (this.length % 2 === 1) return sortedVals.get(Math.floor(this.length / 2));
+
+      var halfLength = this.length / 2;
+      return (sortedVals.get(halfLength - 1) + sortedVals.get(halfLength)) / 2;
+    }
+
+    /**
      * Return the variance of the values in the `Series`
      *
      * pandas equivalent: [Series.var](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.var.html)
@@ -351,6 +429,30 @@ var Series = function () {
     key: 'std',
     value: function std() {
       return Math.sqrt(this.variance());
+    }
+
+    /**
+     * Return Series with absolute value of all values
+     *
+     * pandas equivalent: [Series.abs](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.abs.html)
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([-1, 2, -4, 5, -1, -2]);
+     *
+     * // Returns Series([1, 2, 4, 5, 1, 2]);
+     * ds.abs();
+     */
+
+  }, {
+    key: 'abs',
+    value: function abs() {
+      if (['bool', 'string', 'object'].indexOf(this.dtype.dtype) >= 0) return this.copy();
+
+      return new Series(this.values.map(function (v) {
+        return Math.abs(v);
+      }), { name: this.name, index: this.index });
     }
 
     /**
@@ -458,6 +560,31 @@ var Series = function () {
     }
 
     /**
+     * Multiply by another Iterable, `Series`, or number from the `Series`
+     *
+     * pandas equivalent: [Series.multiply](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.multiply.html)
+     *
+     * @param {Iterable|Series|number} val
+     *  Value to multiply by the `Series`
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'New Series'})
+     *
+     * ds.multiply(5)                           // Series([5, 10, 15], {name: 'New Series'})
+     * ds.multiply(new Series([2, 3, 4]))       // Series([2, 6, 12], {name: 'New Series'})
+     * ds.multiply([2, 3, 4])                   // Series([2, 6, 12], {name: 'New Series'})
+     * ds.multiply(Immutable.List([2, 3, 4]))   // Series([2, 6, 12], {name: 'New Series'})
+     */
+
+  }, {
+    key: 'multiply',
+    value: function multiply(val) {
+      return this.mul(val);
+    }
+
+    /**
      * Divide by another Iterable, `Series`, or number from the `Series`
      *
      * pandas equivalent: [Series.div](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.div.html)
@@ -490,6 +617,31 @@ var Series = function () {
       }));
 
       throw new Error('div only supports numbers, Arrays, Immutable List and pandas.Series');
+    }
+
+    /**
+     * Divide by another Iterable, `Series`, or number from the `Series`
+     *
+     * pandas equivalent: [Series.divide](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.divide.html)
+     *
+     * @param {Iterable|Series|number} val
+     *  Value by which to divide the `Series`
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'New Series'})
+     *
+     * ds.divide(5)                           // Series([0.2, 0.4, 0.6], {name: 'New Series'})
+     * ds.divide(new Series([4, 2, 1]))       // Series([0.25, 1, 3], {name: 'New Series'})
+     * ds.divide([4, 2, 1])                   // Series([0.25, 1, 3], {name: 'New Series'})
+     * ds.divide(Immutable.List([4, 2, 1]))   // Series([0.25, 1, 3], {name: 'New Series'})
+     */
+
+  }, {
+    key: 'divide',
+    value: function divide(val) {
+      return this.div(val);
     }
 
     /**
@@ -571,6 +723,428 @@ var Series = function () {
       return new Series(sortedIndex.map(function (i) {
         return _this4.iloc(i);
       }), { name: this.name, index: sortedIndex });
+    }
+
+    /**
+     * Return a `Series` with all values rounded to the nearest precision specified by decimals
+     *
+     * pandas equivalent: [Series.round](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.round.html)
+     *
+     * @param {number} decimals=0
+     *  Number of decimals to round to
+     *
+     * @example
+     * const ds = new Series([1.25, 1.47, 1.321])
+     *
+     * // Returns Series([1.3, 1.5, 1.3])
+     * ds.round(1);
+     */
+
+  }, {
+    key: 'round',
+    value: function round() {
+      var decimals = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      return new Series(this.values.map(function (v) {
+        return (0, _utils.round10)(v, -1 * decimals);
+      }));
+    }
+
+    // Filtering methods
+
+  }, {
+    key: '_alignSeries',
+    value: function _alignSeries(series) {
+      var _this5 = this;
+
+      // Align two series by index values, returning a Map with index values as keys and
+      // values as Maps with 1: List [value locations at index], 2: [value locations at index]
+
+      var seriesAlignment = _immutable2.default.Map({});
+
+      this.index.forEach(function (idx1) {
+        if (!seriesAlignment.has(idx1)) {
+          seriesAlignment = seriesAlignment.set(idx1, _immutable2.default.Map({
+            first: _immutable2.default.List.of(_this5.iloc(idx1)),
+            second: _immutable2.default.List([])
+          }));
+        } else {
+          seriesAlignment = seriesAlignment.updateIn([idx1, 'first'], function (l) {
+            return l.concat(_this5.iloc(idx1));
+          });
+        }
+      });
+
+      series.index.forEach(function (idx2) {
+        if (!seriesAlignment.has(idx2)) {
+          seriesAlignment = seriesAlignment.set(idx2, _immutable2.default.Map({
+            first: _immutable2.default.List([]),
+            second: _immutable2.default.List.of(series.iloc(idx2))
+          }));
+        } else {
+          seriesAlignment = seriesAlignment.updateIn([idx2, 'second'], function (l) {
+            return l.concat(series.iloc(idx2));
+          });
+        }
+      });
+
+      return seriesAlignment;
+    }
+
+    /**
+     * Flexible comparison of an iterable or value to the `Series`. Returns a `Series` of booleans of
+     * equivalent length
+     *
+     * pandas equivalent: [Series.where](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.where.html)
+     *
+     * @param {Series|Array|List|string|number} other
+     *  Iterable or value compared to Series
+     * @param {function} op
+     *  Function which takes (a, b) values and returns a boolean
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'Test name'})
+     *
+     * // Returns Series([true, false, false])
+     * ds.where(1, (v1, v2) => v1 === 1);
+     *
+     * // Returns Series([false, true, true])
+     * ds.where(new Series([0, 2, 3]), (v1, v2) => v1 === v2);
+     */
+
+  }, {
+    key: 'where',
+    value: function where(other, op) {
+      var name = this.name;
+      var index = this.index;
+      var kwargs = { name: name, index: index };
+
+      if (!Array.isArray(other) && !(other instanceof _immutable2.default.List) && !(other instanceof Series)) return new Series(this.values.map(function (v) {
+        return op(v, other);
+      }), kwargs);
+
+      if (Array.isArray(other)) {
+        if (other.length !== this.length) throw new Error('Must be equal length for comparison');
+        return new Series(this.values.map(function (v, idx) {
+          return op(v, other[idx]);
+        }), kwargs);
+      } else if (other instanceof _immutable2.default.List) {
+        if (other.size !== this.length) throw new Error('Must be equal length for comparison');
+        return new Series(this.values.map(function (v, idx) {
+          return op(v, other.get(idx));
+        }), kwargs);
+      } else if (other instanceof Series) {
+        if (other.length !== this.length) throw new Error('Must be equal length for comparison');
+        return new Series(this.values.map(function (v, idx) {
+          return op(v, other.iloc(idx));
+        }), kwargs);
+      }
+
+      throw new Error('Must be scalar value, Array, Series, or Immutable.List');
+    }
+
+    /**
+     * Equal to of `Series` and other, element wise
+     *
+     * pandas equivalent: Series == val
+     *
+     * @param {Series|Array|List|number|string} other
+     *    Other `Series` or scalar value to check for equality
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'Test name'})
+     *
+     * // Returns Series([true, false, false])
+     * ds.eq(1);
+     *
+     * // Returns Series([false, true, true])
+     * ds.eq(new Series([0, 2, 3]));
+     *
+     * // Returns Series([false, true, true])
+     * ds.eq(Immutable.List([0, 2, 3]));
+     *
+     * // Returns Series([false, true, true])
+     * ds.eq([0, 2, 3]);
+     */
+
+  }, {
+    key: 'eq',
+    value: function eq(other) {
+      return this.where(other, function (a, b) {
+        return a === b;
+      });
+    }
+
+    /**
+     * Less than of `Series` and other, element wise
+     *
+     * pandas equivalent: Series < val
+     *
+     * @param {Series|Array|List|number|string} other
+     *    Other `Series` or scalar value to check for less than
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'Test name'})
+     *
+     * // Returns Series([false, false, false])
+     * ds.lt(1);
+     *
+     * // Returns Series([false, false, true])
+     * ds.lt(new Series([0, 2, 4]));
+     *
+     * // Returns Series([false, false, true])
+     * ds.lt(Immutable.List([0, 2, 5]));
+     *
+     * // Returns Series([false, false, true])
+     * ds.lt([0, 2, 5]);
+     */
+
+  }, {
+    key: 'lt',
+    value: function lt(other) {
+      return this.where(other, function (a, b) {
+        return a < b;
+      });
+    }
+
+    /**
+     * Less than or equal to of `Series` and other, element wise
+     *
+     * pandas equivalent: Series <= val
+     *
+     * @param {Series|Array|List|number|string} other
+     *    Other `Series` or scalar value to check for less than or equal to
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'Test name'})
+     *
+     * // Returns Series([false, false, false])
+     * ds.lte(1);
+     *
+     * // Returns Series([false, false, true])
+     * ds.lte(new Series([0, 2, 4]));
+     *
+     * // Returns Series([false, false, true])
+     * ds.lte(Immutable.List([0, 2, 5]));
+     *
+     * // Returns Series([false, false, true])
+     * ds.lte([0, 2, 5]);
+     */
+
+  }, {
+    key: 'lte',
+    value: function lte(other) {
+      return this.where(other, function (a, b) {
+        return a <= b;
+      });
+    }
+
+    /**
+     * Greater than of `Series` and other, element wise
+     *
+     * pandas equivalent: Series > val
+     *
+     * @param {Series|Array|List|number|string} other
+     *    Other `Series` or scalar value to check for greater than
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'Test name'})
+     *
+     * // Returns Series([false, true, true])
+     * ds.gt(1);
+     *
+     * // Returns Series([true, false, false])
+     * ds.gt(new Series([0, 2, 3]));
+     *
+     * // Returns Series([true, false, false])
+     * ds.gt(Immutable.List([0, 2, 3]));
+     *
+     * // Returns Series([true, false, false])
+     * ds.gt([0, 2, 3]);
+     */
+
+  }, {
+    key: 'gt',
+    value: function gt(other) {
+      return this.where(other, function (a, b) {
+        return a > b;
+      });
+    }
+
+    /**
+     * Greater than or equal to of `Series` and other, element wise
+     *
+     * pandas equivalent: Series >= val
+     *
+     * @param {Series|Array|List|number|string} other
+     *    Other `Series` or scalar value to check for greater than or equal to
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'Test name'})
+     *
+     * // Returns Series([true, true, true])
+     * ds.gte(1);
+     *
+     * // Returns Series([true, true, false])
+     * ds.gte(new Series([0, 2, 4]));
+     *
+     * // Returns Series([true, true, false])
+     * ds.gte(Immutable.List([0, 2, 4]));
+     *
+     * // Returns Series([true, true, false])
+     * ds.gte([0, 2, 4]);
+     */
+
+  }, {
+    key: 'gte',
+    value: function gte(other) {
+      return this.where(other, function (a, b) {
+        return a >= b;
+      });
+    }
+
+    /**
+     * Returns a boolean same-sized Series indicating if the values are not null
+     *
+     * pandas equivalent: [Series.notnull](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.notnull.html)
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, null, null, 4]);
+     *
+     * // Returns Series([true, true, false, false, true])
+     * ds.notnull();
+     */
+
+  }, {
+    key: 'notnull',
+    value: function notnull() {
+      return this.where(null, function (a, b) {
+        return a !== b;
+      });
+    }
+
+    /**
+     * Shift index by desired number of periods
+     *
+     * pandas equivalent:s [Series.shift](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.shift.html)
+     *
+     * @param {number} periods
+     *  Number of periods to move, can be positive or negative
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3, 4]);
+     *
+     * // Returns Series([null, 1, 2, 3]);
+     * ds.shift(1);
+     *
+     * // Returns Series([null, null, 1, 2]);
+     * ds.shift(2);
+     *
+     * // Returns Series([3, 4, null, null]);
+     * ds.shift(-2);
+     */
+
+  }, {
+    key: 'shift',
+    value: function shift() {
+      var periods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+
+      if (!Number.isInteger(periods)) throw new Error('periods must be an integer');
+
+      if (periods === 0) {
+        return this.copy();
+      } else if (periods < 0) {
+        var absPeriods = Math.abs(periods);
+
+        if (absPeriods > this.length) throw new Error('Periods greater than length of Series');
+
+        var _values = this.values.slice(absPeriods, this.length).concat(_immutable2.default.Repeat(null, absPeriods).toList());
+
+        return new Series(_values, { name: this.name, index: this.index });
+      }
+
+      // periods > 0
+      if (periods > this.length) throw new Error('Periods greater than length of Series');
+
+      var values = _immutable2.default.Repeat(null, periods).toList().concat(this.values.slice(0, this.length - periods));
+
+      return new Series(values, { name: this.name, index: this.index });
+    }
+
+    /**
+     * Returns `Immutable.List` of unique values in the `Series`. Preserves order of the original
+     *
+     * pandas equivalent: [Series.unique](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.unique.html)
+     *
+     * @returns {List}
+     *
+     * @example
+     * const ds = new Series(['foo', 'bar', 'bar', 'foo', 'foo', 'test', 'bar', 'hi']);
+     * // Returns ['foo', 'bar', 'test', 'hi']
+     * ds.unique();
+     */
+
+  }, {
+    key: 'unique',
+    value: function unique() {
+      return this.values.toSet().toList();
+    }
+
+    /**
+     * Filter the Series by an Iterable (Series, Array, or List) of booleans and return the subset
+     *
+     * pandas equivalent: series[series condition]
+     *
+     * @param {Series|Array|List} iterBool
+     *    Iterable of booleans
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3]);
+     *
+     * // Returns Series([2, 3]);
+     * ds.filter(ds.gte(2));
+     */
+
+  }, {
+    key: 'filter',
+    value: function filter(iterBool) {
+      var _this6 = this;
+
+      if (!Array.isArray(iterBool) && !(iterBool instanceof _immutable2.default.List) && !(iterBool instanceof Series)) throw new Error('filter must be an Array, List, or Series');
+
+      var valueIndexMap = { values: [], index: [] };
+      if (iterBool instanceof Series) iterBool.values.forEach(function (v, idx) {
+        if (v === true) {
+          valueIndexMap.values.push(_this6.values.get(idx));
+          valueIndexMap.index.push(_this6.index.get(idx));
+        }
+      });else {
+        iterBool.forEach(function (v, idx) {
+          if (v === true) {
+            valueIndexMap.values.push(_this6.values.get(idx));
+            valueIndexMap.index.push(_this6.index.get(idx));
+          }
+        });
+      }
+
+      return new Series(valueIndexMap.values, { name: this.name, index: valueIndexMap.index });
     }
   }, {
     key: 'kwargs',

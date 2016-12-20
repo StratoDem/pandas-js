@@ -1,6 +1,5 @@
-
 import Immutable from 'immutable';
-import { IndexMismatchError } from './exceptions';
+import {IndexMismatchError} from './exceptions';
 
 
 /**
@@ -76,3 +75,52 @@ export const parseIndex = (index, values) => {
     throw new IndexMismatchError();
   }
 };
+
+
+/**
+ * Adjust the decimal value for round, floor, or ceiling
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
+ *
+ * @param type
+ * @param value
+ * @param exp
+ * @returns {*}
+ */
+const decimalAdjust = (type, value, exp) => {
+  // If the exp is undefined or zero...
+  if (typeof exp === 'undefined' || +exp === 0) {
+    return Math[type](value);
+  }
+  // noinspection Eslint
+  value = +value;
+  // noinspection Eslint
+  exp = +exp;
+  // If the value is not a number or the exp is not an integer...
+  if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
+    return NaN;
+  }
+  // Shift
+  // noinspection Eslint
+  value = value.toString().split('e');
+  // noinspection Eslint
+  value = Math[type](+(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp)));
+  // Shift back
+  // noinspection Eslint
+  value = value.toString().split('e');
+  // noinspection Eslint
+  return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
+};
+
+
+/**
+ * Round the value to the nearest power of 10
+ *
+ * @param {number} value
+ * @param {number} exp
+ * @returns {number}
+ *
+ * @example
+ * // Returns 1.65
+ * round10(1.65234123415, -2);
+ */
+export const round10 = (value, exp) => decimalAdjust('round', value, exp);

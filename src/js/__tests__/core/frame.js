@@ -361,6 +361,213 @@ describe('frame', function () {
     });
   });
 
+  describe('where', function () {
+    it('checks for equality of a scalar and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.where(1, function (a, b) {
+        return a === b;
+      });
+
+      expect(df2.get('x').values.toArray()).toEqual([true, false]);
+      expect(df2.get('y').values.toArray()).toEqual([false, false]);
+    });
+
+    it('checks for equality of a Series and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.where(new _series2.default([1, 3]), function (a, b) {
+        return a === b;
+      });
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([true, false]);
+      expect(df2.get('y').values.toArray()).toEqual([false, true]);
+    });
+
+    it('checks for equality of a DataFrame and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.where(new _frame2.default([{ a: 2, b: 2 }, { a: 2, b: 2 }]), function (a, b) {
+        return a === b;
+      });
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([false, true]);
+      expect(df2.get('y').values.toArray()).toEqual([true, false]);
+    });
+  });
+
+  describe('eq', function () {
+    it('checks for equality of a scalar and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.eq(1);
+
+      expect(df2.get('x').values.toArray()).toEqual([true, false]);
+      expect(df2.get('y').values.toArray()).toEqual([false, false]);
+    });
+
+    it('checks for equality of a Series and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.eq(new _series2.default([1, 3]));
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([true, false]);
+      expect(df2.get('y').values.toArray()).toEqual([false, true]);
+    });
+
+    it('checks for equality of a DataFrame and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.eq(new _frame2.default([{ a: 2, b: 2 }, { a: 2, b: 2 }]));
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([false, true]);
+      expect(df2.get('y').values.toArray()).toEqual([true, false]);
+    });
+  });
+
+  describe('gt', function () {
+    it('checks for greater than of a scalar and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.gt(1);
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([false, true]);
+      expect(df2.get('y').values.toArray()).toEqual([true, true]);
+    });
+
+    it('checks for greater than of a Series and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.gt(new _series2.default([1, 3]));
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([false, false]);
+      expect(df2.get('y').values.toArray()).toEqual([true, false]);
+    });
+
+    it('checks for greater than of a DataFrame and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.gt(new _frame2.default([{ a: 2, b: 2 }, { a: 2, b: 2 }]));
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([false, false]);
+      expect(df2.get('y').values.toArray()).toEqual([false, true]);
+    });
+  });
+
+  describe('gte', function () {
+    it('checks for greater than or equal of a scalar and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.gte(1);
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([true, true]);
+      expect(df2.get('y').values.toArray()).toEqual([true, true]);
+    });
+
+    it('checks for greater than or equal of a Series and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.gte(new _series2.default([1, 3]));
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([true, false]);
+      expect(df2.get('y').values.toArray()).toEqual([true, true]);
+    });
+
+    it('checks for greater than or equal of a DataFrame and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.gte(new _frame2.default([{ a: 2, b: 2 }, { a: 2, b: 2 }]));
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([false, true]);
+      expect(df2.get('y').values.toArray()).toEqual([true, true]);
+    });
+  });
+
+  describe('lt', function () {
+    it('checks for less than of a scalar and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.lt(1);
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([false, false]);
+      expect(df2.get('y').values.toArray()).toEqual([false, false]);
+    });
+
+    it('checks for less than of a Series and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.lt(new _series2.default([1, 3]));
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([false, true]);
+      expect(df2.get('y').values.toArray()).toEqual([false, false]);
+    });
+
+    it('checks for less than of a DataFrame and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.lt(new _frame2.default([{ a: 2, b: 2 }, { a: 2, b: 2 }]));
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([true, false]);
+      expect(df2.get('y').values.toArray()).toEqual([false, false]);
+    });
+  });
+
+  describe('lte', function () {
+    it('checks for less than or equal of a scalar and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.lte(1);
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([true, false]);
+      expect(df2.get('y').values.toArray()).toEqual([false, false]);
+    });
+
+    it('checks for less than or equal of a Series and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.lte(new _series2.default([1, 3]));
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([true, true]);
+      expect(df2.get('y').values.toArray()).toEqual([false, true]);
+    });
+
+    it('checks for less than or equal of a DataFrame and returns a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.lte(new _frame2.default([{ a: 2, b: 2 }, { a: 2, b: 2 }]));
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([true, true]);
+      expect(df2.get('y').values.toArray()).toEqual([true, false]);
+    });
+  });
+
+  describe('filter', function () {
+    it('takes a Series boolean and returns the subset of the DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.filter(df.get('x').gt(1));
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([2]);
+      expect(df2.get('y').values.toArray()).toEqual([3]);
+    });
+
+    it('takes a Array boolean and returns the subset of the DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.filter([false, true]);
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([2]);
+      expect(df2.get('y').values.toArray()).toEqual([3]);
+    });
+
+    it('takes a List boolean and returns the subset of the DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+      var df2 = df.filter(_immutable2.default.List([false, true]));
+
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([2]);
+      expect(df2.get('y').values.toArray()).toEqual([3]);
+    });
+  });
+
   describe('pct_change', function () {
     it('calculates the pct_change along axis 0', function () {
       var df1 = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [2, 3, 4] });
