@@ -138,7 +138,7 @@ var Series = function () {
         }
       }
 
-      return new Series(array);
+      return new Series(array, { name: this.name, index: this.index });
     }
 
     /**
@@ -476,15 +476,15 @@ var Series = function () {
   }, {
     key: 'add',
     value: function add(val) {
-      if (typeof val === 'number') return new Series(this.values.map(function (v) {
+      if (typeof val === 'number') return this.map(function (v) {
         return v + val;
-      }));else if (val instanceof Series) return new Series(this.values.map(function (v, idx) {
-        return v + val.values.get(idx);
-      }));else if (Array.isArray(val)) return new Series(this.values.map(function (v, idx) {
+      });else if (val instanceof Series) return this.map(function (v, idx) {
+        return v + val.iloc(idx);
+      });else if (Array.isArray(val)) return this.map(function (v, idx) {
         return v + val[idx];
-      }));else if (val instanceof _immutable2.default.List) return new Series(this.values.map(function (v, idx) {
+      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
         return v + val.get(idx);
-      }));
+      });
 
       throw new Error('add only supports numbers, Arrays, Immutable List and pandas.Series');
     }
@@ -511,15 +511,15 @@ var Series = function () {
   }, {
     key: 'sub',
     value: function sub(val) {
-      if (typeof val === 'number') return new Series(this.values.map(function (v) {
+      if (typeof val === 'number') return this.map(function (v) {
         return v - val;
-      }));else if (val instanceof Series) return new Series(this.values.map(function (v, idx) {
-        return v - val.values.get(idx);
-      }));else if (Array.isArray(val)) return new Series(this.values.map(function (v, idx) {
+      });else if (val instanceof Series) return this.map(function (v, idx) {
+        return v - val.iloc(idx);
+      });else if (Array.isArray(val)) return this.map(function (v, idx) {
         return v - val[idx];
-      }));else if (val instanceof _immutable2.default.List) return new Series(this.values.map(function (v, idx) {
+      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
         return v - val.get(idx);
-      }));
+      });
 
       throw new Error('sub only supports numbers, Arrays, Immutable List and pandas.Series');
     }
@@ -546,15 +546,15 @@ var Series = function () {
   }, {
     key: 'mul',
     value: function mul(val) {
-      if (typeof val === 'number') return new Series(this.values.map(function (v) {
+      if (typeof val === 'number') return this.map(function (v) {
         return v * val;
-      }));else if (val instanceof Series) return new Series(this.values.map(function (v, idx) {
-        return v * val.values.get(idx);
-      }));else if (Array.isArray(val)) return new Series(this.values.map(function (v, idx) {
+      });else if (val instanceof Series) return this.map(function (v, idx) {
+        return v * val.iloc(idx);
+      });else if (Array.isArray(val)) return this.map(function (v, idx) {
         return v * val[idx];
-      }));else if (val instanceof _immutable2.default.List) return new Series(this.values.map(function (v, idx) {
+      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
         return v * val.get(idx);
-      }));
+      });
 
       throw new Error('mul only supports numbers, Arrays, Immutable List and pandas.Series');
     }
@@ -606,15 +606,15 @@ var Series = function () {
   }, {
     key: 'div',
     value: function div(val) {
-      if (typeof val === 'number') return new Series(this.values.map(function (v) {
+      if (typeof val === 'number') return this.map(function (v) {
         return v / val;
-      }));else if (val instanceof Series) return new Series(this.values.map(function (v, idx) {
-        return v / val.values.get(idx);
-      }));else if (Array.isArray(val)) return new Series(this.values.map(function (v, idx) {
+      });else if (val instanceof Series) return this.map(function (v, idx) {
+        return v / val.iloc(idx);
+      });else if (Array.isArray(val)) return this.map(function (v, idx) {
         return v / val[idx];
-      }));else if (val instanceof _immutable2.default.List) return new Series(this.values.map(function (v, idx) {
+      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
         return v / val.get(idx);
-      }));
+      });
 
       throw new Error('div only supports numbers, Arrays, Immutable List and pandas.Series');
     }

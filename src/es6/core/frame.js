@@ -57,21 +57,26 @@ export default class DataFrame {
       this._data = parseArrayToSeriesMap(data, this._index);
       this._columns = this._data.keySeq();
     } else if (data instanceof Immutable.Map) {
-      data.keySeq().forEach((k) => {
+      this._data = Immutable.Map(data.keySeq().map((k) => {
         if (!(data.get(k) instanceof Series))
-          throw new Error('Map must have Series as values');
-        data.set(k, data.get(k).copy());
-      });
-      this._data = data;
-      this._columns = data.keySeq();
-      this._index = data.get(data.keySeq().get(0)).index;
+          throw new Error('Map must have [column, series] key-value pairs');
+
+        return [k, data.get(k).copy()];
+      }));
+      this._columns = this._data.keySeq();
+      this._index = this._data.get(this.columns.get(0)).index;
     } else if (typeof data === 'undefined') {
       this._data = Immutable.Map({});
       this._columns = Immutable.Seq.of();
       this._index = Immutable.List.of();
     }
 
-    this._values = Immutable.List(this._columns.map(k => this._data.get(k).values));
+    let valuesList = Immutable.List([]);
+    for (let idx = 0; idx < this.length; idx += 1) {
+      valuesList = valuesList.concat(
+        [Immutable.List(this.columns.map(k => this._data.get(k).iloc(idx)))]);
+    }
+    this._values = valuesList;
   }
 
   toString() {
@@ -126,13 +131,11 @@ export default class DataFrame {
     return {
       next: () => {
         index += 1;
-        const row = {};
-        this.columns.forEach((k) => {
-          row[k] = this._data.get(k).iloc(index);
-        });
-        return {
-          value: new DataFrame([row], {name: this.name}),
-          done: !(index >= 0 && index < this.length)};
+        const done = !(index >= 0 && index < this.length);
+        const value = done
+          ? undefined
+          : Immutable.Map(this.columns.map((k, idx) => [k, this.values.get(index).get(idx)]));
+        return {value, done};
       },
     };
   }
@@ -149,7 +152,7 @@ export default class DataFrame {
    *
    * // Logs 2 4 6
    * for(const [row, idx] of df) {
-   *   console.log(row.get('x').iloc(0) * 2);
+   *   console.log(row.get('x') * 2);
    * }
    */
   iterrows() {
@@ -316,7 +319,7 @@ export default class DataFrame {
    * df.get('x');
    */
   get(columns) {
-    if (typeof columns === 'string' && this.columnExists(columns))
+    if ((typeof columns === 'string' || typeof columns === 'number') && this.columnExists(columns))
       return this._data.get(columns);
     throw new Error(`KeyError: ${columns} not found`);
   }
@@ -600,7 +603,7 @@ export default class DataFrame {
     } else if (axis === 1) {
       return new Series(
         Immutable.Range(0, this.length).map(idx =>
-          this.columns.toArray().reduce((s, k) => s + this.get(k).iloc(idx), 0)).toList(),
+          this.values.get(idx).reduce((s, k) => s + k, 0)).toList(),
         {index: this.index});
     }
 
@@ -644,8 +647,8 @@ export default class DataFrame {
     } else if (axis === 1) {
       return new Series(
         Immutable.Range(0, this.length).map(idx =>
-          this.columns.toArray().reduce((s, k) =>
-            s + (this.get(k).iloc(idx) / this.columns.size), 0)).toList(),
+          this.values.get(idx).reduce((s, k) =>
+            s + (k / this.columns.size), 0)).toList(),
           {index: this.index});
     }
 
@@ -687,8 +690,7 @@ export default class DataFrame {
         this.columns.toArray().map(k => this.get(k).std()),
         {index: this.columns.toArray()});
     } else if (axis === 1) {
-      const variances = this.variance(axis);
-      return new Series(variances.values.map(v => Math.sqrt(v)), {index: this.index});
+      return this.variance(axis).map(v => Math.sqrt(v));
     }
 
     throw new InvalidAxisError();
@@ -732,8 +734,8 @@ export default class DataFrame {
       const means = this.mean(axis).values;
       return new Series(
         Immutable.Range(0, this.length).map(idx =>
-          this.columns.toArray().reduce((s, k) => {
-            const diff = this.get(k).iloc(idx) - means.get(idx);
+          this.values.get(idx).reduce((s, k) => {
+            const diff = k - means.get(idx);
             return s + ((diff * diff) / (this.columns.size - 1));
           }, 0)).toArray(),
         {index: this.index});
@@ -771,11 +773,18 @@ export default class DataFrame {
       throw new Error('periods must be positive');
 
     if (axis === 0) {
-      let data = Immutable.Map.of();
-      this._columns.forEach((k) => { data = data.set(k, this._data.get(k).pct_change(periods)); });
-      return new DataFrame(data, {index: this.index});
+      return new DataFrame(
+        Immutable.Map(this.columns.map(k => [k, this._data.get(k).pct_change(periods)])),
+        {index: this.index});
     } else if (axis === 1) {
-      throw new Error('Not implemented');
+      return new DataFrame(
+        Immutable.Map(this.columns.map((k, idx) => {
+          if (idx < periods)
+            return [k, new Series(Immutable.Repeat(null, this.length).toList(),
+              {name: k, index: this.index})];
+          const compareCol = this.get(this.columns.get(idx - periods));
+          return [k, this.get(k).map((v, vIdx) => (v / compareCol.iloc(vIdx)) - 1)];
+        })), {index: this.index});
     }
 
     throw new InvalidAxisError();
@@ -832,11 +841,21 @@ const innerMerge = (df1, df2, on) => {
   const intersectCols = intersectingColumns(cols1, cols2);
   intersectCols.count();  // Cache intersectCols size
 
+  const cols1Rename = cols1.map(k => (
+    intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
+    ? `${k}_x`
+    : k));
+
+  const cols2Rename = cols2.map(k => (
+    intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
+    ? `${k}_y`
+    : k));
+
   for (const [row1, _1] of df1.iterrows()) {
     for (const [row2, _2] of df2.iterrows()) {
       let match = true;
       for (const c of on) {
-        if (row1.get(c).iloc(0) !== row2.get(c).iloc(0)) {
+        if (row1.get(c) !== row2.get(c)) {
           match = false;
           break;
         }
@@ -846,21 +865,15 @@ const innerMerge = (df1, df2, on) => {
         const rowData = {};
 
         on.forEach((k) => {
-          rowData[k] = row1.get(k).iloc(0);
+          rowData[k] = row1.get(k);
         });
 
-        cols1.forEach((k) => {
-          const nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
-            ? `${k}_x`
-            : k;
-          rowData[nextColName] = row1.get(k).iloc(0);
+        cols1.forEach((k, idx) => {
+          rowData[cols1Rename.get(idx)] = row1.get(k);
         });
 
-        cols2.forEach((k) => {
-          const nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
-            ? `${k}_y`
-            : k;
-          rowData[nextColName] = row2.get(k).iloc(0);
+        cols2.forEach((k, idx) => {
+          rowData[cols2Rename.get(idx)] = row2.get(k);
         });
 
         data.push(rowData);
@@ -887,7 +900,7 @@ const outerMerge = (df1, df2, on) => {
     for (const [row2, idx_2] of df2.iterrows()) {
       let match = true;
       for (const c of on) {
-        if (row1.get(c).iloc(0) !== row2.get(c).iloc(0)) {
+        if (row1.get(c) !== row2.get(c)) {
           match = false;
           break;
         }
@@ -895,14 +908,14 @@ const outerMerge = (df1, df2, on) => {
       const rowData = {};
 
       on.forEach((k) => {
-        rowData[k] = row1.get(k).iloc(0);
+        rowData[k] = row1.get(k);
       });
 
       cols1.forEach((k) => {
         const nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
           ? `${k}_x`
           : k;
-        rowData[nextColName] = row1.get(k).iloc(0);
+        rowData[nextColName] = row1.get(k);
       });
 
       if (match) {
@@ -910,7 +923,7 @@ const outerMerge = (df1, df2, on) => {
           const nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
             ? `${k}_y`
             : k;
-          rowData[nextColName] = row2.get(k).iloc(0);
+          rowData[nextColName] = row2.get(k);
         });
         data.push(rowData);
         matched1[idx_1] = true;

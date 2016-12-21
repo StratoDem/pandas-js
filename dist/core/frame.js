@@ -95,22 +95,31 @@ var DataFrame = function () {
       this._data = parseArrayToSeriesMap(data, this._index);
       this._columns = this._data.keySeq();
     } else if (data instanceof _immutable2.default.Map) {
-      data.keySeq().forEach(function (k) {
-        if (!(data.get(k) instanceof _series2.default)) throw new Error('Map must have Series as values');
-        data.set(k, data.get(k).copy());
-      });
-      this._data = data;
-      this._columns = data.keySeq();
-      this._index = data.get(data.keySeq().get(0)).index;
+      this._data = _immutable2.default.Map(data.keySeq().map(function (k) {
+        if (!(data.get(k) instanceof _series2.default)) throw new Error('Map must have [column, series] key-value pairs');
+
+        return [k, data.get(k).copy()];
+      }));
+      this._columns = this._data.keySeq();
+      this._index = this._data.get(this.columns.get(0)).index;
     } else if (typeof data === 'undefined') {
       this._data = _immutable2.default.Map({});
       this._columns = _immutable2.default.Seq.of();
       this._index = _immutable2.default.List.of();
     }
 
-    this._values = _immutable2.default.List(this._columns.map(function (k) {
-      return _this._data.get(k).values;
-    }));
+    var valuesList = _immutable2.default.List([]);
+
+    var _loop = function _loop(idx) {
+      valuesList = valuesList.concat([_immutable2.default.List(_this.columns.map(function (k) {
+        return _this._data.get(k).iloc(idx);
+      }))]);
+    };
+
+    for (var idx = 0; idx < this.length; idx += 1) {
+      _loop(idx);
+    }
+    this._values = valuesList;
   }
 
   (0, _createClass3.default)(DataFrame, [{
@@ -180,13 +189,11 @@ var DataFrame = function () {
       return {
         next: function next() {
           index += 1;
-          var row = {};
-          _this3.columns.forEach(function (k) {
-            row[k] = _this3._data.get(k).iloc(index);
-          });
-          return {
-            value: new DataFrame([row], { name: _this3.name }),
-            done: !(index >= 0 && index < _this3.length) };
+          var done = !(index >= 0 && index < _this3.length);
+          var value = done ? undefined : _immutable2.default.Map(_this3.columns.map(function (k, idx) {
+            return [k, _this3.values.get(index).get(idx)];
+          }));
+          return { value: value, done: done };
         }
       };
     }
@@ -203,7 +210,7 @@ var DataFrame = function () {
      *
      * // Logs 2 4 6
      * for(const [row, idx] of df) {
-     *   console.log(row.get('x').iloc(0) * 2);
+     *   console.log(row.get('x') * 2);
      * }
      */
 
@@ -253,7 +260,7 @@ var DataFrame = function () {
   }, {
     key: 'get',
     value: function get(columns) {
-      if (typeof columns === 'string' && this.columnExists(columns)) return this._data.get(columns);
+      if ((typeof columns === 'string' || typeof columns === 'number') && this.columnExists(columns)) return this._data.get(columns);
       throw new Error('KeyError: ' + columns + ' not found');
     }
 
@@ -588,8 +595,8 @@ var DataFrame = function () {
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
         return new _series2.default(_immutable2.default.Range(0, this.length).map(function (idx) {
-          return _this5.columns.toArray().reduce(function (s, k) {
-            return s + _this5.get(k).iloc(idx);
+          return _this5.values.get(idx).reduce(function (s, k) {
+            return s + k;
           }, 0);
         }).toList(), { index: this.index });
       }
@@ -640,8 +647,8 @@ var DataFrame = function () {
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
         return new _series2.default(_immutable2.default.Range(0, this.length).map(function (idx) {
-          return _this6.columns.toArray().reduce(function (s, k) {
-            return s + _this6.get(k).iloc(idx) / _this6.columns.size;
+          return _this6.values.get(idx).reduce(function (s, k) {
+            return s + k / _this6.columns.size;
           }, 0);
         }).toList(), { index: this.index });
       }
@@ -691,10 +698,9 @@ var DataFrame = function () {
           return _this7.get(k).std();
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
-        var variances = this.variance(axis);
-        return new _series2.default(variances.values.map(function (v) {
+        return this.variance(axis).map(function (v) {
           return Math.sqrt(v);
-        }), { index: this.index });
+        });
       }
 
       throw new _exceptions.InvalidAxisError();
@@ -742,19 +748,19 @@ var DataFrame = function () {
           return _this8.get(k).variance();
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
-        var _ret = function () {
+        var _ret2 = function () {
           var means = _this8.mean(axis).values;
           return {
             v: new _series2.default(_immutable2.default.Range(0, _this8.length).map(function (idx) {
-              return _this8.columns.toArray().reduce(function (s, k) {
-                var diff = _this8.get(k).iloc(idx) - means.get(idx);
+              return _this8.values.get(idx).reduce(function (s, k) {
+                var diff = k - means.get(idx);
                 return s + diff * diff / (_this8.columns.size - 1);
               }, 0);
             }).toArray(), { index: _this8.index })
           };
         }();
 
-        if ((typeof _ret === 'undefined' ? 'undefined' : (0, _typeof3.default)(_ret)) === "object") return _ret.v;
+        if ((typeof _ret2 === 'undefined' ? 'undefined' : (0, _typeof3.default)(_ret2)) === "object") return _ret2.v;
       }
 
       throw new _exceptions.InvalidAxisError();
@@ -795,19 +801,17 @@ var DataFrame = function () {
       if (periods <= 0) throw new Error('periods must be positive');
 
       if (axis === 0) {
-        var _ret2 = function () {
-          var data = _immutable2.default.Map.of();
-          _this9._columns.forEach(function (k) {
-            data = data.set(k, _this9._data.get(k).pct_change(periods));
-          });
-          return {
-            v: new DataFrame(data, { index: _this9.index })
-          };
-        }();
-
-        if ((typeof _ret2 === 'undefined' ? 'undefined' : (0, _typeof3.default)(_ret2)) === "object") return _ret2.v;
+        return new DataFrame(_immutable2.default.Map(this.columns.map(function (k) {
+          return [k, _this9._data.get(k).pct_change(periods)];
+        })), { index: this.index });
       } else if (axis === 1) {
-        throw new Error('Not implemented');
+        return new DataFrame(_immutable2.default.Map(this.columns.map(function (k, idx) {
+          if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this9.length).toList(), { name: k, index: _this9.index })];
+          var compareCol = _this9.get(_this9.columns.get(idx - periods));
+          return [k, _this9.get(k).map(function (v, vIdx) {
+            return v / compareCol.iloc(vIdx) - 1;
+          })];
+        })), { index: this.index });
       }
 
       throw new _exceptions.InvalidAxisError();
@@ -1021,12 +1025,20 @@ var innerMerge = function innerMerge(df1, df2, on) {
   var intersectCols = (0, _utils.intersectingColumns)(cols1, cols2);
   intersectCols.count(); // Cache intersectCols size
 
+  var cols1Rename = cols1.map(function (k) {
+    return intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_x' : k;
+  });
+
+  var cols2Rename = cols2.map(function (k) {
+    return intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_y' : k;
+  });
+
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
   var _iteratorError = undefined;
 
   try {
-    var _loop = function _loop() {
+    var _loop2 = function _loop2() {
       var _step$value = (0, _slicedToArray3.default)(_step.value, 2),
           row1 = _step$value[0],
           _1 = _step$value[1];
@@ -1036,7 +1048,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
       var _iteratorError2 = undefined;
 
       try {
-        var _loop2 = function _loop2() {
+        var _loop3 = function _loop3() {
           var _step2$value = (0, _slicedToArray3.default)(_step2.value, 2),
               row2 = _step2$value[0],
               _2 = _step2$value[1];
@@ -1050,7 +1062,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
             for (var _iterator3 = on[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
               var c = _step3.value;
 
-              if (row1.get(c).iloc(0) !== row2.get(c).iloc(0)) {
+              if (row1.get(c) !== row2.get(c)) {
                 match = false;
                 break;
               }
@@ -1075,17 +1087,15 @@ var innerMerge = function innerMerge(df1, df2, on) {
               var rowData = {};
 
               on.forEach(function (k) {
-                rowData[k] = row1.get(k).iloc(0);
+                rowData[k] = row1.get(k);
               });
 
-              cols1.forEach(function (k) {
-                var nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_x' : k;
-                rowData[nextColName] = row1.get(k).iloc(0);
+              cols1.forEach(function (k, idx) {
+                rowData[cols1Rename.get(idx)] = row1.get(k);
               });
 
-              cols2.forEach(function (k) {
-                var nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_y' : k;
-                rowData[nextColName] = row2.get(k).iloc(0);
+              cols2.forEach(function (k, idx) {
+                rowData[cols2Rename.get(idx)] = row2.get(k);
               });
 
               data.push(rowData);
@@ -1094,7 +1104,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
         };
 
         for (var _iterator2 = df2.iterrows()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          _loop2();
+          _loop3();
         }
       } catch (err) {
         _didIteratorError2 = true;
@@ -1113,7 +1123,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
     };
 
     for (var _iterator = df1.iterrows()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      _loop();
+      _loop2();
     }
   } catch (err) {
     _didIteratorError = true;
@@ -1150,7 +1160,7 @@ var outerMerge = function outerMerge(df1, df2, on) {
   var _iteratorError4 = undefined;
 
   try {
-    var _loop3 = function _loop3() {
+    var _loop4 = function _loop4() {
       var _step4$value = (0, _slicedToArray3.default)(_step4.value, 2),
           row1 = _step4$value[0],
           idx_1 = _step4$value[1];
@@ -1160,7 +1170,7 @@ var outerMerge = function outerMerge(df1, df2, on) {
       var _iteratorError5 = undefined;
 
       try {
-        var _loop4 = function _loop4() {
+        var _loop5 = function _loop5() {
           var _step5$value = (0, _slicedToArray3.default)(_step5.value, 2),
               row2 = _step5$value[0],
               idx_2 = _step5$value[1];
@@ -1174,7 +1184,7 @@ var outerMerge = function outerMerge(df1, df2, on) {
             for (var _iterator6 = on[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
               var c = _step6.value;
 
-              if (row1.get(c).iloc(0) !== row2.get(c).iloc(0)) {
+              if (row1.get(c) !== row2.get(c)) {
                 match = false;
                 break;
               }
@@ -1197,18 +1207,18 @@ var outerMerge = function outerMerge(df1, df2, on) {
           var rowData = {};
 
           on.forEach(function (k) {
-            rowData[k] = row1.get(k).iloc(0);
+            rowData[k] = row1.get(k);
           });
 
           cols1.forEach(function (k) {
             var nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_x' : k;
-            rowData[nextColName] = row1.get(k).iloc(0);
+            rowData[nextColName] = row1.get(k);
           });
 
           if (match) {
             cols2.forEach(function (k) {
               var nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_y' : k;
-              rowData[nextColName] = row2.get(k).iloc(0);
+              rowData[nextColName] = row2.get(k);
             });
             data.push(rowData);
             matched1[idx_1] = true;
@@ -1217,7 +1227,7 @@ var outerMerge = function outerMerge(df1, df2, on) {
         };
 
         for (var _iterator5 = df2.iterrows()[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-          _loop4();
+          _loop5();
         }
       } catch (err) {
         _didIteratorError5 = true;
@@ -1236,7 +1246,7 @@ var outerMerge = function outerMerge(df1, df2, on) {
     };
 
     for (var _iterator4 = df1.iterrows()[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-      _loop3();
+      _loop4();
     }
   } catch (err) {
     _didIteratorError4 = true;

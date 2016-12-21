@@ -96,9 +96,9 @@ describe('frame', () => {
       const df1 = new DataFrame(vals);
 
       for (const [row, idx] of df1.iterrows()) {
-        expect(row).toBeInstanceOf(DataFrame);
-        expect(row.get('x').iloc(0)).toEqual(vals[idx].x);
-        expect(row.get('y').iloc(0)).toEqual(vals[idx].y);
+        expect(row).toBeInstanceOf(Immutable.Map);
+        expect(row.get('x')).toEqual(vals[idx].x);
+        expect(row.get('y')).toEqual(vals[idx].y);
       }
     });
 
@@ -255,7 +255,7 @@ describe('frame', () => {
   });
 
   describe('values', () => {
-    it('values returns an Immutable.List of Immutable.Lists with [column][row] indexing', () => {
+    it('values returns an Immutable.List of Immutable.Lists with [row][column] indexing', () => {
       const vals1 = [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}, {x: 4, y: 10}];
       const df1 = new DataFrame(vals1);
 
@@ -277,17 +277,27 @@ describe('frame', () => {
 
   describe('merge', () => {
     it('merges a second DataFrame to this instance on a given key', () => {
-      const vals1 = [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}, {x: 4, y: 10}];
-      const df1 = new DataFrame(vals1);
-      const vals2 = [{x: 2, z: 6}, {x: 1, z: 1}, {x: 3, z: 100}];
-      const df2 = new DataFrame(vals2);
+      // n = 10  : .014s
+      // n = 25  : .037s
+      // n = 50  : .11s
+      // n = 100 : .38s
+      // n = 200 : 3.2s
+      // n = 300 : 5.1s
+      // n = 400 : 8.5s
+      // n = 800 : 35.7s
+      const n = 25;
+      const xSeries = new Series(Immutable.Range(0, n).toList());
+      const ySeries = new Series(Immutable.Range(1, n + 1).toList());
+      const zSeries = new Series(Immutable.Range(n + 2, 2, -1).toList());
+      const df1 = new DataFrame(Immutable.Map({x: xSeries, y: ySeries}));
+      const df2 = new DataFrame(Immutable.Map({x: xSeries, z: zSeries}));
 
       const df3 = df1.merge(df2, ['x']);
       expect(df3).toBeInstanceOf(DataFrame);
-      expect(df3.length).toEqual(3);
-      expect(df3.get('x').values.toArray()).toEqual([1, 2, 3]);
-      expect(df3.get('y').values.toArray()).toEqual([2, 3, 4]);
-      expect(df3.get('z').values.toArray()).toEqual([1, 6, 100]);
+      expect(df3.length).toEqual(25);
+      expect(df3.get('x').values.toArray()).toEqual(xSeries.values.toArray());
+      expect(df3.get('y').values.toArray()).toEqual(ySeries.values.toArray());
+      expect(df3.get('z').values.toArray()).toEqual(zSeries.values.toArray());
     });
 
     it('merges a second DataFrame after columns are renamed', () => {
@@ -529,6 +539,16 @@ describe('frame', () => {
       expect(df2.get('x').values.toArray()).toEqual([null, 1, 0.5]);
       expect(df2.get('y').values.toArray()).toEqual([null, 0.5, (4 / 3) - 1]);
       expect(df2.index.toArray()).toEqual([2, 3, 4]);
+    });
+
+    it('calculates the pct_change along axis 1', () => {
+      const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [2, 3, 4]});
+
+      const df2 = df1.pct_change(1, 1);
+      expect(df2.values.get(0).toArray()).toEqual([null, 1]);
+      expect(df2.values.get(1).toArray()).toEqual([null, 0.5]);
+      expect(df2.values.get(2).toArray()).toEqual([null, (4 / 3) - 1]);
+      expect(df2.columns.toArray()).toEqual(['x', 'y']);
     });
   });
 });

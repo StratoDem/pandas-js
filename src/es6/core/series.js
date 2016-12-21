@@ -89,7 +89,7 @@ export default class Series {
       array.push(func(val, idx));
     }
 
-    return new Series(array);
+    return new Series(array, {name: this.name, index: this.index});
   }
 
   /**
@@ -465,13 +465,13 @@ export default class Series {
    */
   add(val) {
     if (typeof val === 'number')
-      return new Series(this.values.map(v => v + val));
+      return this.map(v => v + val);
     else if (val instanceof Series)
-      return new Series(this.values.map((v, idx) => v + val.values.get(idx)));
+      return this.map((v, idx) => v + val.iloc(idx));
     else if (Array.isArray(val))
-      return new Series(this.values.map((v, idx) => v + val[idx]));
+      return this.map((v, idx) => v + val[idx]);
     else if (val instanceof Immutable.List)
-      return new Series(this.values.map((v, idx) => v + val.get(idx)));
+      return this.map((v, idx) => v + val.get(idx));
 
     throw new Error('add only supports numbers, Arrays, Immutable List and pandas.Series');
   }
@@ -496,13 +496,13 @@ export default class Series {
    */
   sub(val) {
     if (typeof val === 'number')
-      return new Series(this.values.map(v => v - val));
+      return this.map(v => v - val);
     else if (val instanceof Series)
-      return new Series(this.values.map((v, idx) => v - val.values.get(idx)));
+      return this.map((v, idx) => v - val.iloc(idx));
     else if (Array.isArray(val))
-      return new Series(this.values.map((v, idx) => v - val[idx]));
+      return this.map((v, idx) => v - val[idx]);
     else if (val instanceof Immutable.List)
-      return new Series(this.values.map((v, idx) => v - val.get(idx)));
+      return this.map((v, idx) => v - val.get(idx));
 
     throw new Error('sub only supports numbers, Arrays, Immutable List and pandas.Series');
   }
@@ -527,13 +527,13 @@ export default class Series {
    */
   mul(val) {
     if (typeof val === 'number')
-      return new Series(this.values.map(v => v * val));
+      return this.map(v => v * val);
     else if (val instanceof Series)
-      return new Series(this.values.map((v, idx) => v * val.values.get(idx)));
+      return this.map((v, idx) => v * val.iloc(idx));
     else if (Array.isArray(val))
-      return new Series(this.values.map((v, idx) => v * val[idx]));
+      return this.map((v, idx) => v * val[idx]);
     else if (val instanceof Immutable.List)
-      return new Series(this.values.map((v, idx) => v * val.get(idx)));
+      return this.map((v, idx) => v * val.get(idx));
 
     throw new Error('mul only supports numbers, Arrays, Immutable List and pandas.Series');
   }
@@ -580,13 +580,13 @@ export default class Series {
    */
   div(val) {
     if (typeof val === 'number')
-      return new Series(this.values.map(v => v / val));
+      return this.map(v => v / val);
     else if (val instanceof Series)
-      return new Series(this.values.map((v, idx) => v / val.values.get(idx)));
+      return this.map((v, idx) => v / val.iloc(idx));
     else if (Array.isArray(val))
-      return new Series(this.values.map((v, idx) => v / val[idx]));
+      return this.map((v, idx) => v / val[idx]);
     else if (val instanceof Immutable.List)
-      return new Series(this.values.map((v, idx) => v / val.get(idx)));
+      return this.map((v, idx) => v / val.get(idx));
 
     throw new Error('div only supports numbers, Arrays, Immutable List and pandas.Series');
   }
