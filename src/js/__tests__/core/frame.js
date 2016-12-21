@@ -70,6 +70,7 @@ describe('frame', function () {
         df1.index = _immutable2.default.List([2, 3, 4]);
 
         expect(df1.index.toArray()).toEqual([2, 3, 4]);
+        expect(df1.get('x').index.toArray()).toEqual([2, 3, 4]);
       });
 
       it('throws IndexMismatchError in setter if index does not match', function () {

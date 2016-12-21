@@ -254,6 +254,11 @@ export default class DataFrame {
    */
   set index(index) {
     this._index = parseIndex(index, this._data.get(this._columns.get(0)).values);
+
+    // noinspection Eslint
+    this._data.mapEntries(([k, v]) => { // noinspection Eslint
+      v.index = this.index;
+    });
   }
 
   /**

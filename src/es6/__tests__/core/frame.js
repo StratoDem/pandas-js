@@ -56,6 +56,7 @@ describe('frame', () => {
         df1.index = Immutable.List([2, 3, 4]);
 
         expect(df1.index.toArray()).toEqual([2, 3, 4]);
+        expect(df1.get('x').index.toArray()).toEqual([2, 3, 4]);
       });
 
       it('throws IndexMismatchError in setter if index does not match', () => {

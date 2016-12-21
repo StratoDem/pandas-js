@@ -947,7 +947,19 @@ var DataFrame = function () {
      */
     ,
     set: function set(index) {
+      var _this11 = this;
+
       this._index = (0, _utils.parseIndex)(index, this._data.get(this._columns.get(0)).values);
+
+      // noinspection Eslint
+      this._data.mapEntries(function (_ref9) {
+        var _ref10 = (0, _slicedToArray3.default)(_ref9, 2),
+            k = _ref10[0],
+            v = _ref10[1];
+
+        // noinspection Eslint
+        v.index = _this11.index;
+      });
     }
 
     /**
@@ -967,10 +979,10 @@ var DataFrame = function () {
   }, {
     key: 'length',
     get: function get() {
-      var _this11 = this;
+      var _this12 = this;
 
       return Math.max.apply(Math, (0, _toConsumableArray3.default)(this._data.keySeq().map(function (k) {
-        return _this11.get(k).length;
+        return _this12.get(k).length;
       }).toArray()));
     }
 
