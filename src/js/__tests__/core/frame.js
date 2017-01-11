@@ -579,6 +579,30 @@ describe('frame', function () {
     });
   });
 
+  describe('cov', function () {
+    it('calculates the covariance of all Series in a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2, z: 3 }, { x: 2, y: 1, z: 5 }, { x: 3, y: 0, z: 7 }]);
+
+      var dfCov = df.cov();
+
+      expect(dfCov.get('x').values.toArray()).toEqual([1, -1, 2]);
+      expect(dfCov.get('y').values.toArray()).toEqual([-1, 1, -2]);
+      expect(dfCov.get('z').values.toArray()).toEqual([2, -2, 4]);
+    });
+  });
+
+  describe('corr', function () {
+    it('calculates the correlation of all Series in a DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2, z: 3 }, { x: 2, y: 1, z: 5 }, { x: 3, y: 0, z: 7 }]);
+
+      var dfCorr = df.corr();
+
+      expect(dfCorr.get('x').values.toArray()).toEqual([1, -1, 1]);
+      expect(dfCorr.get('y').values.toArray()).toEqual([-1, 1, -1]);
+      expect(dfCorr.get('z').values.toArray()).toEqual([1, -1, 1]);
+    });
+  });
+
   describe('pct_change', function () {
     it('calculates the pct_change along axis 0', function () {
       var df1 = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [2, 3, 4] });

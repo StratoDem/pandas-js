@@ -16,9 +16,25 @@ var _createClass2 = require('babel-runtime/helpers/createClass');
 
 var _createClass3 = _interopRequireDefault(_createClass2);
 
+var _possibleConstructorReturn2 = require('babel-runtime/helpers/possibleConstructorReturn');
+
+var _possibleConstructorReturn3 = _interopRequireDefault(_possibleConstructorReturn2);
+
+var _get2 = require('babel-runtime/helpers/get');
+
+var _get3 = _interopRequireDefault(_get2);
+
+var _inherits2 = require('babel-runtime/helpers/inherits');
+
+var _inherits3 = _interopRequireDefault(_inherits2);
+
 var _immutable = require('immutable');
 
 var _immutable2 = _interopRequireDefault(_immutable);
+
+var _generic = require('./generic');
+
+var _generic2 = _interopRequireDefault(_generic);
 
 var _utils = require('./utils');
 
@@ -26,7 +42,14 @@ var _dtype = require('./dtype');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var Series = function () {
+/**
+ * A pandas.Series one-dimensional array with axis labels, with an Immutable.List instead of
+ * numpy.ndarray as the values
+ */
+
+var Series = function (_NDFrame) {
+  (0, _inherits3.default)(Series, _NDFrame);
+
   /**
    * One dimensional array with axis labels. An `Immutable.List` serves as the numpy.ndarray for
    * values.
@@ -57,23 +80,27 @@ var Series = function () {
     var kwargs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     (0, _classCallCheck3.default)(this, Series);
 
+    var _this = (0, _possibleConstructorReturn3.default)(this, (Series.__proto__ || Object.getPrototypeOf(Series)).call(this, data, kwargs));
+
     if (Array.isArray(data)) {
-      this._values = _immutable2.default.List(data);
-      this._dtype = (0, _dtype.arrayToDType)(data);
+      _this._values = _immutable2.default.List(data);
+      _this._dtype = (0, _dtype.arrayToDType)(data);
     } else if (data instanceof _immutable2.default.List) {
-      this._values = data;
-      this._dtype = (0, _dtype.arrayToDType)(data);
+      _this._values = data;
+      _this._dtype = (0, _dtype.arrayToDType)(data);
     } else {
-      this._values = _immutable2.default.List.of(data);
-      this._dtype = (0, _dtype.arrayToDType)([data]);
+      _this._values = _immutable2.default.List.of(data);
+      _this._dtype = (0, _dtype.arrayToDType)([data]);
     }
 
-    this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
+    _this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
 
-    this._index = (0, _utils.parseIndex)(kwargs.index, this.values);
+    _this.set_axis(0, (0, _utils.parseIndex)(kwargs.index, _this.values));
+    _this._setup_axes(_immutable2.default.List.of(0));
 
-    this._sort_ascending = this._sort_ascending.bind(this);
-    this._sort_descending = this._sort_descending.bind(this);
+    _this._sort_ascending = _this._sort_ascending.bind(_this);
+    _this._sort_descending = _this._sort_descending.bind(_this);
+    return _this;
   }
 
   (0, _createClass3.default)(Series, [{
@@ -160,13 +187,13 @@ var Series = function () {
   }, {
     key: 'toString',
     value: function toString() {
-      var _this = this;
+      var _this2 = this;
 
       var vals = this.iloc(0, 10).values;
 
       var valString = '';
       vals.forEach(function (v, idx) {
-        valString += _this.index.get(idx) + '\t' + v + '\n';
+        valString += _this2.index.get(idx) + '\t' + v + '\n';
       });
 
       return valString + 'Name: ' + this.name + ', dtype: ' + this.dtype;
@@ -401,13 +428,13 @@ var Series = function () {
   }, {
     key: 'variance',
     value: function variance() {
-      var _this2 = this;
+      var _this3 = this;
 
       var mean = this.mean();
 
       return this.values.reduce(function (s, v) {
         var diff = v - mean;
-        return s + diff * diff / (_this2.length - 1);
+        return s + diff * diff / (_this3.length - 1);
       }, 0);
     }
 
@@ -645,6 +672,83 @@ var Series = function () {
     }
 
     /**
+     * Calculate the covariance between this `Series` and another `Series` or iterable
+     *
+     * pandas equivalent: [Series.cov](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.cov.html)
+     *
+     * @param {Series} ds
+     *    Series with which to calculate covariance
+     *
+     * @returns {number}
+     *
+     * @example
+     * const ds1 = new Series([1, 2, 3, 4, 5]);
+     * const ds2 = new Series([2, 4, 6, 8, 10]);
+     *
+     * // Returns 5
+     * ds1.cov(ds2);
+     *
+     * // Also returns 5
+     * ds2.cov(ds1);
+     */
+
+  }, {
+    key: 'cov',
+    value: function cov(ds) {
+      if (!(ds instanceof Series)) throw new Error('ds must be a Series');
+
+      if (ds.length !== this.length) throw new Error('Series must be of equal length');
+
+      var n = 0;
+      var mean1 = 0;
+      var mean2 = 0;
+      var m12 = 0;
+
+      this.values.forEach(function (v1, idx) {
+        n += 1;
+        var d1 = (v1 - mean1) / n;
+        mean1 += d1;
+        var d2 = (ds.values.get(idx) - mean2) / n;
+        mean2 += d2;
+
+        m12 += (n - 1) * d1 * d2 - m12 / n;
+      });
+
+      return n / (n - 1) * m12;
+    }
+
+    /**
+     * Calculate the correlation between this `Series` and another `Series` or iterable
+     *
+     * pandas equivalent: [Series.corr](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.corr.html)
+     *
+     * @param {Series} ds
+     *    Series with which to calculate correlation
+     *
+     * @returns {number}
+     *
+     * @example
+     * const ds1 = new Series([1, 2, 3, 4, 5]);
+     * const ds2 = new Series([2, 4, 6, 8, 10]);
+     *
+     * // Returns 1
+     * ds1.corr(ds2);
+     *
+     * // Also returns 1
+     * ds2.corr(ds1);
+     */
+
+  }, {
+    key: 'corr',
+    value: function corr(ds) {
+      if (!(ds instanceof Series)) throw new Error('ds must be a Series');
+
+      if (ds.length !== this.length) throw new Error('Series must be of equal length');
+
+      return this.cov(ds) / (this.std() * ds.std());
+    }
+
+    /**
      * Return the percentage change over a given number of periods
      *
      * pandas equivalent: [Series.pct_change](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.pct_change.html)
@@ -664,7 +768,7 @@ var Series = function () {
   }, {
     key: 'pct_change',
     value: function pct_change() {
-      var _this3 = this;
+      var _this4 = this;
 
       var periods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
 
@@ -672,7 +776,7 @@ var Series = function () {
       if (periods <= 0) throw new Error('periods must be positive');
 
       return new Series(_immutable2.default.Repeat(null, periods).toList().concat(_immutable2.default.Range(periods, this.length).map(function (idx) {
-        return _this3.values.get(idx) / _this3.values.get(idx - periods) - 1;
+        return _this4.values.get(idx) / _this4.values.get(idx - periods) - 1;
       }).toList()), { index: this.index, name: this.name });
     }
   }, {
@@ -714,14 +818,14 @@ var Series = function () {
   }, {
     key: 'sort_values',
     value: function sort_values() {
-      var _this4 = this;
+      var _this5 = this;
 
       var ascending = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 
       var sortedIndex = ascending ? this.index.sort(this._sort_ascending) : this.index.sort(this._sort_descending);
 
       return new Series(sortedIndex.map(function (i) {
-        return _this4.iloc(i);
+        return _this5.iloc(i);
       }), { name: this.name, index: sortedIndex });
     }
 
@@ -755,7 +859,7 @@ var Series = function () {
   }, {
     key: '_alignSeries',
     value: function _alignSeries(series) {
-      var _this5 = this;
+      var _this6 = this;
 
       // Align two series by index values, returning a Map with index values as keys and
       // values as Maps with 1: List [value locations at index], 2: [value locations at index]
@@ -765,12 +869,12 @@ var Series = function () {
       this.index.forEach(function (idx1) {
         if (!seriesAlignment.has(idx1)) {
           seriesAlignment = seriesAlignment.set(idx1, _immutable2.default.Map({
-            first: _immutable2.default.List.of(_this5.iloc(idx1)),
+            first: _immutable2.default.List.of(_this6.iloc(idx1)),
             second: _immutable2.default.List([])
           }));
         } else {
           seriesAlignment = seriesAlignment.updateIn([idx1, 'first'], function (l) {
-            return l.concat(_this5.iloc(idx1));
+            return l.concat(_this6.iloc(idx1));
           });
         }
       });
@@ -1125,21 +1229,21 @@ var Series = function () {
   }, {
     key: 'filter',
     value: function filter(iterBool) {
-      var _this6 = this;
+      var _this7 = this;
 
       if (!Array.isArray(iterBool) && !(iterBool instanceof _immutable2.default.List) && !(iterBool instanceof Series)) throw new Error('filter must be an Array, List, or Series');
 
       var valueIndexMap = { values: [], index: [] };
       if (iterBool instanceof Series) iterBool.values.forEach(function (v, idx) {
         if (v === true) {
-          valueIndexMap.values.push(_this6.values.get(idx));
-          valueIndexMap.index.push(_this6.index.get(idx));
+          valueIndexMap.values.push(_this7.values.get(idx));
+          valueIndexMap.index.push(_this7.index.get(idx));
         }
       });else {
         iterBool.forEach(function (v, idx) {
           if (v === true) {
-            valueIndexMap.values.push(_this6.values.get(idx));
-            valueIndexMap.index.push(_this6.index.get(idx));
+            valueIndexMap.values.push(_this7.values.get(idx));
+            valueIndexMap.index.push(_this7.index.get(idx));
           }
         });
       }
@@ -1188,7 +1292,7 @@ var Series = function () {
   }, {
     key: 'index',
     get: function get() {
-      return this._index;
+      return this._get_axis(0);
     }
 
     /**
@@ -1206,7 +1310,7 @@ var Series = function () {
      */
     ,
     set: function set(index) {
-      this._index = (0, _utils.parseIndex)(index, this.values);
+      this.set_axis(0, (0, _utils.parseIndex)(index, this.values));
     }
 
     /**
@@ -1246,13 +1350,10 @@ var Series = function () {
   }, {
     key: 'values',
     get: function get() {
-      return this._values;
+      return (0, _get3.default)(Series.prototype.__proto__ || Object.getPrototypeOf(Series.prototype), 'values', this);
     }
   }]);
   return Series;
-}(); /**
-      * A pandas.Series one-dimensional array with axis labels, with an Immutable.List instead of
-      * numpy.ndarray as the values
-      */
+}(_generic2.default);
 
 exports.default = Series;

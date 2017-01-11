@@ -2,6 +2,7 @@
 import Immutable from 'immutable';
 
 import { InvalidAxisError } from './exceptions';
+import NDFrame from './generic';
 import Series from './series';
 import { enumerate, nonMergeColumns, intersectingColumns, parseIndex } from './utils';
 
@@ -28,7 +29,7 @@ const parseArrayToSeriesMap = (array, index) => {
   return Immutable.Map(dataMap);
 };
 
-export default class DataFrame {
+export default class DataFrame extends NDFrame {
   /**
    * Two-dimensional size-mutable, potentially heterogeneous tabular data
    * structure with labeled axes (rows and columns). Arithmetic operations
@@ -52,10 +53,12 @@ export default class DataFrame {
    * df.toString();
    */
   constructor(data, kwargs = {}) {
+    super(data, kwargs);
+
     if (Array.isArray(data)) {
-      this._index = parseIndex(kwargs.index, Immutable.List(data));
-      this._data = parseArrayToSeriesMap(data, this._index);
-      this._columns = this._data.keySeq();
+      this.set_axis(0, parseIndex(kwargs.index, Immutable.List(data)));
+      this._data = parseArrayToSeriesMap(data, this.index);
+      this.set_axis(1, this._data.keySeq());
     } else if (data instanceof Immutable.Map) {
       this._data = Immutable.Map(data.keySeq().map((k) => {
         if (!(data.get(k) instanceof Series))
@@ -63,20 +66,22 @@ export default class DataFrame {
 
         return [k, data.get(k).copy()];
       }));
-      this._columns = this._data.keySeq();
-      this._index = this._data.get(this.columns.get(0)).index;
+      this.set_axis(1, this._data.keySeq());
+      this.set_axis(0, this._data.get(this.columns.get(0)).index);
     } else if (typeof data === 'undefined') {
       this._data = Immutable.Map({});
-      this._columns = Immutable.Seq.of();
-      this._index = Immutable.List.of();
+      this.set_axis(0, Immutable.List.of());
+      this.set_axis(1, Immutable.Seq.of());
     }
 
+    // TODO this is a slow operation
     let valuesList = Immutable.List([]);
     for (let idx = 0; idx < this.length; idx += 1) {
       valuesList = valuesList.concat(
         [Immutable.List(this.columns.map(k => this._data.get(k).iloc(idx)))]);
     }
     this._values = valuesList;
+    this._setup_axes(Immutable.List.of(0, 1));
   }
 
   toString() {
@@ -173,7 +178,7 @@ export default class DataFrame {
    * df.values;
    */
   get values() {
-    return this._values;
+    return super.values;
   }
 
   /**
@@ -190,7 +195,7 @@ export default class DataFrame {
    * df.columns;
    */
   get columns() {
-    return this._columns;
+    return this._get_axis(1);
   }
 
   /**
@@ -222,7 +227,7 @@ export default class DataFrame {
     });
 
     this._data = Immutable.Map(nextData);
-    this._columns = Immutable.Seq(columns);
+    this.set_axis(1, Immutable.Seq(columns));
   }
 
   /**
@@ -237,7 +242,7 @@ export default class DataFrame {
    * df.index;
    */
   get index() {
-    return this._index;
+    return this._get_axis(0);
   }
 
   /**
@@ -256,7 +261,7 @@ export default class DataFrame {
    * df.index;
    */
   set index(index) {
-    this._index = parseIndex(index, this._data.get(this._columns.get(0)).values);
+    this.set_axis(0, parseIndex(index, this._data.get(this.columns.get(0)).values));
 
     // noinspection Eslint
     this._data.mapEntries(([k, v]) => { // noinspection Eslint
@@ -281,25 +286,8 @@ export default class DataFrame {
     return Math.max(...this._data.keySeq().map(k => this.get(k).length).toArray());
   }
 
-  /**
-   * Return a List representing the dimensionality of the DataFrame
-   *
-   * pandas equivalent: [DataFrame.shape](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.shape.html)
-   *
-   * @returns {List<number>}
-   *
-   * @example
-   * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}];
-   *
-   * // Returns List [3, 2]
-   * df.shape;
-   */
-  get shape() {
-    return Immutable.List([this.length, this.columns.size]);
-  }
-
   columnExists(col) {
-    return this._columns.indexOf(col) >= 0;
+    return this.columns.indexOf(col) >= 0;
   }
 
   /**
@@ -742,6 +730,72 @@ export default class DataFrame {
     }
 
     throw new InvalidAxisError();
+  }
+
+  _pairwiseDataFrame(func) {
+    // Apply the func between all Series in the DataFrame, takes two series and returns a value
+    const valArray = [];
+
+    // Calculate upper triangle
+    for (let idx1 = 0; idx1 < this.columns.size; idx1 += 1) {
+      valArray.push({});
+      const ds1 = this.get(this.columns.get(idx1));
+
+      for (let idx2 = idx1; idx2 < this.columns.size; idx2 += 1) {
+        const col2 = this.columns.get(idx2);
+        const ds2 = this.get(col2);
+        valArray[idx1][col2] = func(ds1, ds2);
+      }
+    }
+
+    // Take upper triangle and fill in lower triangle
+    for (let idx1 = 0; idx1 < this.columns.size; idx1 += 1) {
+        const col1 = this.columns.get(idx1);
+      for (let idx2 = idx1 + 1; idx2 < this.columns.size; idx2 += 1) {
+        const col2 = this.columns.get(idx2);
+        valArray[idx2][col1] = valArray[idx1][col2];
+      }
+    }
+
+    return new DataFrame(valArray, {index: this.columns.toList()});
+  }
+
+  /**
+   * Calculate the covariance between all `Series` in the `DataFrame`
+   *
+   * pandas equivalent: [DataFrame.cov](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.cov.html)
+   *
+   * @return {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 1, z: 5}, {x: 3, y: 0, z: 7}]);
+   *
+   * // Returns DataFrame([{x: 1, y: -1, z: 2}, {x: -1, y: 1, z: -2}, {x: 2, y: -2, z: 4}])
+   * df.cov();
+   */
+  cov() {
+    return this._pairwiseDataFrame((ds1, ds2) => ds1.cov(ds2));
+  }
+
+  /**
+   * Calculate the correlation between all `Series` in the `DataFrame`
+   *
+   * pandas equivalent: [DataFrame.corr](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.corr.html)
+   *
+   * @return {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 1, z: 5}, {x: 3, y: 0, z: 7}]);
+   *
+   * // Returns DataFrame([{x: 1, y: -1, z: 1}, {x: -1, y: 1, z: -1}, {x: 1, y: -1, z: 1}])
+   * df.corr();
+   */
+  corr() {
+    // noinspection Eslint
+    const corrFunc = (ds1, ds2) => {
+      return ds1.values === ds2.values ? 1 : ds1.corr(ds2);
+    };
+    return this._pairwiseDataFrame(corrFunc);
   }
 
   /**

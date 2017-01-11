@@ -46,6 +46,12 @@ describe('series', () => {
       expect(ds2.index.toArray()).toEqual([1, 2, 3, 4]);
     });
 
+    it('shape', () => {
+      const ds = new Series([1, 2, 3, 4, 5]);
+      expect(ds.shape).toBeInstanceOf(Immutable.Seq);
+      expect(ds.shape.toArray()).toEqual([5]);
+    });
+
     describe('astype', () => {
       it('converts a float Series to an integer Series', () => {
         const ds1 = new Series([1.5, 2.1, 3.9]);
@@ -511,6 +517,40 @@ describe('series', () => {
         expect(dsFilter.length).toEqual(3);
         expect(dsFilter.values.toArray()).toEqual([2, 3, 4]);
         expect(dsFilter.index.toArray()).toEqual([1, 2, 3]);
+      });
+    });
+
+    describe('cov', () => {
+      it('calculates the covariance between this Series and another', () => {
+        const ds1 = new Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        const ds2 = new Series([-10, -8, -6, -4, -2, 0, 2, 4, 6, 8]);
+
+        const cov = ds1.cov(ds2);
+        expect(cov).toBeCloseTo(18.3333333, 6);
+      });
+
+      it('throws an error if the Series are not equal length', () => {
+        const ds1 = new Series([1, 2, 3, 4]);
+        const ds2 = new Series([2, 3, 4]);
+
+        expect(() => { ds1.cov(ds2); }).toThrow();
+      });
+    });
+
+    describe('corr', () => {
+      it('calculates the correlation between this Series and another', () => {
+        const ds1 = new Series([1, 2, 3, 4, 5]);
+        const ds2 = new Series([-10, -8, -6, -4, -2]);
+
+        const corr = ds1.corr(ds2);
+        expect(corr).toBeCloseTo(1, 8);
+      });
+
+      it('throws an error if the Series are not equal length', () => {
+        const ds1 = new Series([1, 2, 3, 4]);
+        const ds2 = new Series([2, 3, 4]);
+
+        expect(() => { ds1.corr(ds2); }).toThrow();
       });
     });
   });

@@ -58,11 +58,13 @@ export const intersectingColumns = (cols1, cols2) => cols1.filter(k => cols2.ind
  */
 export const parseIndex = (index, values) => {
   if (Array.isArray(index)) {
-    if (values.size !== index.length) throw new IndexMismatchError();
+    if (values.size !== index.length)
+      throw new IndexMismatchError('values size not equal to index size');
 
     return Immutable.List(index);
   } else if (index instanceof Immutable.List) {
-    if (values.size !== index.size) throw new IndexMismatchError();
+    if (values.size !== index.size)
+      throw new IndexMismatchError('values size not equal to index size');
 
     return index;
   } else if (typeof index !== 'undefined') {

@@ -21,6 +21,18 @@ var _createClass2 = require('babel-runtime/helpers/createClass');
 
 var _createClass3 = _interopRequireDefault(_createClass2);
 
+var _possibleConstructorReturn2 = require('babel-runtime/helpers/possibleConstructorReturn');
+
+var _possibleConstructorReturn3 = _interopRequireDefault(_possibleConstructorReturn2);
+
+var _get2 = require('babel-runtime/helpers/get');
+
+var _get3 = _interopRequireDefault(_get2);
+
+var _inherits2 = require('babel-runtime/helpers/inherits');
+
+var _inherits3 = _interopRequireDefault(_inherits2);
+
 var _typeof2 = require('babel-runtime/helpers/typeof');
 
 var _typeof3 = _interopRequireDefault(_typeof2);
@@ -30,6 +42,10 @@ var _immutable = require('immutable');
 var _immutable2 = _interopRequireDefault(_immutable);
 
 var _exceptions = require('./exceptions');
+
+var _generic = require('./generic');
+
+var _generic2 = _interopRequireDefault(_generic);
 
 var _series = require('./series');
 
@@ -61,7 +77,9 @@ var parseArrayToSeriesMap = function parseArrayToSeriesMap(array, index) {
   return _immutable2.default.Map(dataMap);
 };
 
-var DataFrame = function () {
+var DataFrame = function (_NDFrame) {
+  (0, _inherits3.default)(DataFrame, _NDFrame);
+
   /**
    * Two-dimensional size-mutable, potentially heterogeneous tabular data
    * structure with labeled axes (rows and columns). Arithmetic operations
@@ -85,29 +103,30 @@ var DataFrame = function () {
    * df.toString();
    */
   function DataFrame(data) {
-    var _this = this;
-
     var kwargs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     (0, _classCallCheck3.default)(this, DataFrame);
 
+    var _this = (0, _possibleConstructorReturn3.default)(this, (DataFrame.__proto__ || Object.getPrototypeOf(DataFrame)).call(this, data, kwargs));
+
     if (Array.isArray(data)) {
-      this._index = (0, _utils.parseIndex)(kwargs.index, _immutable2.default.List(data));
-      this._data = parseArrayToSeriesMap(data, this._index);
-      this._columns = this._data.keySeq();
+      _this.set_axis(0, (0, _utils.parseIndex)(kwargs.index, _immutable2.default.List(data)));
+      _this._data = parseArrayToSeriesMap(data, _this.index);
+      _this.set_axis(1, _this._data.keySeq());
     } else if (data instanceof _immutable2.default.Map) {
-      this._data = _immutable2.default.Map(data.keySeq().map(function (k) {
+      _this._data = _immutable2.default.Map(data.keySeq().map(function (k) {
         if (!(data.get(k) instanceof _series2.default)) throw new Error('Map must have [column, series] key-value pairs');
 
         return [k, data.get(k).copy()];
       }));
-      this._columns = this._data.keySeq();
-      this._index = this._data.get(this.columns.get(0)).index;
+      _this.set_axis(1, _this._data.keySeq());
+      _this.set_axis(0, _this._data.get(_this.columns.get(0)).index);
     } else if (typeof data === 'undefined') {
-      this._data = _immutable2.default.Map({});
-      this._columns = _immutable2.default.Seq.of();
-      this._index = _immutable2.default.List.of();
+      _this._data = _immutable2.default.Map({});
+      _this.set_axis(0, _immutable2.default.List.of());
+      _this.set_axis(1, _immutable2.default.Seq.of());
     }
 
+    // TODO this is a slow operation
     var valuesList = _immutable2.default.List([]);
 
     var _loop = function _loop(idx) {
@@ -116,10 +135,12 @@ var DataFrame = function () {
       }))]);
     };
 
-    for (var idx = 0; idx < this.length; idx += 1) {
+    for (var idx = 0; idx < _this.length; idx += 1) {
       _loop(idx);
     }
-    this._values = valuesList;
+    _this._values = valuesList;
+    _this._setup_axes(_immutable2.default.List.of(0, 1));
+    return _this;
   }
 
   (0, _createClass3.default)(DataFrame, [{
@@ -237,7 +258,7 @@ var DataFrame = function () {
   }, {
     key: 'columnExists',
     value: function columnExists(col) {
-      return this._columns.indexOf(col) >= 0;
+      return this.columns.indexOf(col) >= 0;
     }
 
     /**
@@ -765,6 +786,81 @@ var DataFrame = function () {
 
       throw new _exceptions.InvalidAxisError();
     }
+  }, {
+    key: '_pairwiseDataFrame',
+    value: function _pairwiseDataFrame(func) {
+      // Apply the func between all Series in the DataFrame, takes two series and returns a value
+      var valArray = [];
+
+      // Calculate upper triangle
+      for (var idx1 = 0; idx1 < this.columns.size; idx1 += 1) {
+        valArray.push({});
+        var ds1 = this.get(this.columns.get(idx1));
+
+        for (var idx2 = idx1; idx2 < this.columns.size; idx2 += 1) {
+          var col2 = this.columns.get(idx2);
+          var ds2 = this.get(col2);
+          valArray[idx1][col2] = func(ds1, ds2);
+        }
+      }
+
+      // Take upper triangle and fill in lower triangle
+      for (var _idx = 0; _idx < this.columns.size; _idx += 1) {
+        var col1 = this.columns.get(_idx);
+        for (var _idx2 = _idx + 1; _idx2 < this.columns.size; _idx2 += 1) {
+          var _col = this.columns.get(_idx2);
+          valArray[_idx2][col1] = valArray[_idx][_col];
+        }
+      }
+
+      return new DataFrame(valArray, { index: this.columns.toList() });
+    }
+
+    /**
+     * Calculate the covariance between all `Series` in the `DataFrame`
+     *
+     * pandas equivalent: [DataFrame.cov](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.cov.html)
+     *
+     * @return {DataFrame}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 1, z: 5}, {x: 3, y: 0, z: 7}]);
+     *
+     * // Returns DataFrame([{x: 1, y: -1, z: 2}, {x: -1, y: 1, z: -2}, {x: 2, y: -2, z: 4}])
+     * df.cov();
+     */
+
+  }, {
+    key: 'cov',
+    value: function cov() {
+      return this._pairwiseDataFrame(function (ds1, ds2) {
+        return ds1.cov(ds2);
+      });
+    }
+
+    /**
+     * Calculate the correlation between all `Series` in the `DataFrame`
+     *
+     * pandas equivalent: [DataFrame.corr](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.corr.html)
+     *
+     * @return {DataFrame}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 1, z: 5}, {x: 3, y: 0, z: 7}]);
+     *
+     * // Returns DataFrame([{x: 1, y: -1, z: 1}, {x: -1, y: 1, z: -1}, {x: 1, y: -1, z: 1}])
+     * df.corr();
+     */
+
+  }, {
+    key: 'corr',
+    value: function corr() {
+      // noinspection Eslint
+      var corrFunc = function corrFunc(ds1, ds2) {
+        return ds1.values === ds2.values ? 1 : ds1.corr(ds2);
+      };
+      return this._pairwiseDataFrame(corrFunc);
+    }
 
     /**
      * Return the percentage change over a given number of periods along the axis
@@ -859,7 +955,7 @@ var DataFrame = function () {
   }, {
     key: 'values',
     get: function get() {
-      return this._values;
+      return (0, _get3.default)(DataFrame.prototype.__proto__ || Object.getPrototypeOf(DataFrame.prototype), 'values', this);
     }
 
     /**
@@ -879,7 +975,7 @@ var DataFrame = function () {
   }, {
     key: 'columns',
     get: function get() {
-      return this._columns;
+      return this._get_axis(1);
     }
 
     /**
@@ -913,7 +1009,7 @@ var DataFrame = function () {
       });
 
       this._data = _immutable2.default.Map(nextData);
-      this._columns = _immutable2.default.Seq(columns);
+      this.set_axis(1, _immutable2.default.Seq(columns));
     }
 
     /**
@@ -931,7 +1027,7 @@ var DataFrame = function () {
   }, {
     key: 'index',
     get: function get() {
-      return this._index;
+      return this._get_axis(0);
     }
 
     /**
@@ -953,7 +1049,7 @@ var DataFrame = function () {
     set: function set(index) {
       var _this11 = this;
 
-      this._index = (0, _utils.parseIndex)(index, this._data.get(this._columns.get(0)).values);
+      this.set_axis(0, (0, _utils.parseIndex)(index, this._data.get(this.columns.get(0)).values));
 
       // noinspection Eslint
       this._data.mapEntries(function (_ref9) {
@@ -989,29 +1085,9 @@ var DataFrame = function () {
         return _this12.get(k).length;
       }).toArray()));
     }
-
-    /**
-     * Return a List representing the dimensionality of the DataFrame
-     *
-     * pandas equivalent: [DataFrame.shape](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.shape.html)
-     *
-     * @returns {List<number>}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}];
-     *
-     * // Returns List [3, 2]
-     * df.shape;
-     */
-
-  }, {
-    key: 'shape',
-    get: function get() {
-      return _immutable2.default.List([this.length, this.columns.size]);
-    }
   }]);
   return DataFrame;
-}();
+}(_generic2.default);
 
 exports.default = DataFrame;
 

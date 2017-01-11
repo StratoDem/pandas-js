@@ -5,11 +5,12 @@
 
 import Immutable from 'immutable';
 
+import NDFrame from './generic';
 import {enumerate, sum, parseIndex, round10} from './utils';
 import {DType, arrayToDType} from './dtype';
 
 
-export default class Series {
+export default class Series extends NDFrame {
   /**
    * One dimensional array with axis labels. An `Immutable.List` serves as the numpy.ndarray for
    * values.
@@ -36,6 +37,8 @@ export default class Series {
    * // Name: My test name, dtype: dtype(int)
    */
   constructor(data = null, kwargs = {}) {
+    super(data, kwargs);
+
     if (Array.isArray(data)) {
       this._values = Immutable.List(data);
       this._dtype = arrayToDType(data);
@@ -49,7 +52,8 @@ export default class Series {
 
     this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
 
-    this._index = parseIndex(kwargs.index, this.values);
+    this.set_axis(0, parseIndex(kwargs.index, this.values));
+    this._setup_axes(Immutable.List.of(0));
 
     this._sort_ascending = this._sort_ascending.bind(this);
     this._sort_descending = this._sort_descending.bind(this);
@@ -213,7 +217,7 @@ export default class Series {
    * ds.index;
    */
   get index() {
-    return this._index;
+    return this._get_axis(0);
   }
 
   /**
@@ -230,7 +234,7 @@ export default class Series {
    * ds.index;
    */
   set index(index) {
-    this._index = parseIndex(index, this.values);
+    this.set_axis(0, parseIndex(index, this.values));
   }
 
   /**
@@ -264,7 +268,7 @@ export default class Series {
    * ds.values;
    */
   get values() {
-    return this._values;
+    return super.values;
   }
 
   /**
@@ -611,6 +615,81 @@ export default class Series {
    */
   divide(val) {
     return this.div(val);
+  }
+
+  /**
+   * Calculate the covariance between this `Series` and another `Series` or iterable
+   *
+   * pandas equivalent: [Series.cov](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.cov.html)
+   *
+   * @param {Series} ds
+   *    Series with which to calculate covariance
+   *
+   * @returns {number}
+   *
+   * @example
+   * const ds1 = new Series([1, 2, 3, 4, 5]);
+   * const ds2 = new Series([2, 4, 6, 8, 10]);
+   *
+   * // Returns 5
+   * ds1.cov(ds2);
+   *
+   * // Also returns 5
+   * ds2.cov(ds1);
+   */
+  cov(ds) {
+    if (!(ds instanceof Series))
+      throw new Error('ds must be a Series');
+
+    if (ds.length !== this.length)
+      throw new Error('Series must be of equal length');
+
+    let n = 0;
+    let mean1 = 0;
+    let mean2 = 0;
+    let m12 = 0;
+
+    this.values.forEach((v1, idx) => {
+      n += 1;
+      const d1 = (v1 - mean1) / n;
+      mean1 += d1;
+      const d2 = (ds.values.get(idx) - mean2) / n;
+      mean2 += d2;
+
+      m12 += ((((n - 1) * d1) * d2) - (m12 / n));
+    });
+
+    return (n / (n - 1)) * m12;
+  }
+
+  /**
+   * Calculate the correlation between this `Series` and another `Series` or iterable
+   *
+   * pandas equivalent: [Series.corr](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.corr.html)
+   *
+   * @param {Series} ds
+   *    Series with which to calculate correlation
+   *
+   * @returns {number}
+   *
+   * @example
+   * const ds1 = new Series([1, 2, 3, 4, 5]);
+   * const ds2 = new Series([2, 4, 6, 8, 10]);
+   *
+   * // Returns 1
+   * ds1.corr(ds2);
+   *
+   * // Also returns 1
+   * ds2.corr(ds1);
+   */
+  corr(ds) {
+    if (!(ds instanceof Series))
+      throw new Error('ds must be a Series');
+
+    if (ds.length !== this.length)
+      throw new Error('Series must be of equal length');
+
+    return this.cov(ds) / (this.std() * ds.std());
   }
 
   /**
