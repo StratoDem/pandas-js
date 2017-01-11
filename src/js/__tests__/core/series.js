@@ -59,6 +59,12 @@ describe('series', function () {
       expect(ds2.index.toArray()).toEqual([1, 2, 3, 4]);
     });
 
+    it('shape', function () {
+      var ds = new _series2.default([1, 2, 3, 4, 5]);
+      expect(ds.shape).toBeInstanceOf(_immutable2.default.Seq);
+      expect(ds.shape.toArray()).toEqual([5]);
+    });
+
     describe('astype', function () {
       it('converts a float Series to an integer Series', function () {
         var ds1 = new _series2.default([1.5, 2.1, 3.9]);
@@ -536,6 +542,44 @@ describe('series', function () {
         expect(dsFilter.length).toEqual(3);
         expect(dsFilter.values.toArray()).toEqual([2, 3, 4]);
         expect(dsFilter.index.toArray()).toEqual([1, 2, 3]);
+      });
+    });
+
+    describe('cov', function () {
+      it('calculates the covariance between this Series and another', function () {
+        var ds1 = new _series2.default([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        var ds2 = new _series2.default([-10, -8, -6, -4, -2, 0, 2, 4, 6, 8]);
+
+        var cov = ds1.cov(ds2);
+        expect(cov).toBeCloseTo(18.3333333, 6);
+      });
+
+      it('throws an error if the Series are not equal length', function () {
+        var ds1 = new _series2.default([1, 2, 3, 4]);
+        var ds2 = new _series2.default([2, 3, 4]);
+
+        expect(function () {
+          ds1.cov(ds2);
+        }).toThrow();
+      });
+    });
+
+    describe('corr', function () {
+      it('calculates the correlation between this Series and another', function () {
+        var ds1 = new _series2.default([1, 2, 3, 4, 5]);
+        var ds2 = new _series2.default([-10, -8, -6, -4, -2]);
+
+        var corr = ds1.corr(ds2);
+        expect(corr).toBeCloseTo(1, 8);
+      });
+
+      it('throws an error if the Series are not equal length', function () {
+        var ds1 = new _series2.default([1, 2, 3, 4]);
+        var ds2 = new _series2.default([2, 3, 4]);
+
+        expect(function () {
+          ds1.corr(ds2);
+        }).toThrow();
       });
     });
   });

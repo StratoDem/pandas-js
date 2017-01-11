@@ -150,11 +150,11 @@ var intersectingColumns = exports.intersectingColumns = function intersectingCol
  */
 var parseIndex = exports.parseIndex = function parseIndex(index, values) {
   if (Array.isArray(index)) {
-    if (values.size !== index.length) throw new _exceptions.IndexMismatchError();
+    if (values.size !== index.length) throw new _exceptions.IndexMismatchError('values size not equal to index size');
 
     return _immutable2.default.List(index);
   } else if (index instanceof _immutable2.default.List) {
-    if (values.size !== index.size) throw new _exceptions.IndexMismatchError();
+    if (values.size !== index.size) throw new _exceptions.IndexMismatchError('values size not equal to index size');
 
     return index;
   } else if (typeof index !== 'undefined') {
