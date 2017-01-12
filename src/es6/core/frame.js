@@ -973,9 +973,9 @@ export default class DataFrame extends NDFrame {
     });
     const sortedIndex = uniqueVals.keySeq().sort().toArray();
     const sortedColumns = uniqueCols.sort();
-    return new DataFrame(sortedIndex.map(idx => {
+    return new DataFrame(sortedIndex.map((idx) => {
       let rowMap = Immutable.Map({});
-      sortedColumns.forEach(col => {
+      sortedColumns.forEach((col) => {
         const val = uniqueVals.getIn([idx, col]);
         rowMap = rowMap.set(col, typeof val === 'undefined' ? null : val);
       });
