@@ -799,6 +799,52 @@ export default class DataFrame extends NDFrame {
   }
 
   /**
+   * Return the difference over a given number of periods along the axis
+   *
+   * pandas equivalent: [DataFrame.diff](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.diff.html)
+   *
+   * @param {number} periods=1
+   *    Number of periods to use for difference calculation
+   * @param {number} axis=0
+   *    Axis along which to calculate difference
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+   *
+   * // Returns
+   * //    x    |  y
+   * // 0  null |  null
+   * // 1  1    |  1
+   * // 2  1  |  1
+   * df.diff().toString();
+   */
+  diff(periods = 1, axis = 0) {
+    if (typeof periods !== 'number' || !Number.isInteger(periods))
+      throw new Error('periods must be an integer');
+    if (periods <= 0)
+      throw new Error('periods must be positive');
+
+    if (axis === 0) {
+      return new DataFrame(
+        Immutable.Map(this.columns.map(k => [k, this._data.get(k).diff(periods)])),
+        {index: this.index});
+    } else if (axis === 1) {
+      return new DataFrame(
+        Immutable.Map(this.columns.map((k, idx) => {
+          if (idx < periods)
+            return [k, new Series(Immutable.Repeat(null, this.length).toList(),
+              {name: k, index: this.index})];
+          const compareCol = this.get(this.columns.get(idx - periods));
+          return [k, this.get(k).map((v, vIdx) => v - compareCol.iloc(vIdx))];
+        })), {index: this.index});
+    }
+
+    throw new InvalidAxisError();
+  }
+
+  /**
    * Return the percentage change over a given number of periods along the axis
    *
    * pandas equivalent: [DataFrame.pct_change](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.pct_change.html)

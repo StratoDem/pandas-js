@@ -749,6 +749,41 @@ var Series = function (_NDFrame) {
     }
 
     /**
+     * Return the difference over a given number of periods
+     *
+     * pandas equivalent: [Series.diff](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.diff.html)
+     *
+     * @param {number} periods=1
+     *  Number of periods to use for difference calculation
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 6, 5])
+     *
+     * // Returns Series([null, 1, 4, -1])
+     * ds.diff();
+     *
+     * // Returns Series([null, null, 5, 3])
+     * ds.diff(2);
+     */
+
+  }, {
+    key: 'diff',
+    value: function diff() {
+      var _this4 = this;
+
+      var periods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+
+      if (typeof periods !== 'number' || !Number.isInteger(periods)) throw new Error('periods must be an integer');
+      if (periods <= 0) throw new Error('periods must be positive');
+
+      return new Series(_immutable2.default.Repeat(null, periods).toList().concat(_immutable2.default.Range(periods, this.length).map(function (idx) {
+        return _this4.values.get(idx) - _this4.values.get(idx - periods);
+      }).toList()), { index: this.index, name: this.name });
+    }
+
+    /**
      * Return the percentage change over a given number of periods
      *
      * pandas equivalent: [Series.pct_change](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.pct_change.html)
@@ -768,7 +803,7 @@ var Series = function (_NDFrame) {
   }, {
     key: 'pct_change',
     value: function pct_change() {
-      var _this4 = this;
+      var _this5 = this;
 
       var periods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
 
@@ -776,7 +811,7 @@ var Series = function (_NDFrame) {
       if (periods <= 0) throw new Error('periods must be positive');
 
       return new Series(_immutable2.default.Repeat(null, periods).toList().concat(_immutable2.default.Range(periods, this.length).map(function (idx) {
-        return _this4.values.get(idx) / _this4.values.get(idx - periods) - 1;
+        return _this5.values.get(idx) / _this5.values.get(idx - periods) - 1;
       }).toList()), { index: this.index, name: this.name });
     }
   }, {
@@ -818,14 +853,14 @@ var Series = function (_NDFrame) {
   }, {
     key: 'sort_values',
     value: function sort_values() {
-      var _this5 = this;
+      var _this6 = this;
 
       var ascending = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 
       var sortedIndex = ascending ? this.index.sort(this._sort_ascending) : this.index.sort(this._sort_descending);
 
       return new Series(sortedIndex.map(function (i) {
-        return _this5.iloc(i);
+        return _this6.iloc(i);
       }), { name: this.name, index: sortedIndex });
     }
 
@@ -859,7 +894,7 @@ var Series = function (_NDFrame) {
   }, {
     key: '_alignSeries',
     value: function _alignSeries(series) {
-      var _this6 = this;
+      var _this7 = this;
 
       // Align two series by index values, returning a Map with index values as keys and
       // values as Maps with 1: List [value locations at index], 2: [value locations at index]
@@ -869,12 +904,12 @@ var Series = function (_NDFrame) {
       this.index.forEach(function (idx1) {
         if (!seriesAlignment.has(idx1)) {
           seriesAlignment = seriesAlignment.set(idx1, _immutable2.default.Map({
-            first: _immutable2.default.List.of(_this6.iloc(idx1)),
+            first: _immutable2.default.List.of(_this7.iloc(idx1)),
             second: _immutable2.default.List([])
           }));
         } else {
           seriesAlignment = seriesAlignment.updateIn([idx1, 'first'], function (l) {
-            return l.concat(_this6.iloc(idx1));
+            return l.concat(_this7.iloc(idx1));
           });
         }
       });
@@ -1229,21 +1264,21 @@ var Series = function (_NDFrame) {
   }, {
     key: 'filter',
     value: function filter(iterBool) {
-      var _this7 = this;
+      var _this8 = this;
 
       if (!Array.isArray(iterBool) && !(iterBool instanceof _immutable2.default.List) && !(iterBool instanceof Series)) throw new Error('filter must be an Array, List, or Series');
 
       var valueIndexMap = { values: [], index: [] };
       if (iterBool instanceof Series) iterBool.values.forEach(function (v, idx) {
         if (v === true) {
-          valueIndexMap.values.push(_this7.values.get(idx));
-          valueIndexMap.index.push(_this7.index.get(idx));
+          valueIndexMap.values.push(_this8.values.get(idx));
+          valueIndexMap.index.push(_this8.index.get(idx));
         }
       });else {
         iterBool.forEach(function (v, idx) {
           if (v === true) {
-            valueIndexMap.values.push(_this7.values.get(idx));
-            valueIndexMap.index.push(_this7.index.get(idx));
+            valueIndexMap.values.push(_this8.values.get(idx));
+            valueIndexMap.index.push(_this8.index.get(idx));
           }
         });
       }

@@ -4,26 +4,22 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _index = require('./core/index');
+var _series = require('./series');
 
 Object.defineProperty(exports, 'Series', {
   enumerable: true,
   get: function get() {
-    return _index.Series;
+    return _interopRequireDefault(_series).default;
   }
 });
+
+var _frame = require('./frame');
+
 Object.defineProperty(exports, 'DataFrame', {
   enumerable: true,
   get: function get() {
-    return _index.DataFrame;
+    return _interopRequireDefault(_frame).default;
   }
 });
 
-var _tools = require('./tseries/tools');
-
-Object.defineProperty(exports, 'to_datetime', {
-  enumerable: true,
-  get: function get() {
-    return _tools.to_datetime;
-  }
-});
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }

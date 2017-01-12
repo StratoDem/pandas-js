@@ -23,8 +23,9 @@ var int = 'int';
 var float = 'float';
 var object = 'object';
 var bool = 'bool';
+var datetime = 'datetime';
 
-var ALLOWED_DTYPES = [int, float, object, bool];
+var ALLOWED_DTYPES = [int, float, object, bool, datetime];
 
 var DType = exports.DType = function () {
   function DType(name) {
@@ -65,6 +66,8 @@ var elementToDType = exports.elementToDType = function elementToDType(el) {
     arrayDType = float;
   } else if (typeof el === 'boolean') {
     arrayDType = bool;
+  } else if (el instanceof Date) {
+    arrayDType = datetime;
   } else if ((typeof el === 'undefined' ? 'undefined' : (0, _typeof3.default)(el)) === 'object') {
     arrayDType = object;
   }
@@ -91,7 +94,7 @@ var arrayToDType = exports.arrayToDType = function arrayToDType(array) {
 
       arrayDType = elementToDType(el);
 
-      if (arrayDType.dtype !== int && arrayDType.dtype !== float) break;
+      if (arrayDType.dtype !== int && arrayDType.dtype !== float && arrayDType.dtype !== datetime) break;
     }
   } catch (err) {
     _didIteratorError = true;

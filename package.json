@@ -68,7 +68,7 @@
   "bugs": {
     "url": "https://github.com/StratoDem/pandas.js/issues"
   },
-  "homepage": "https://github.com/StratoDem/pandas.js#readme",
+  "homepage": "https://stratodem.github.io/pandas.js-docs/",
   "scripts": {
     "build": "babel src/es6 --out-dir dist",
     "test": "jest --verbose --runInBand"

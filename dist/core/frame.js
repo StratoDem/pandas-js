@@ -863,6 +863,57 @@ var DataFrame = function (_NDFrame) {
     }
 
     /**
+     * Return the difference over a given number of periods along the axis
+     *
+     * pandas equivalent: [DataFrame.diff](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.diff.html)
+     *
+     * @param {number} periods=1
+     *    Number of periods to use for difference calculation
+     * @param {number} axis=0
+     *    Axis along which to calculate difference
+     *
+     * @returns {DataFrame}
+     *
+     * @example
+     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+     *
+     * // Returns
+     * //    x    |  y
+     * // 0  null |  null
+     * // 1  1    |  1
+     * // 2  1  |  1
+     * df.diff().toString();
+     */
+
+  }, {
+    key: 'diff',
+    value: function diff() {
+      var _this9 = this;
+
+      var periods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+      var axis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+      if (typeof periods !== 'number' || !Number.isInteger(periods)) throw new Error('periods must be an integer');
+      if (periods <= 0) throw new Error('periods must be positive');
+
+      if (axis === 0) {
+        return new DataFrame(_immutable2.default.Map(this.columns.map(function (k) {
+          return [k, _this9._data.get(k).diff(periods)];
+        })), { index: this.index });
+      } else if (axis === 1) {
+        return new DataFrame(_immutable2.default.Map(this.columns.map(function (k, idx) {
+          if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this9.length).toList(), { name: k, index: _this9.index })];
+          var compareCol = _this9.get(_this9.columns.get(idx - periods));
+          return [k, _this9.get(k).map(function (v, vIdx) {
+            return v - compareCol.iloc(vIdx);
+          })];
+        })), { index: this.index });
+      }
+
+      throw new _exceptions.InvalidAxisError();
+    }
+
+    /**
      * Return the percentage change over a given number of periods along the axis
      *
      * pandas equivalent: [DataFrame.pct_change](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.pct_change.html)
@@ -888,7 +939,7 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'pct_change',
     value: function pct_change() {
-      var _this9 = this;
+      var _this10 = this;
 
       var periods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
       var axis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
@@ -898,13 +949,13 @@ var DataFrame = function (_NDFrame) {
 
       if (axis === 0) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k) {
-          return [k, _this9._data.get(k).pct_change(periods)];
+          return [k, _this10._data.get(k).pct_change(periods)];
         })), { index: this.index });
       } else if (axis === 1) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k, idx) {
-          if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this9.length).toList(), { name: k, index: _this9.index })];
-          var compareCol = _this9.get(_this9.columns.get(idx - periods));
-          return [k, _this9.get(k).map(function (v, vIdx) {
+          if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this10.length).toList(), { name: k, index: _this10.index })];
+          var compareCol = _this10.get(_this10.columns.get(idx - periods));
+          return [k, _this10.get(k).map(function (v, vIdx) {
             return v / compareCol.iloc(vIdx) - 1;
           })];
         })), { index: this.index });
@@ -995,14 +1046,14 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(columns) {
-      var _this10 = this;
+      var _this11 = this;
 
       if (!Array.isArray(columns) || columns.length !== this.columns.size) throw new Error('Columns must be array of same dimension');
 
       var nextData = {};
       columns.forEach(function (k, idx) {
-        var prevColumn = _this10.columns.get(idx);
-        var prevSeries = _this10.get(prevColumn);
+        var prevColumn = _this11.columns.get(idx);
+        var prevSeries = _this11.get(prevColumn);
 
         prevSeries.name = k;
         nextData[k] = prevSeries;
@@ -1047,7 +1098,7 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(index) {
-      var _this11 = this;
+      var _this12 = this;
 
       this.set_axis(0, (0, _utils.parseIndex)(index, this._data.get(this.columns.get(0)).values));
 
@@ -1058,7 +1109,7 @@ var DataFrame = function (_NDFrame) {
             v = _ref10[1];
 
         // noinspection Eslint
-        v.index = _this11.index;
+        v.index = _this12.index;
       });
     }
 
@@ -1079,10 +1130,10 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'length',
     get: function get() {
-      var _this12 = this;
+      var _this13 = this;
 
       return Math.max.apply(Math, (0, _toConsumableArray3.default)(this._data.keySeq().map(function (k) {
-        return _this12.get(k).length;
+        return _this13.get(k).length;
       }).toArray()));
     }
   }]);
