@@ -8,22 +8,30 @@ import { enumerate, nonMergeColumns, intersectingColumns, parseIndex } from './u
 
 
 const parseArrayToSeriesMap = (array, index) => {
-  const dataMap = {};
+  let dataMap = Immutable.Map({});
 
   array.forEach((el) => {
-    if (typeof el === 'object') {
-      Object.keys(el).forEach((k) => {
-        if (k in dataMap) {
-          dataMap[k] = dataMap[k].push(el[k]);
+    if (el instanceof Immutable.Map) {
+      el.keySeq().forEach(k => {
+        if (dataMap.has(k)) {
+          dataMap = dataMap.set(k, dataMap.get(k).push(el.get(k)));
         } else {
-          dataMap[k] = Immutable.List.of(el[k]);
+          dataMap = dataMap.set(k, Immutable.List.of(el.get(k)));
+        }
+      });
+    } else if (typeof el === 'object') {
+      Object.keys(el).forEach((k) => {
+        if (dataMap.has(k)) {
+          dataMap = dataMap.set(k, dataMap.get(k).push(el[k]));
+        } else {
+          dataMap = dataMap.set(k, Immutable.List.of(el[k]));
         }
       });
     }
   });
 
-  Object.keys(dataMap).forEach((k) => {
-    dataMap[k] = new Series(dataMap[k], {name: k, index});
+  dataMap.keySeq().forEach(k => {
+    dataMap = dataMap.set(k, new Series(dataMap.get(k), {name: k, index}));
   });
 
   return Immutable.Map(dataMap);
@@ -929,6 +937,50 @@ export default class DataFrame extends NDFrame {
     return new DataFrame(Immutable.Map(this._data.mapEntries(([k, v]) => {
       return [k, v.filter(iterBool)];
     })));
+  }
+
+  /**
+   * Reshape data (produce a “pivot” table) based on column values. Uses unique values from
+   * index / columns to form axes of the resulting DataFrame.
+   *
+   * pandas equivalent: [DataFrame.pivot](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.pivot.html)
+   *
+   * @param {string|number} index
+   *  Name of the column to use as index
+   * @param {string|number} columns
+   *  Name of the column to use as column values
+   * @param {string|number} values
+   *  Name of the column to use as the value
+   *
+   * @returns {DataFrame}
+   */
+  pivot(index, columns, values) {
+    let uniqueVals = Immutable.Map({});
+    let uniqueCols = Immutable.List([]);
+
+    this.index.forEach((v, idx) => {
+      const idxVal = this.get(index).iloc(idx);
+      const colVal = this.get(columns).iloc(idx);
+
+      if (uniqueVals.hasIn([idxVal, colVal]))
+        throw new Error('pivot index and column must be unique');
+
+      const val = this.get(values).iloc(idx);
+
+      uniqueVals = uniqueVals.setIn([idxVal, colVal], val);
+      if (!uniqueCols.has(colVal))
+        uniqueCols = uniqueCols.push(colVal);
+    });
+    const sortedIndex = uniqueVals.keySeq().sort().toArray();
+    const sortedColumns = uniqueCols.sort();
+    return new DataFrame(sortedIndex.map(idx => {
+      let rowMap = Immutable.Map({});
+      sortedColumns.forEach(col => {
+        const val = uniqueVals.getIn([idx, col]);
+        rowMap = rowMap.set(col, typeof val === 'undefined' ? null : val);
+      });
+      return rowMap;
+    }), {index: sortedIndex});
   }
 }
 

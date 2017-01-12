@@ -596,4 +596,35 @@ describe('frame', () => {
       expect(df2.columns.toArray()).toEqual(['x', 'y']);
     });
   });
+
+  describe('pivot', () => {
+    it('pivots a DataFrame with unique index, column pairs', () => {
+      const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 1, z: 1}]);
+
+      let dfPv = df.pivot('x', 'y', 'z');
+
+      expect(dfPv).toBeInstanceOf(DataFrame);
+
+      expect(dfPv.get(1).values.toArray()).toEqual([null, 1]);
+      expect(dfPv.get(2).values.toArray()).toEqual([3, null]);
+
+      dfPv = df.pivot('z', 'x', 'y');
+
+      expect(dfPv).toBeInstanceOf(DataFrame);
+      expect(dfPv.get(1).values.toArray()).toEqual([null, 2]);
+      expect(dfPv.get(2).values.toArray()).toEqual([1, null]);
+    });
+
+    it('throws an error if column not in df', () => {
+      const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}]);
+
+      expect(() => df.pivot('x', 'y', 'z')).toThrow();
+    });
+
+    it('throws an error if index or column not unique', () => {
+      const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 1, y: 2, z: 4}]);
+
+      expect(() => df.pivot('x', 'y', 'z')).toThrow();
+    });
+  });
 });
