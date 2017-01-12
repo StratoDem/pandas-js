@@ -273,6 +273,18 @@ describe('series', function () {
       });
     });
 
+    describe('diff', function () {
+      it('calculates the difference for 1 period', function () {
+        var ds = new _series2.default([1, 2, 4, 8, 16]);
+        expect(ds.diff(1).values.toArray()).toEqual([null, 1, 2, 4, 8]);
+      });
+
+      it('calculates the difference for 2 periods', function () {
+        var ds = new _series2.default([1, 2, 4, 8, 16]);
+        expect(ds.diff(2).values.toArray()).toEqual([null, null, 3, 6, 12]);
+      });
+    });
+
     describe('pct_change', function () {
       it('calculates the percent change for 1 period', function () {
         var ds = new _series2.default([1, 2, 3, 4, 5]);

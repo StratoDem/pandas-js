@@ -4,12 +4,14 @@ const int = 'int';
 const float = 'float';
 const object = 'object';
 const bool = 'bool';
+const datetime = 'datetime';
 
 const ALLOWED_DTYPES = [
   int,
   float,
   object,
   bool,
+  datetime,
 ];
 
 export class DType {
@@ -44,6 +46,8 @@ export const elementToDType = (el) => {
     arrayDType = float;
   } else if (typeof el === 'boolean') {
     arrayDType = bool;
+  } else if (el instanceof Date) {
+    arrayDType = datetime;
   } else if (typeof el === 'object') {
     arrayDType = object;
   }
@@ -63,7 +67,7 @@ export const arrayToDType = (array) => {
   for (const el of array) {
     arrayDType = elementToDType(el);
 
-    if (arrayDType.dtype !== int && arrayDType.dtype !== float)
+    if (arrayDType.dtype !== int && arrayDType.dtype !== float && arrayDType.dtype !== datetime)
       break;
   }
 

@@ -693,6 +693,38 @@ export default class Series extends NDFrame {
   }
 
   /**
+   * Return the difference over a given number of periods
+   *
+   * pandas equivalent: [Series.diff](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.diff.html)
+   *
+   * @param {number} periods=1
+   *  Number of periods to use for difference calculation
+   *
+   * @returns {Series}
+   *
+   * @example
+   * const ds = new Series([1, 2, 6, 5])
+   *
+   * // Returns Series([null, 1, 4, -1])
+   * ds.diff();
+   *
+   * // Returns Series([null, null, 5, 3])
+   * ds.diff(2);
+   */
+  diff(periods = 1) {
+    if (typeof periods !== 'number' || !Number.isInteger(periods))
+      throw new Error('periods must be an integer');
+    if (periods <= 0)
+      throw new Error('periods must be positive');
+
+    return new Series(
+      Immutable.Repeat(null, periods).toList().concat(
+        Immutable.Range(periods, this.length).map(idx =>
+        (this.values.get(idx) - this.values.get(idx - periods))).toList()),
+      {index: this.index, name: this.name});
+  }
+
+  /**
    * Return the percentage change over a given number of periods
    *
    * pandas equivalent: [Series.pct_change](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.pct_change.html)

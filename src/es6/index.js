@@ -1,3 +1,3 @@
 
-export { default as Series} from './core/series';
-export { default as DataFrame } from './core/frame';
+export { Series, DataFrame } from './core/index';
+export { to_datetime } from './tseries/tools';

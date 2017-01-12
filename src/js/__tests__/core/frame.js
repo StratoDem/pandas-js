@@ -603,6 +603,27 @@ describe('frame', function () {
     });
   });
 
+  describe('diff', function () {
+    it('calculates the diff along axis 0', function () {
+      var df1 = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [2, 3, 4] });
+
+      var df2 = df1.diff();
+      expect(df2.get('x').values.toArray()).toEqual([null, 1, 1]);
+      expect(df2.get('y').values.toArray()).toEqual([null, 1, 1]);
+      expect(df2.index.toArray()).toEqual([2, 3, 4]);
+    });
+
+    it('calculates the diff along axis 1', function () {
+      var df1 = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [2, 3, 4] });
+
+      var df2 = df1.diff(1, 1);
+      expect(df2.values.get(0).toArray()).toEqual([null, 1]);
+      expect(df2.values.get(1).toArray()).toEqual([null, 1]);
+      expect(df2.values.get(2).toArray()).toEqual([null, 1]);
+      expect(df2.columns.toArray()).toEqual(['x', 'y']);
+    });
+  });
+
   describe('pct_change', function () {
     it('calculates the pct_change along axis 0', function () {
       var df1 = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [2, 3, 4] });
