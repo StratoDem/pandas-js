@@ -337,9 +337,9 @@ describe('frame', () => {
 
       const originalURL = window.URL;
       window.URL = {
-        createObjectURL: (blob) => { console.log(blob); return "something"; },
+        createObjectURL: (blob) => { return "CREATEOBJECTURL"; },
       };
-      console.log(df.to_excel(new Workbook(), 'my test sheet', true));
+      // console.log(df.to_excel(new Workbook(), 'my test sheet', true));
 
       window.URL = originalURL;
     });

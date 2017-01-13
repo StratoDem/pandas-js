@@ -381,10 +381,10 @@ describe('frame', function () {
       var originalURL = window.URL;
       window.URL = {
         createObjectURL: function createObjectURL(blob) {
-          console.log(blob);return "something";
+          return "CREATEOBJECTURL";
         }
       };
-      console.log(df.to_excel(new _structs.Workbook(), 'my test sheet', true));
+      // console.log(df.to_excel(new Workbook(), 'my test sheet', true));
 
       window.URL = originalURL;
     });

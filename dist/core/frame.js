@@ -41,6 +41,8 @@ var _immutable = require('immutable');
 
 var _immutable2 = _interopRequireDefault(_immutable);
 
+var _fileSaver = require('file-saver');
+
 var _exceptions = require('./exceptions');
 
 var _generic = require('./generic');
@@ -51,27 +53,37 @@ var _series = require('./series');
 
 var _series2 = _interopRequireDefault(_series);
 
+var _structs = require('./structs');
+
 var _utils = require('./utils');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var parseArrayToSeriesMap = function parseArrayToSeriesMap(array, index) {
-  var dataMap = {};
+  var dataMap = _immutable2.default.Map({});
 
   array.forEach(function (el) {
-    if ((typeof el === 'undefined' ? 'undefined' : (0, _typeof3.default)(el)) === 'object') {
-      Object.keys(el).forEach(function (k) {
-        if (k in dataMap) {
-          dataMap[k] = dataMap[k].push(el[k]);
+    if (el instanceof _immutable2.default.Map) {
+      el.keySeq().forEach(function (k) {
+        if (dataMap.has(k)) {
+          dataMap = dataMap.set(k, dataMap.get(k).push(el.get(k)));
         } else {
-          dataMap[k] = _immutable2.default.List.of(el[k]);
+          dataMap = dataMap.set(k, _immutable2.default.List.of(el.get(k)));
+        }
+      });
+    } else if ((typeof el === 'undefined' ? 'undefined' : (0, _typeof3.default)(el)) === 'object') {
+      Object.keys(el).forEach(function (k) {
+        if (dataMap.has(k)) {
+          dataMap = dataMap.set(k, dataMap.get(k).push(el[k]));
+        } else {
+          dataMap = dataMap.set(k, _immutable2.default.List.of(el[k]));
         }
       });
     }
   });
 
-  Object.keys(dataMap).forEach(function (k) {
-    dataMap[k] = new _series2.default(dataMap[k], { name: k, index: index });
+  dataMap.keySeq().forEach(function (k) {
+    dataMap = dataMap.set(k, new _series2.default(dataMap.get(k), { name: k, index: index }));
   });
 
   return _immutable2.default.Map(dataMap);
@@ -574,6 +586,54 @@ var DataFrame = function (_NDFrame) {
     }
 
     /**
+     * Write the `DataFrame` to a Workbook object
+     *
+     * @param {string|Workbook} excel_writer
+     *    File path or existing Workbook object
+     * @param {string} sheetName
+     *    Name of sheet which will contain DataFrame
+     * @param {boolean} download
+     *    Download the excel file?
+     *
+     * @return {Workbook}
+     *
+     * @example
+     *
+     */
+
+  }, {
+    key: 'to_excel',
+    value: function to_excel(excel_writer) {
+      var sheetName = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'Sheet1';
+      var download = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
+      var wb = void 0;
+      if (excel_writer instanceof _structs.Workbook) {
+        var sheet = new _structs.Sheet(this.values);
+
+        wb = excel_writer.copy();
+        wb.addSheet(sheetName, sheet);
+      } else if (typeof excel_writer === 'string') {
+        wb = new _structs.Workbook();
+        wb.addSheet(sheetName, new _structs.Sheet(this.values));
+      } else throw new Error('excel_writer must be a file path or Workbook object');
+
+      function s2ab(s) {
+        var buf = new ArrayBuffer(s.length);
+        var view = new Uint8Array(buf);
+        for (var i = 0; i < s.length; i += 1) {
+          view[i] = s.charCodeAt(i) && 0xFF;
+        }return buf;
+      }
+
+      if (download) {
+        (0, _fileSaver.saveAs)(new Blob([s2ab(wb.writeWorkbook())], { type: "application/octet-stream" }), typeof excel_writer === 'string' ? excel_writer : 'StratoDem Download.xlsx');
+      }
+
+      return wb;
+    }
+
+    /**
      * Return the sum of the values in the `DataFrame` along the axis
      *
      * pandas equivalent: [DataFrame.sum](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.sum.html)
@@ -1003,6 +1063,53 @@ var DataFrame = function (_NDFrame) {
         return [k, v.filter(iterBool)];
       })));
     }
+
+    /**
+     * Reshape data (produce a “pivot” table) based on column values. Uses unique values from
+     * index / columns to form axes of the resulting DataFrame.
+     *
+     * pandas equivalent: [DataFrame.pivot](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.pivot.html)
+     *
+     * @param {string|number} index
+     *  Name of the column to use as index
+     * @param {string|number} columns
+     *  Name of the column to use as column values
+     * @param {string|number} values
+     *  Name of the column to use as the value
+     *
+     * @returns {DataFrame}
+     */
+
+  }, {
+    key: 'pivot',
+    value: function pivot(index, columns, values) {
+      var _this11 = this;
+
+      var uniqueVals = _immutable2.default.Map({});
+      var uniqueCols = _immutable2.default.List([]);
+
+      this.index.forEach(function (v, idx) {
+        var idxVal = _this11.get(index).iloc(idx);
+        var colVal = _this11.get(columns).iloc(idx);
+
+        if (uniqueVals.hasIn([idxVal, colVal])) throw new Error('pivot index and column must be unique');
+
+        var val = _this11.get(values).iloc(idx);
+
+        uniqueVals = uniqueVals.setIn([idxVal, colVal], val);
+        if (!uniqueCols.has(colVal)) uniqueCols = uniqueCols.push(colVal);
+      });
+      var sortedIndex = uniqueVals.keySeq().sort().toArray();
+      var sortedColumns = uniqueCols.sort();
+      return new DataFrame(sortedIndex.map(function (idx) {
+        var rowMap = _immutable2.default.Map({});
+        sortedColumns.forEach(function (col) {
+          var val = uniqueVals.getIn([idx, col]);
+          rowMap = rowMap.set(col, typeof val === 'undefined' ? null : val);
+        });
+        return rowMap;
+      }), { index: sortedIndex });
+    }
   }, {
     key: 'values',
     get: function get() {
@@ -1046,14 +1153,14 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(columns) {
-      var _this11 = this;
+      var _this12 = this;
 
       if (!Array.isArray(columns) || columns.length !== this.columns.size) throw new Error('Columns must be array of same dimension');
 
       var nextData = {};
       columns.forEach(function (k, idx) {
-        var prevColumn = _this11.columns.get(idx);
-        var prevSeries = _this11.get(prevColumn);
+        var prevColumn = _this12.columns.get(idx);
+        var prevSeries = _this12.get(prevColumn);
 
         prevSeries.name = k;
         nextData[k] = prevSeries;
@@ -1098,7 +1205,7 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(index) {
-      var _this12 = this;
+      var _this13 = this;
 
       this.set_axis(0, (0, _utils.parseIndex)(index, this._data.get(this.columns.get(0)).values));
 
@@ -1109,7 +1216,7 @@ var DataFrame = function (_NDFrame) {
             v = _ref10[1];
 
         // noinspection Eslint
-        v.index = _this12.index;
+        v.index = _this13.index;
       });
     }
 
@@ -1130,10 +1237,10 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'length',
     get: function get() {
-      var _this13 = this;
+      var _this14 = this;
 
       return Math.max.apply(Math, (0, _toConsumableArray3.default)(this._data.keySeq().map(function (k) {
-        return _this13.get(k).length;
+        return _this14.get(k).length;
       }).toArray()));
     }
   }]);
