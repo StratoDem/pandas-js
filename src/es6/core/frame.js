@@ -1,9 +1,11 @@
 
 import Immutable from 'immutable';
+import { saveAs } from 'file-saver';
 
 import { InvalidAxisError } from './exceptions';
 import NDFrame from './generic';
 import Series from './series';
+import { Workbook, Sheet } from './structs';
 import { enumerate, nonMergeColumns, intersectingColumns, parseIndex } from './utils';
 
 
@@ -560,6 +562,49 @@ export default class DataFrame extends NDFrame {
     }
 
     return csvString;
+  }
+
+  /**
+   * Write the `DataFrame` to a Workbook object
+   *
+   * @param {string|Workbook} excel_writer
+   *    File path or existing Workbook object
+   * @param {string} sheetName
+   *    Name of sheet which will contain DataFrame
+   * @param {boolean} download
+   *    Download the excel file?
+   *
+   * @return {Workbook}
+   *
+   * @example
+   *
+   */
+  to_excel(excel_writer, sheetName = 'Sheet1', download = false) {
+    let wb;
+    if (excel_writer instanceof Workbook) {
+      const sheet = new Sheet(this.values);
+
+      wb = excel_writer.copy();
+      wb.addSheet(sheetName, sheet);
+    } else if (typeof excel_writer === 'string') {
+      wb = new Workbook();
+      wb.addSheet(sheetName, new Sheet(this.values));
+    } else throw new Error('excel_writer must be a file path or Workbook object');
+
+    function s2ab(s) {
+      const buf = new ArrayBuffer(s.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i < s.length; i += 1) view[i] = s.charCodeAt(i) && 0xFF;
+      return buf;
+    }
+
+    if (download) {
+      saveAs(new Blob([s2ab(wb.writeWorkbook())],
+        {type: "application/octet-stream"}),
+        typeof excel_writer === 'string' ? excel_writer : 'StratoDem Download.xlsx');
+    }
+
+    return wb;
   }
 
   /**

@@ -16,6 +16,8 @@ var _series = require('../../core/series');
 
 var _series2 = _interopRequireDefault(_series);
 
+var _structs = require('../../core/structs');
+
 var _exceptions = require('../../core/exceptions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -369,6 +371,22 @@ describe('frame', function () {
           }
         }
       }
+    });
+  });
+
+  describe('to_excel', function () {
+    it('converts a pandas DataFrame to a properly formatted Excel file', function () {
+      var df = new _frame2.default(_immutable2.default.Map({ x: new _series2.default([1, 2, 3]), y: new _series2.default([2, 3, 4]) }));
+
+      var originalURL = window.URL;
+      window.URL = {
+        createObjectURL: function createObjectURL(blob) {
+          console.log(blob);return "something";
+        }
+      };
+      console.log(df.to_excel(new _structs.Workbook(), 'my test sheet', true));
+
+      window.URL = originalURL;
     });
   });
 

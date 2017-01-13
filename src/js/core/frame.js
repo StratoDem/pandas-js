@@ -41,6 +41,8 @@ var _immutable = require('immutable');
 
 var _immutable2 = _interopRequireDefault(_immutable);
 
+var _fileSaver = require('file-saver');
+
 var _exceptions = require('./exceptions');
 
 var _generic = require('./generic');
@@ -50,6 +52,8 @@ var _generic2 = _interopRequireDefault(_generic);
 var _series = require('./series');
 
 var _series2 = _interopRequireDefault(_series);
+
+var _structs = require('./structs');
 
 var _utils = require('./utils');
 
@@ -579,6 +583,54 @@ var DataFrame = function (_NDFrame) {
       }
 
       return csvString;
+    }
+
+    /**
+     * Write the `DataFrame` to a Workbook object
+     *
+     * @param {string|Workbook} excel_writer
+     *    File path or existing Workbook object
+     * @param {string} sheetName
+     *    Name of sheet which will contain DataFrame
+     * @param {boolean} download
+     *    Download the excel file?
+     *
+     * @return {Workbook}
+     *
+     * @example
+     *
+     */
+
+  }, {
+    key: 'to_excel',
+    value: function to_excel(excel_writer) {
+      var sheetName = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'Sheet1';
+      var download = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
+      var wb = void 0;
+      if (excel_writer instanceof _structs.Workbook) {
+        var sheet = new _structs.Sheet(this.values);
+
+        wb = excel_writer.copy();
+        wb.addSheet(sheetName, sheet);
+      } else if (typeof excel_writer === 'string') {
+        wb = new _structs.Workbook();
+        wb.addSheet(sheetName, new _structs.Sheet(this.values));
+      } else throw new Error('excel_writer must be a file path or Workbook object');
+
+      function s2ab(s) {
+        var buf = new ArrayBuffer(s.length);
+        var view = new Uint8Array(buf);
+        for (var i = 0; i < s.length; i += 1) {
+          view[i] = s.charCodeAt(i) && 0xFF;
+        }return buf;
+      }
+
+      if (download) {
+        (0, _fileSaver.saveAs)(new Blob([s2ab(wb.writeWorkbook())], { type: "application/octet-stream" }), typeof excel_writer === 'string' ? excel_writer : 'StratoDem Download.xlsx');
+      }
+
+      return wb;
     }
 
     /**

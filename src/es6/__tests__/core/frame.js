@@ -2,6 +2,7 @@ import Immutable from 'immutable';
 
 import DataFrame, {mergeDataFrame} from '../../core/frame';
 import Series from '../../core/series';
+import { Workbook } from '../../core/structs';
 import {IndexMismatchError} from '../../core/exceptions';
 
 
@@ -327,6 +328,20 @@ describe('frame', () => {
       for (let [r, idx] of df1.iterrows()) {
         // console.log(r.values);
       }
+    });
+  });
+
+  describe('to_excel', () => {
+    it('converts a pandas DataFrame to a properly formatted Excel file', () => {
+      const df = new DataFrame(Immutable.Map({x: new Series([1, 2, 3]), y: new Series([2, 3, 4])}));
+
+      const originalURL = window.URL;
+      window.URL = {
+        createObjectURL: (blob) => { console.log(blob); return "something"; },
+      };
+      console.log(df.to_excel(new Workbook(), 'my test sheet', true));
+
+      window.URL = originalURL;
     });
   });
 
