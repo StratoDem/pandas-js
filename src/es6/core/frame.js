@@ -594,7 +594,7 @@ export default class DataFrame extends NDFrame {
     function s2ab(s) {
       const buf = new ArrayBuffer(s.length);
       const view = new Uint8Array(buf);
-      for (let i = 0; i < s.length; i += 1) view[i] = s.charCodeAt(i) && 0xFF;
+      for (let i = 0; i < s.length; i += 1) view[i] = s.charCodeAt(i) & 0xFF;
       return buf;
     }
 

@@ -622,7 +622,7 @@ var DataFrame = function (_NDFrame) {
         var buf = new ArrayBuffer(s.length);
         var view = new Uint8Array(buf);
         for (var i = 0; i < s.length; i += 1) {
-          view[i] = s.charCodeAt(i) && 0xFF;
+          view[i] = s.charCodeAt(i) & 0xFF;
         }return buf;
       }
 
