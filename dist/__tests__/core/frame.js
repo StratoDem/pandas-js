@@ -384,7 +384,7 @@ describe('frame', function () {
           return "CREATEOBJECTURL";
         }
       };
-      // console.log(df.to_excel(new Workbook(), 'my test sheet', true));
+      // console.log(df.to_excel(new Workbook(), 'my test values', true));
 
       window.URL = originalURL;
     });

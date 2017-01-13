@@ -68,7 +68,7 @@ var Workbook = exports.Workbook = function () {
     }
 
     /**
-     * Add a sheet to the Workbook
+     * Add a values to the Workbook
      *
      * @param {string} sheetName
      * @param {Sheet} sheetContent
@@ -109,13 +109,12 @@ var Sheets = function () {
     (0, _classCallCheck3.default)(this, Sheets);
 
     this._sheets = _immutable2.default.Map(initialSheets);
-    this._sheetNames = this._sheets.keySeq().toList();
   }
 
   /**
-   * List of sheet names in the Sheets
+   * List of values names in the Sheets
    *
-   * @returns {List<number|string>}
+   * @returns {List<string>}
    */
 
 
@@ -126,15 +125,15 @@ var Sheets = function () {
     /**
      *
      * @param {string} sheetName
-     * @param {Sheet} sheetContent
+     * @param {Sheet} sheet
      */
-    value: function addSheet(sheetName, sheetContent) {
-      this._sheets = this._sheets.set(sheetName, sheetContent);
+    value: function addSheet(sheetName, sheet) {
+      this._sheets = this._sheets.set(sheetName, sheet.values);
     }
   }, {
     key: 'sheetNames',
     get: function get() {
-      return this._sheetNames;
+      return this._sheets.keySeq().toList();
     }
 
     /**
@@ -210,7 +209,7 @@ var Sheet = exports.Sheet = function () {
       return ws;
     }
   }, {
-    key: 'sheet',
+    key: 'values',
     get: function get() {
       return this._sheet;
     }

@@ -570,7 +570,7 @@ export default class DataFrame extends NDFrame {
    * @param {string|Workbook} excel_writer
    *    File path or existing Workbook object
    * @param {string} sheetName
-   *    Name of sheet which will contain DataFrame
+   *    Name of values which will contain DataFrame
    * @param {boolean} download
    *    Download the excel file?
    *

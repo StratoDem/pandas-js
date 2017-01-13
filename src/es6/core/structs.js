@@ -49,7 +49,7 @@ export class Workbook {
   }
 
   /**
-   * Add a sheet to the Workbook
+   * Add a values to the Workbook
    *
    * @param {string} sheetName
    * @param {Sheet} sheetContent
@@ -67,16 +67,15 @@ export class Workbook {
 class Sheets {
   constructor(initialSheets = {}) {
     this._sheets = Immutable.Map(initialSheets);
-    this._sheetNames = this._sheets.keySeq().toList();
   }
 
   /**
-   * List of sheet names in the Sheets
+   * List of values names in the Sheets
    *
-   * @returns {List<number|string>}
+   * @returns {List<string>}
    */
   get sheetNames() {
-    return this._sheetNames;
+    return this._sheets.keySeq().toList();
   }
 
   /**
@@ -91,10 +90,10 @@ class Sheets {
   /**
    *
    * @param {string} sheetName
-   * @param {Sheet} sheetContent
+   * @param {Sheet} sheet
    */
-  addSheet(sheetName, sheetContent) {
-    this._sheets = this._sheets.set(sheetName, sheetContent);
+  addSheet(sheetName, sheet) {
+    this._sheets = this._sheets.set(sheetName, sheet.values);
   }
 }
 
@@ -109,7 +108,7 @@ export class Sheet {
     this._sheet = this._sheet_from_list_of_lists(data);
   }
 
-  get sheet() {
+  get values() {
     return this._sheet;
   }
 
