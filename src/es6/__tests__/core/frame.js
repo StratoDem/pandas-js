@@ -2,6 +2,7 @@ import Immutable from 'immutable';
 
 import DataFrame, {mergeDataFrame} from '../../core/frame';
 import Series from '../../core/series';
+import { Workbook } from '../../core/structs';
 import {IndexMismatchError} from '../../core/exceptions';
 
 
@@ -330,6 +331,20 @@ describe('frame', () => {
     });
   });
 
+  describe('to_excel', () => {
+    it('converts a pandas DataFrame to a properly formatted Excel file', () => {
+      const df = new DataFrame(Immutable.Map({x: new Series([1, 2, 3]), y: new Series([2, 3, 4])}));
+
+      const originalURL = window.URL;
+      window.URL = {
+        createObjectURL: (blob) => { return "CREATEOBJECTURL"; },
+      };
+      // console.log(df.to_excel(new Workbook(), 'my test sheet', true));
+
+      window.URL = originalURL;
+    });
+  });
+
   describe('where', () => {
     it('checks for equality of a scalar and returns a DataFrame', () => {
       const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}]);
@@ -594,6 +609,37 @@ describe('frame', () => {
       expect(df2.values.get(1).toArray()).toEqual([null, 0.5]);
       expect(df2.values.get(2).toArray()).toEqual([null, (4 / 3) - 1]);
       expect(df2.columns.toArray()).toEqual(['x', 'y']);
+    });
+  });
+
+  describe('pivot', () => {
+    it('pivots a DataFrame with unique index, column pairs', () => {
+      const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 1, z: 1}]);
+
+      let dfPv = df.pivot('x', 'y', 'z');
+
+      expect(dfPv).toBeInstanceOf(DataFrame);
+
+      expect(dfPv.get(1).values.toArray()).toEqual([null, 1]);
+      expect(dfPv.get(2).values.toArray()).toEqual([3, null]);
+
+      dfPv = df.pivot('z', 'x', 'y');
+
+      expect(dfPv).toBeInstanceOf(DataFrame);
+      expect(dfPv.get(1).values.toArray()).toEqual([null, 2]);
+      expect(dfPv.get(2).values.toArray()).toEqual([1, null]);
+    });
+
+    it('throws an error if column not in df', () => {
+      const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}]);
+
+      expect(() => df.pivot('x', 'y', 'z')).toThrow();
+    });
+
+    it('throws an error if index or column not unique', () => {
+      const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 1, y: 2, z: 4}]);
+
+      expect(() => df.pivot('x', 'y', 'z')).toThrow();
     });
   });
 });

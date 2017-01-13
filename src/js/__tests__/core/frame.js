@@ -16,6 +16,8 @@ var _series = require('../../core/series');
 
 var _series2 = _interopRequireDefault(_series);
 
+var _structs = require('../../core/structs');
+
 var _exceptions = require('../../core/exceptions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -372,6 +374,22 @@ describe('frame', function () {
     });
   });
 
+  describe('to_excel', function () {
+    it('converts a pandas DataFrame to a properly formatted Excel file', function () {
+      var df = new _frame2.default(_immutable2.default.Map({ x: new _series2.default([1, 2, 3]), y: new _series2.default([2, 3, 4]) }));
+
+      var originalURL = window.URL;
+      window.URL = {
+        createObjectURL: function createObjectURL(blob) {
+          return "CREATEOBJECTURL";
+        }
+      };
+      // console.log(df.to_excel(new Workbook(), 'my test sheet', true));
+
+      window.URL = originalURL;
+    });
+  });
+
   describe('where', function () {
     it('checks for equality of a scalar and returns a DataFrame', function () {
       var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
@@ -642,6 +660,41 @@ describe('frame', function () {
       expect(df2.values.get(1).toArray()).toEqual([null, 0.5]);
       expect(df2.values.get(2).toArray()).toEqual([null, 4 / 3 - 1]);
       expect(df2.columns.toArray()).toEqual(['x', 'y']);
+    });
+  });
+
+  describe('pivot', function () {
+    it('pivots a DataFrame with unique index, column pairs', function () {
+      var df = new _frame2.default([{ x: 1, y: 2, z: 3 }, { x: 2, y: 1, z: 1 }]);
+
+      var dfPv = df.pivot('x', 'y', 'z');
+
+      expect(dfPv).toBeInstanceOf(_frame2.default);
+
+      expect(dfPv.get(1).values.toArray()).toEqual([null, 1]);
+      expect(dfPv.get(2).values.toArray()).toEqual([3, null]);
+
+      dfPv = df.pivot('z', 'x', 'y');
+
+      expect(dfPv).toBeInstanceOf(_frame2.default);
+      expect(dfPv.get(1).values.toArray()).toEqual([null, 2]);
+      expect(dfPv.get(2).values.toArray()).toEqual([1, null]);
+    });
+
+    it('throws an error if column not in df', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }]);
+
+      expect(function () {
+        return df.pivot('x', 'y', 'z');
+      }).toThrow();
+    });
+
+    it('throws an error if index or column not unique', function () {
+      var df = new _frame2.default([{ x: 1, y: 2, z: 3 }, { x: 1, y: 2, z: 4 }]);
+
+      expect(function () {
+        return df.pivot('x', 'y', 'z');
+      }).toThrow();
     });
   });
 });

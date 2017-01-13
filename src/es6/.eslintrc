@@ -25,7 +25,6 @@
     "import/resolver": {
       "node": {
         "extensions": [
-          ".es6",
           ".js",
           ".jsx"
         ]
@@ -37,5 +36,6 @@
       "experimentalObjectRestSpread": true
     }
   },
-  "parser": "babel-eslint"
+  "parser": "babel-eslint",
+  "root": true
 }
