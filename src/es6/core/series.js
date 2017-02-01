@@ -1158,4 +1158,53 @@ export default class Series extends NDFrame {
 
     return new Series(valueIndexMap.values, {name: this.name, index: valueIndexMap.index});
   }
+
+  /**
+   * Convert the Series to a json object
+   *
+   * pandas equivalent: [Series.to_json](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.to_json.html)
+   *
+   * @param kwargs
+   * @param {string} [kwargs.orient=columns] orientation of JSON
+   *
+   * @returns {*}
+   *
+   * @example
+   * const ds = new Series([1, 2, 3], {name: 'x'});
+   *
+   * // Returns {0: 1, 1: 2, 2: 3}
+   * ds.to_json();
+   *
+   * // Returns [1, 2, 3]
+   * ds.to_json({orient: 'records'});
+   *
+   * // Returns {index: [0, 1, 2], name: 'x', values: [1, 2, 3]}
+   * ds.to_json({orient: 'split'});
+   */
+  to_json(kwargs = {orient: 'index'}) {
+    const ALLOWED_ORIENT = ['records', 'split', 'index'];
+    let orient = 'index';
+
+    if (typeof kwargs.orient !== 'undefined') {
+      if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0)
+        throw new TypeError(`orient must be in ${ALLOWED_ORIENT}`);
+      orient = kwargs.orient;
+    }
+
+    let json;
+    switch (orient) {
+      case 'records':
+        return this.values.toArray();
+      case 'split':
+        return {index: this.index.toArray(), name: this.name, values: this.values.toJS()};
+      case 'index':
+        json = {};
+        this.values.forEach((v, idx) => {
+          json[this.index.get(idx)] = v;
+        });
+        return json;
+      default:
+        throw new TypeError(`orient must be in ${ALLOWED_ORIENT}`);
+    }
+  }
 }

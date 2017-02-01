@@ -594,5 +594,28 @@ describe('series', function () {
         }).toThrow();
       });
     });
+
+    describe('to_json', function () {
+      it('converts a pandas Series to a json object', function () {
+        var ds = new _series2.default([1, 2, 3, 4], { name: 'x' });
+
+        var dsJSON = ds.to_json();
+        expect(dsJSON).toEqual({ 0: 1, 1: 2, 2: 3, 3: 4 });
+      });
+
+      it('converts a pandas Series to a json object when orient="records"', function () {
+        var ds = new _series2.default([1, 2, 3, 4], { name: 'x' });
+
+        var dsJSON = ds.to_json({ orient: 'records' });
+        expect(dsJSON).toEqual([1, 2, 3, 4]);
+      });
+
+      it('converts a pandas Series to a json object when orient="split"', function () {
+        var ds = new _series2.default([1, 2, 3, 4], { name: 'x' });
+
+        var dsJSON = ds.to_json({ orient: 'split' });
+        expect(dsJSON).toEqual({ name: 'x', index: [0, 1, 2, 3], values: [1, 2, 3, 4] });
+      });
+    });
   });
 });
