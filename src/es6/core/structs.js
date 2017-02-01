@@ -55,6 +55,7 @@ export class Workbook {
    * @param {Sheet} sheetContent
    */
   addSheet(sheetName, sheetContent) {
+    console.log(sheetContent.values);
     this._sheets.addSheet(sheetName, sheetContent);
   }
 

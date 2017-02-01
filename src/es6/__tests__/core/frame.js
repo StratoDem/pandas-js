@@ -339,9 +339,58 @@ describe('frame', () => {
       window.URL = {
         createObjectURL: (blob) => { return "CREATEOBJECTURL"; },
       };
-      // console.log(df.to_excel(new Workbook(), 'my test values', true));
+      df.to_excel(new Workbook(), 'my test values', true, {index: false});
 
       window.URL = originalURL;
+    });
+  });
+
+  describe('to_json', () => {
+    it('converts a pandas DataFrame to a json object when orient="columns"', () => {
+      const df = new DataFrame(Immutable.Map({x: new Series([1, 2, 3]), y: new Series([2, 3, 4])}));
+
+      const dfJSON = df.to_json();
+      expect(dfJSON).toEqual({x: {0: 1, 1: 2, 2: 3}, y: {0: 2, 1: 3, 2: 4}});
+    });
+
+    it('converts a pandas DataFrame to a json object when orient="records"', () => {
+      const df = new DataFrame(Immutable.Map({x: new Series([1, 2, 3]), y: new Series([2, 3, 4])}));
+
+      const dfJSON = df.to_json({orient: 'records'});
+      expect(dfJSON).toBeInstanceOf(Array);
+      expect(dfJSON[0]).toEqual({x: 1, y: 2});
+      expect(dfJSON[1]).toEqual({x: 2, y: 3});
+      expect(dfJSON[2]).toEqual({x: 3, y: 4});
+    });
+
+    it('converts a pandas DataFrame to a json object when orient="split"', () => {
+      const df = new DataFrame(Immutable.Map({x: new Series([1, 2, 3]), y: new Series([2, 3, 4])}));
+
+      const dfJSON = df.to_json({orient: 'split'});
+      expect(dfJSON).toBeInstanceOf(Object);
+      expect(dfJSON.columns).toEqual(['x', 'y']);
+      expect(dfJSON.index).toEqual([0, 1, 2]);
+      expect(dfJSON.values).toEqual([[1, 2], [2, 3], [3, 4]]);
+    });
+
+    it('converts a pandas DataFrame to a json object when orient="index"', () => {
+      const df = new DataFrame(Immutable.Map({x: new Series([1, 2, 3]), y: new Series([2, 3, 4])}));
+
+      const dfJSON = df.to_json({orient: 'index'});
+      expect(dfJSON).toBeInstanceOf(Object);
+      expect(dfJSON).toEqual({
+        0: {x: 1, y: 2},
+        1: {x: 2, y: 3},
+        2: {x: 3, y: 4},
+      });
+    });
+
+    it('converts a pandas DataFrame to a json object when orient="values"', () => {
+      const df = new DataFrame(Immutable.Map({x: new Series([1, 2, 3]), y: new Series([2, 3, 4])}));
+
+      const dfJSON = df.to_json({orient: 'values'});
+      expect(dfJSON).toBeInstanceOf(Object);
+      expect(dfJSON).toEqual([[1, 2], [2, 3], [3, 4]]);
     });
   });
 

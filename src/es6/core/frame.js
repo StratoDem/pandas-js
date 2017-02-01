@@ -14,7 +14,7 @@ const parseArrayToSeriesMap = (array, index) => {
 
   array.forEach((el) => {
     if (el instanceof Immutable.Map) {
-      el.keySeq().forEach(k => {
+      el.keySeq().forEach((k) => {
         if (dataMap.has(k)) {
           dataMap = dataMap.set(k, dataMap.get(k).push(el.get(k)));
         } else {
@@ -32,7 +32,7 @@ const parseArrayToSeriesMap = (array, index) => {
     }
   });
 
-  dataMap.keySeq().forEach(k => {
+  dataMap.keySeq().forEach((k) => {
     dataMap = dataMap.set(k, new Series(dataMap.get(k), {name: k, index}));
   });
 
@@ -84,13 +84,6 @@ export default class DataFrame extends NDFrame {
       this.set_axis(1, Immutable.Seq.of());
     }
 
-    // TODO this is a slow operation
-    let valuesList = Immutable.List([]);
-    for (let idx = 0; idx < this.length; idx += 1) {
-      valuesList = valuesList.concat(
-        [Immutable.List(this.columns.map(k => this._data.get(k).iloc(idx)))]);
-    }
-    this._values = valuesList;
     this._setup_axes(Immutable.List.of(0, 1));
   }
 
@@ -188,6 +181,16 @@ export default class DataFrame extends NDFrame {
    * df.values;
    */
   get values() {
+    if (this._values instanceof Immutable.List)
+      return super.values;
+
+    let valuesList = Immutable.List([]);
+    for (let idx = 0; idx < this.length; idx += 1) {
+      valuesList = valuesList.concat(
+        [Immutable.List(this.columns.map(k => this._data.get(k).iloc(idx)))]);
+    }
+    this._values = valuesList;
+
     return super.values;
   }
 
@@ -573,28 +576,42 @@ export default class DataFrame extends NDFrame {
    *    Name of values which will contain DataFrame
    * @param {boolean} download
    *    Download the excel file?
+   * @param {Object} kwargs
+   * @param {boolean} kwargs.index=true
    *
    * @return {Workbook}
    *
    * @example
    *
    */
-  to_excel(excel_writer, sheetName = 'Sheet1', download = false) {
+  to_excel(excel_writer, sheetName = 'Sheet1', download = false, kwargs = {index: true}) {
     let wb;
-    if (excel_writer instanceof Workbook) {
-      const sheet = new Sheet(this.values);
 
+    const sheetObject = () => {
+      if (kwargs.index) {
+        const colRow = Immutable.List.of('').concat(this.columns.toList());
+        return new Sheet(
+          Immutable.List.of(colRow)
+            .concat(this.values.map((v, idx) => Immutable.List.of(this.index.get(idx)).concat(v))));
+      }
+
+      return new Sheet(Immutable.List.of(this.columns.toList()).concat(this.values));
+    };
+
+    if (excel_writer instanceof Workbook) {
       wb = excel_writer.copy();
-      wb.addSheet(sheetName, sheet);
+      wb.addSheet(sheetName, sheetObject());
     } else if (typeof excel_writer === 'string') {
       wb = new Workbook();
-      wb.addSheet(sheetName, new Sheet(this.values));
+      wb.addSheet(sheetName, sheetObject());
     } else throw new Error('excel_writer must be a file path or Workbook object');
 
     function s2ab(s) {
       const buf = new ArrayBuffer(s.length);
       const view = new Uint8Array(buf);
-      for (let i = 0; i < s.length; i += 1) view[i] = s.charCodeAt(i) & 0xFF;
+      for (let i = 0; i < s.length; i += 1) { // noinspection Eslint
+        view[i] = s.charCodeAt(i) & 0xFF;
+      }
       return buf;
     }
 
@@ -605,6 +622,79 @@ export default class DataFrame extends NDFrame {
     }
 
     return wb;
+  }
+
+  /**
+   * Convert the DataFrame to a json object
+   *
+   * pandas equivalent: [DataFrame.to_json](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.to_json.html)
+   *
+   * @param kwargs
+   * @param {string} [kwargs.orient=columns] orientation of JSON
+   *
+   * @returns {*}
+   *
+   * @example
+   * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+   *
+   * // Returns {x: {0: 1, 1: 2, 2: 3}, y: {0: 1, 1: 2, 2: 3}}
+   * df.to_json();
+   *
+   * // Returns [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]
+   * df.to_json({orient: 'records'});
+   *
+   * // Returns {0: {x: 1, y: 2}, 1: {x: 2, y: 3}, 2: {x: 3, y: 4}}
+   * df.to_json({orient: 'index'});
+   *
+   * // Returns {index: [0, 1, 2], columns: ['x', 'y'], values: [[1, 2], [2, 3], [3, 4]]}
+   * df.to_json({orient: 'split'});
+   * 
+   * // Returns [[1, 2], [2, 3], [3, 4]]
+   * df.to_json({orient: 'values'});
+   */
+  to_json(kwargs = {orient: 'columns'}) {
+    const ALLOWED_ORIENT = ['records', 'split', 'index', 'values', 'columns'];
+    let orient = 'columns';
+
+    if (typeof kwargs.orient !== 'undefined') {
+      if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0)
+        throw new TypeError(`orient must be in ${ALLOWED_ORIENT}`);
+      orient = kwargs.orient;
+    }
+
+    let json;
+    switch (orient) {
+      case 'records':
+        return this.values.map((row) => {
+          const rowObj = {};
+          row.forEach((val, idx) => { rowObj[this.columns.get(idx)] = val; });
+          return rowObj;
+        }).toArray();
+      case 'split':
+        return {
+          index: this.index.toArray(),
+          columns: this.columns.toArray(),
+          values: this.values.toJS(),
+        };
+      case 'index':
+        json = {};
+        this.values.forEach((row, idx) => {
+          const rowObj = {};
+          row.forEach((val, idx2) => { rowObj[this.columns.get(idx2)] = val; });
+          json[this.index.get(idx)] = rowObj;
+        });
+        return json;
+      case 'values':
+        return this.values.toJS();
+      case 'columns':
+        json = {};
+        this.columns.forEach((c) => {
+          json[c] = this.get(c).to_json({orient: 'index'});
+        });
+        return json;
+      default:
+        throw new TypeError(`orient must be in ${ALLOWED_ORIENT}`);
+    }
   }
 
   /**

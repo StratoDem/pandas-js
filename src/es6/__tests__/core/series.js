@@ -565,5 +565,28 @@ describe('series', () => {
         expect(() => { ds1.corr(ds2); }).toThrow();
       });
     });
+
+    describe('to_json', () => {
+      it('converts a pandas Series to a json object', () => {
+        const ds = new Series([1, 2, 3, 4], {name: 'x'});
+
+        const dsJSON = ds.to_json();
+        expect(dsJSON).toEqual({0: 1, 1: 2, 2: 3, 3: 4});
+      });
+
+      it('converts a pandas Series to a json object when orient="records"', () => {
+        const ds = new Series([1, 2, 3, 4], {name: 'x'});
+
+        const dsJSON = ds.to_json({orient: 'records'});
+        expect(dsJSON).toEqual([1, 2, 3, 4]);
+      });
+
+      it('converts a pandas Series to a json object when orient="split"', () => {
+        const ds = new Series([1, 2, 3, 4], {name: 'x'});
+
+        const dsJSON = ds.to_json({orient: 'split'});
+        expect(dsJSON).toEqual({name: 'x', index: [0, 1, 2, 3], values: [1, 2, 3, 4]});
+      });
+    });
   });
 });

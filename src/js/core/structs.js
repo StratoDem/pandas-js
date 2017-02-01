@@ -77,6 +77,7 @@ var Workbook = exports.Workbook = function () {
   }, {
     key: 'addSheet',
     value: function addSheet(sheetName, sheetContent) {
+      console.log(sheetContent.values);
       this._sheets.addSheet(sheetName, sheetContent);
     }
   }, {
