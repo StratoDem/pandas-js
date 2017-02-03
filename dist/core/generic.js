@@ -30,23 +30,8 @@ var NDFrame = function () {
     this._values = null;
   }
 
-  /**
-   * Return a Seq of axis dimensions
-   *
-   * @returns Immutable.Seq
-   */
-
-
   (0, _createClass3.default)(NDFrame, [{
     key: 'set_axis',
-
-
-    /**
-     * Assign labels to an axis
-     *
-     * @param {number|string} axis
-     * @param {List} labels
-     */
     value: function set_axis(axis, labels) {
       this._axes[axis] = labels;
     }

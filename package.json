@@ -72,7 +72,7 @@
   },
   "homepage": "https://stratodem.github.io/pandas.js-docs/",
   "scripts": {
-    "build": "babel src/es6 --out-dir dist",
+    "build": "babel src/es6 --out-dir dist --no-comments",
     "test": "jest --verbose --runInBand"
   },
   "license": "MIT"

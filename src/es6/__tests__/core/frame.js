@@ -87,6 +87,48 @@ describe('frame', () => {
       });
     });
 
+    describe('get', () => {
+      it('gets one column as a Series when string passed in', () => {
+        const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 3, z: 4}, {x: 3, y: 4, z: 5}]);
+
+        const ds = df.get('y');
+        expect(ds).toBeInstanceOf(Series);
+        expect(ds.values.toArray()).toEqual([2, 3, 4]);
+      });
+
+      it('gets multiple columns as a DataFrame when Iterable of strings passed in', () => {
+        const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 3, z: 4}, {x: 3, y: 4, z: 5}]);
+
+        const df2 = df.get(['y', 'z']);
+        expect(df2).toBeInstanceOf(DataFrame);
+        expect(df2.columns.toArray()).toEqual(['y', 'z']);
+        expect(df2.get('y').values.toArray()).toEqual([2, 3, 4]);
+        expect(df2.get('z').values.toArray()).toEqual([3, 4, 5]);
+      })
+    });
+
+    describe('head', () => {
+      it('returns the first n rows as a new DataFrame', () => {
+        const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}, {x: 4, y: 5}]);
+
+        const df2 = df.head(2);
+        expect(df2.shape.toArray()).toEqual([2, 2]);
+        expect(df2.get('x').values.toArray()).toEqual([1, 2]);
+        expect(df2.index.toArray()).toEqual([0, 1]);
+      });
+    });
+
+    describe('tail', () => {
+      it('returns the last n rows as a new DataFrame', () => {
+        const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}, {x: 4, y: 5}]);
+
+        const df2 = df.tail(2);
+        expect(df2.shape.toArray()).toEqual([2, 2]);
+        expect(df2.get('x').values.toArray()).toEqual([3, 4]);
+        expect(df2.index.toArray()).toEqual([2, 3]);
+      });
+    });
+
     it('measures length properly', () => {
       const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
       expect(df1.length).toEqual(3);
@@ -689,6 +731,81 @@ describe('frame', () => {
       const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 1, y: 2, z: 4}]);
 
       expect(() => df.pivot('x', 'y', 'z')).toThrow();
+    });
+  });
+
+  describe('iloc', () => {
+    it('.iloc(1, 1) returns a DataFrame of shape [1, 1]', () => {
+      const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 3, z: 4}, {x: 3, y: 4, z: 5}]);
+
+      const df2 = df.iloc(1, 1);
+      expect(df2).toBeInstanceOf(DataFrame);
+      expect(df2.shape.toArray()).toEqual([1, 1]);
+      expect(df2.columns.toArray()).toEqual(['y']);
+      expect(df2.get('y').length).toEqual(1);
+      expect(df2.get('y').iloc(0)).toEqual(3);
+
+      expect(df2.index.toArray()).toEqual([1]);
+    });
+
+    it('.iloc(1, [1, 3]) returns a DataFrame of shape [1, 2]', () => {
+      const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 3, z: 4}, {x: 3, y: 4, z: 5}]);
+
+      const df2 = df.iloc(1, [1, 3]);
+      expect(df2).toBeInstanceOf(DataFrame);
+      expect(df2.shape.toArray()).toEqual([1, 2]);
+      expect(df2.columns.toArray()).toEqual(['y', 'z']);
+      expect(df2.get('y').length).toEqual(1);
+      expect(df2.get('y').iloc(0)).toEqual(3);
+      expect(df2.get('z').length).toEqual(1);
+      expect(df2.get('z').iloc(0)).toEqual(4);
+
+      expect(df2.index.toArray()).toEqual([1]);
+    });
+
+    it('.iloc(1) returns a DataFrame of shape [1, 3]', () => {
+      const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 3, z: 4}, {x: 3, y: 4, z: 5}]);
+
+      const df2 = df.iloc(1);
+      expect(df2).toBeInstanceOf(DataFrame);
+      expect(df2.shape.toArray()).toEqual([1, 3]);
+      expect(df2.columns.toArray()).toEqual(['x', 'y', 'z']);
+      expect(df2.get('x').length).toEqual(1);
+      expect(df2.get('x').iloc(0)).toEqual(2);
+      expect(df2.get('y').length).toEqual(1);
+      expect(df2.get('y').iloc(0)).toEqual(3);
+      expect(df2.get('z').length).toEqual(1);
+      expect(df2.get('z').iloc(0)).toEqual(4);
+
+      expect(df2.index.toArray()).toEqual([1]);
+    });
+
+    it('.iloc([1, 3], 1) returns a DataFrame of shape [2, 1]', () => {
+      const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 3, z: 4}, {x: 3, y: 4, z: 5}]);
+
+      const df2 = df.iloc([1, 3], 1);
+      expect(df2).toBeInstanceOf(DataFrame);
+      expect(df2.shape.toArray()).toEqual([2, 1]);
+      expect(df2.columns.toArray()).toEqual(['y']);
+      expect(df2.get('y').length).toEqual(2);
+      expect(df2.get('y').values.toArray()).toEqual([3, 4]);
+
+      expect(df2.index.toArray()).toEqual([1, 2]);
+    });
+
+    it('.iloc([1, 3], [1, 3]) returns a DataFrame of shape [2, 2]', () => {
+      const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 3, z: 4}, {x: 3, y: 4, z: 5}]);
+
+      const df2 = df.iloc([1, 3], [1, 3]);
+      expect(df2).toBeInstanceOf(DataFrame);
+      expect(df2.shape.toArray()).toEqual([2, 2]);
+      expect(df2.columns.toArray()).toEqual(['y', 'z']);
+      expect(df2.get('y').length).toEqual(2);
+      expect(df2.get('y').values.toArray()).toEqual([3, 4]);
+      expect(df2.get('z').length).toEqual(2);
+      expect(df2.get('z').values.toArray()).toEqual([4, 5]);
+
+      expect(df2.index.toArray()).toEqual([1, 2]);
     });
   });
 });

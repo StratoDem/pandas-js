@@ -92,28 +92,6 @@ var parseArrayToSeriesMap = function parseArrayToSeriesMap(array, index) {
 var DataFrame = function (_NDFrame) {
   (0, _inherits3.default)(DataFrame, _NDFrame);
 
-  /**
-   * Two-dimensional size-mutable, potentially heterogeneous tabular data
-   * structure with labeled axes (rows and columns). Arithmetic operations
-   * align on both row and column labels. Can be thought of as a Immutable.Map-like
-   * container for Series objects. The primary pandas data structure
-   *
-   * @param data {Array|Object}
-   *    Data to be stored in DataFrame
-   * @param {Object} kwargs
-   *    Extra optional arguments for a DataFrame
-   * @param {Array|Object} [kwargs.index]
-   *
-   * @example
-   * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}])
-   *
-   * // Returns:
-   * //    x  |  y
-   * // 0  1  |  2
-   * // 1  2  |  3
-   * // 2  3  |  4
-   * df.toString();
-   */
   function DataFrame(data) {
     var kwargs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     (0, _classCallCheck3.default)(this, DataFrame);
@@ -171,33 +149,10 @@ var DataFrame = function (_NDFrame) {
 
       return string;
     }
-
-    /**
-     * Return a new deep copy of the `DataFrame`
-     *
-     * pandas equivalent: [DataFrame.copy](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.copy.html)
-     *
-     * @returns {DataFrame}
-     *
-     * @example
-     * const df = const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     * const df2 = df.copy();
-     * df2.index = [1, 2, 3];
-     * df.index   // [0, 1, 2];
-     * df2.index  // [1, 2, 3];
-     */
-
   }, {
     key: 'copy',
     value: function copy() {
       return new DataFrame(this._data, { index: this.index });
-    }
-  }, {
-    key: 'kwargs',
-    value: function kwargs() {
-      this.kwargs = {
-        index: this.index
-      };
     }
   }, {
     key: Symbol.iterator,
@@ -217,104 +172,102 @@ var DataFrame = function (_NDFrame) {
         }
       };
     }
-
-    /**
-     * A generator which returns [row, index location] tuples
-     *
-     * pandas equivalent: [DataFrame.iterrows](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.iterrows.html)
-     *
-     * @returns {*}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Logs 2 4 6
-     * for(const [row, idx] of df) {
-     *   console.log(row.get('x') * 2);
-     * }
-     */
-
   }, {
     key: 'iterrows',
     value: function iterrows() {
       return (0, _utils.enumerate)(this);
     }
+  }, {
+    key: 'iloc',
+    value: function iloc(rowIdx, colIdx) {
+      var _this4 = this;
 
-    /**
-     * Immutable.List of Immutable.List, with [row][column] indexing
-     *
-     * pandas equivalent: [DataFrame.values](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.values.html)
-     *
-     * @returns {List.<List>}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns List [ List[1, 2, 3], List[2, 3, 4]]
-     * df.values;
-     */
+      if (typeof rowIdx === 'number') {
+        if (typeof colIdx === 'number') {
+          if (colIdx < 0 || colIdx >= this.shape[1]) throw new Error('colIdx out of bounds');
 
+          var getCol = this.columns.get(colIdx);
+          return new DataFrame(_immutable2.default.Map([[getCol, this.get(getCol).iloc(rowIdx, rowIdx + 1)]]), { index: this.index.slice(rowIdx, rowIdx + 1) });
+        } else if (Array.isArray(colIdx)) {
+          if (colIdx.length !== 2) throw new Error('colIdx must be length 2 (start and end positions)');
+          if (colIdx[1] <= colIdx[0]) throw new Error('colIdx end position cannot be less than or equal tostart position');
+          if (colIdx[0] < 0 || colIdx[1] > this.shape[1]) throw new Error('colIdx position out of bounds');
+
+          return new DataFrame(_immutable2.default.Map(_immutable2.default.Range(colIdx[0], colIdx[1]).map(function (idx) {
+            var getCol = _this4.columns.get(idx);
+            return [getCol, _this4.get(getCol).iloc(rowIdx, rowIdx + 1)];
+          }).toArray()), { index: this.index.slice(rowIdx, rowIdx + 1) });
+        } else if (typeof colIdx === 'undefined') {
+          return new DataFrame(_immutable2.default.Map(this.columns.map(function (c) {
+            return [c, _this4.get(c).iloc(rowIdx, rowIdx + 1)];
+          }).toArray()), { index: this.index.slice(rowIdx, rowIdx + 1) });
+        }
+
+        throw new TypeError('colIdx must be either integer or Array of integers');
+      } else if (Array.isArray(rowIdx)) {
+        if (typeof colIdx === 'number') {
+          if (colIdx < 0 || colIdx >= this.shape[1]) throw new Error('colIdx out of bounds');
+
+          var _getCol = this.columns.get(colIdx);
+          return new DataFrame(_immutable2.default.Map([[_getCol, this.get(_getCol).iloc(rowIdx[0], rowIdx[1])]]), { index: this.index.slice(rowIdx[0], rowIdx[1]) });
+        } else if (Array.isArray(colIdx)) {
+          if (colIdx.length !== 2) throw new Error('colIdx must be length 2 (start and end positions)');
+          if (colIdx[1] <= colIdx[0]) throw new Error('colIdx end position cannot be less than or equal tostart position');
+          if (colIdx[0] < 0 || colIdx[1] > this.shape[1]) throw new Error('colIdx position out of bounds');
+
+          return new DataFrame(_immutable2.default.Map(_immutable2.default.Range(colIdx[0], colIdx[1]).map(function (idx) {
+            var getCol = _this4.columns.get(idx);
+            return [getCol, _this4.get(getCol).iloc(rowIdx[0], rowIdx[1])];
+          }).toArray()), { index: this.index.slice(rowIdx[0], rowIdx[1]) });
+        } else if (typeof colIdx === 'undefined') {
+          return new DataFrame(_immutable2.default.Map(this.columns.map(function (c) {
+            return [c, _this4.get(c).iloc(rowIdx[0], rowIdx[1])];
+          }).toArray()), { index: this.index.slice(rowIdx[0], rowIdx[1]) });
+        }
+
+        throw new TypeError('colIdx must be either integer or Array of integers');
+      }
+
+      throw new TypeError('rowIdx must be either integer or Array of integers');
+    }
+  }, {
+    key: 'head',
+    value: function head() {
+      var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 10;
+
+      return this.iloc([0, n]);
+    }
+  }, {
+    key: 'tail',
+    value: function tail() {
+      var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 10;
+
+      return this.iloc([this.length - n, this.length]);
+    }
   }, {
     key: 'columnExists',
     value: function columnExists(col) {
       return this.columns.indexOf(col) >= 0;
     }
-
-    /**
-     * Return the `Series` at the column
-     *
-     * pandas equivalent: df['column_name']
-     *
-     * @param {string} columns
-     *    Name of the column to retrieve
-     *
-     * @returns {Series}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns Series([1, 2, 3], {name: 'x', index: [0, 1, 2]})
-     * df.get('x');
-     */
-
   }, {
     key: 'get',
     value: function get(columns) {
-      if ((typeof columns === 'string' || typeof columns === 'number') && this.columnExists(columns)) return this._data.get(columns);
+      var _this5 = this;
+
+      if ((typeof columns === 'string' || typeof columns === 'number') && this.columnExists(columns)) return this._data.get(columns);else if (Array.isArray(columns) || columns instanceof _immutable2.default.List || columns instanceof _immutable2.default.Seq) {
+        columns.forEach(function (c) {
+          if (!_this5.columnExists(c)) throw new Error('KeyError: ' + c + ' not found');
+        });
+        return new DataFrame(_immutable2.default.Map(columns.map(function (c) {
+          return [c, _this5.get(c)];
+        })), this.kwargs);
+      }
       throw new Error('KeyError: ' + columns + ' not found');
     }
-
-    /**
-     * Return an object of same shape as self and whose corresponding entries are from self
-     * where cond is True and otherwise are from other.
-     *
-     * pandas equivalent [DataFrame.where](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.where.html)
-     *
-     * @param {Array|List|Series|DataFrame|number|string} other
-     *  Iterable or value to compare to DataFrame
-     * @param {function} op
-     *  Function which takes (a, b) values and returns a boolean
-     *
-     * @returns {DataFrame}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}]);
-     *
-     * // Returns DataFrame(Map({x: Series([true, false]), y: Series([false, true])})
-     * df.where(new Series([1, 3]), (a, b) => a === b);
-     *
-     * // Returns DataFrame(Map({x: Series([true, false]), y: Series([false, true])})
-     * df.where(new DataFrame(Map({
-     *    a: new Series([1, 1]),
-     *    b: new Series([3, 3])})),
-     *    (a, b) => a === b);
-     */
-
   }, {
     key: 'where',
     value: function where(other, op) {
       if (!Array.isArray(other) && !(other instanceof _immutable2.default.List) && !(other instanceof _series2.default) && !(other instanceof DataFrame)) {
-        // noinspection Eslint
         return new DataFrame(_immutable2.default.Map(this._data.mapEntries(function (_ref) {
           var _ref2 = (0, _slicedToArray3.default)(_ref, 2),
               k = _ref2[0],
@@ -325,7 +278,7 @@ var DataFrame = function (_NDFrame) {
       } else if (Array.isArray(other) || other instanceof _series2.default || other instanceof _immutable2.default.List) {
         if ((Array.isArray(other) || other instanceof _series2.default) && other.length !== this.length) throw new Error('Array or Series must be same length as DataFrame');
         if (other instanceof _immutable2.default.List && other.size !== this.length) throw new Error('Immutable List must be same size as DataFrame');
-        // noinspection Eslint
+
         return new DataFrame(_immutable2.default.Map(this._data.mapEntries(function (_ref3) {
           var _ref4 = (0, _slicedToArray3.default)(_ref3, 2),
               k = _ref4[0],
@@ -335,7 +288,7 @@ var DataFrame = function (_NDFrame) {
         })));
       } else if (other instanceof DataFrame) {
         if (!other.shape.equals(this.shape)) throw new Error('DataFrame must have the same shape');
-        // noinspection Eslint
+
         return new DataFrame(_immutable2.default.Map(this._data.mapEntries(function (_ref5, idx) {
           var _ref6 = (0, _slicedToArray3.default)(_ref5, 2),
               k = _ref6[0],
@@ -347,29 +300,6 @@ var DataFrame = function (_NDFrame) {
 
       throw new Error('Unsupported comparison value, or non-matching lengths');
     }
-
-    /**
-     * Equal to `DataFrame` and other, element wise
-     *
-     * pandas equivalent: df == val
-     *
-     * @param {Array|List|Series|DataFrame|number|string} other
-     *  Other Iterable or scalar value to check for equal to
-     *
-     * @returns {DataFrame}
-     *
-     * @example
-     * const df = new DataFrame(Map({x: new Series([1, 2]), y: new Series([2, 3])}));
-     *
-     * // Returns DataFrame(Map({x: Series([true, false]), y: Series([false, true])})
-     * df.eq(new Series([1, 3]));
-     *
-     * // Returns DataFrame(Map({x: Series([true, false]), y: Series([false, false])})
-     * df.gt(new DataFrame(Map({
-     *    a: new Series([1, 1]),
-     *    b: new Series([1, 2])})));
-     */
-
   }, {
     key: 'eq',
     value: function eq(other) {
@@ -377,29 +307,6 @@ var DataFrame = function (_NDFrame) {
         return a === b;
       });
     }
-
-    /**
-     * Greater than of `DataFrame` and other, element wise
-     *
-     * pandas equivalent: df > val
-     *
-     * @param {Array|List|Series|DataFrame|number|string} other
-     *  Other Iterable or scalar value to check for greater than
-     *
-     * @returns {DataFrame}
-     *
-     * @example
-     * const df = new DataFrame(Map({x: new Series([1, 2]), y: new Series([2, 3])}));
-     *
-     * // Returns DataFrame(Map({x: Series([false, false]), y: Series([true, false])})
-     * df.gt(new Series([1, 3]));
-     *
-     * // Returns DataFrame(Map({x: Series([false, true]), y: Series([true, true])})
-     * df.gt(new DataFrame(Map({
-     *    a: new Series([1, 1]),
-     *    b: new Series([1, 2])})));
-     */
-
   }, {
     key: 'gt',
     value: function gt(other) {
@@ -407,29 +314,6 @@ var DataFrame = function (_NDFrame) {
         return a > b;
       });
     }
-
-    /**
-     * Greater than or equal to of `DataFrame` and other, element wise
-     *
-     * pandas equivalent: df >= val
-     *
-     * @param {Array|List|Series|DataFrame|number|string} other
-     *  Other Iterable or scalar value to check for greater than or equal to
-     *
-     * @returns {DataFrame}
-     *
-     * @example
-     * const df = new DataFrame(Map({x: new Series([1, 2]), y: new Series([2, 3])}));
-     *
-     * // Returns DataFrame(Map({x: Series([true, false]), y: Series([true, true])})
-     * df.gte(new Series([1, 3]));
-     *
-     * // Returns DataFrame(Map({x: Series([true, true]), y: Series([true, true])})
-     * df.gte(new DataFrame(Map({
-     *    a: new Series([1, 1]),
-     *    b: new Series([1, 2])})));
-     */
-
   }, {
     key: 'gte',
     value: function gte(other) {
@@ -437,29 +321,6 @@ var DataFrame = function (_NDFrame) {
         return a >= b;
       });
     }
-
-    /**
-     * Less than of `DataFrame` and other, element wise
-     *
-     * pandas equivalent: df < val
-     *
-     * @param {Array|List|Series|DataFrame|number|string} other
-     *  Other Iterable or scalar value to check for less than
-     *
-     * @returns {DataFrame}
-     *
-     * @example
-     * const df = new DataFrame(Map({x: new Series([1, 2]), y: new Series([2, 3])}));
-     *
-     * // Returns DataFrame(Map({x: Series([false, true]), y: Series([false, false])})
-     * df.lt(new Series([1, 3]));
-     *
-     * // Returns DataFrame(Map({x: Series([false, false]), y: Series([false, false])})
-     * df.lt(new DataFrame(Map({
-     *    a: new Series([1, 1]),
-     *    b: new Series([1, 2])})));
-     */
-
   }, {
     key: 'lt',
     value: function lt(other) {
@@ -467,29 +328,6 @@ var DataFrame = function (_NDFrame) {
         return a < b;
       });
     }
-
-    /**
-     * Less than or equal to of `DataFrame` and other, element wise
-     *
-     * pandas equivalent: df <= val
-     *
-     * @param {Array|List|Series|DataFrame|number|string} other
-     *  Other Iterable or scalar value to check for less than or equal to
-     *
-     * @returns {DataFrame}
-     *
-     * @example
-     * const df = new DataFrame(Map({x: new Series([1, 2]), y: new Series([2, 3])}));
-     *
-     * // Returns DataFrame(Map({x: Series([true, true]), y: Series([false, true])})
-     * df.lte(new Series([1, 3]));
-     *
-     * // Returns DataFrame(Map({x: Series([true, false]), y: Series([false, false])})
-     * df.lte(new DataFrame(Map({
-     *    a: new Series([1, 1]),
-     *    b: new Series([1, 2])})));
-     */
-
   }, {
     key: 'lte',
     value: function lte(other) {
@@ -497,33 +335,6 @@ var DataFrame = function (_NDFrame) {
         return a <= b;
       });
     }
-
-    /**
-     * Merge this `DataFrame` with another `DataFrame`, optionally on some set of columns
-     *
-     * pandas equivalent: `DataFrame.merge`
-     *
-     * @param {DataFrame} df
-     *    `DataFrame` with which to merge this `DataFrame`
-     * @param {Array} on
-     *    Array of columns on which to merge
-     * @param {string} how='inner'
-     *    Merge method, either 'inner' or 'outer'
-     *
-     * @returns {DataFrame}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     * const df2 = new DataFrame([{x: 1, z: 3}, {x: 3, z: 5}, {x: 2, z: 10}]);
-     *
-     * // Returns
-     * //    x  |  y  |  z
-     * // 0  1  |  2  |  3
-     * // 1  2  |  3  |  10
-     * // 2  3  |  4  |  5
-     * df.merge(df2, ['x'], 'inner');
-     */
-
   }, {
     key: 'merge',
     value: function merge(df, on) {
@@ -531,25 +342,10 @@ var DataFrame = function (_NDFrame) {
 
       return mergeDataFrame(this, df, on, how);
     }
-
-    /**
-     * Convert the `DataFrame` to a csv string
-     *
-     * pandas equivalent: [DataFrame.to_csv](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.to_csv.html)
-     *
-     * @returns {string}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns x,y,\r\n1,2,\r\n2,3\r\n3,4\r\n
-     * df.to_csv();
-     */
-
   }, {
     key: 'to_csv',
     value: function to_csv() {
-      var _this4 = this;
+      var _this6 = this;
 
       var csvString = '';
       this.columns.forEach(function (k) {
@@ -559,8 +355,8 @@ var DataFrame = function (_NDFrame) {
 
       var updateString = function updateString(idx) {
         var s = '';
-        _this4.columns.forEach(function (k) {
-          s += _this4.get(k).iloc(idx) + ',';
+        _this6.columns.forEach(function (k) {
+          s += _this6.get(k).iloc(idx) + ',';
         });
         return s;
       };
@@ -571,31 +367,12 @@ var DataFrame = function (_NDFrame) {
 
       return csvString;
     }
-
-    /**
-     * Write the `DataFrame` to a Workbook object
-     *
-     * @param {string|Workbook} excel_writer
-     *    File path or existing Workbook object
-     * @param {string} sheetName
-     *    Name of values which will contain DataFrame
-     * @param {boolean} download
-     *    Download the excel file?
-     * @param {Object} kwargs
-     * @param {boolean} kwargs.index=true
-     *
-     * @return {Workbook}
-     *
-     * @example
-     *
-     */
-
   }, {
     key: 'to_excel',
     value: function to_excel(excel_writer) {
       var sheetName = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'Sheet1';
 
-      var _this5 = this;
+      var _this7 = this;
 
       var download = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
       var kwargs = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { index: true };
@@ -604,13 +381,13 @@ var DataFrame = function (_NDFrame) {
 
       var sheetObject = function sheetObject() {
         if (kwargs.index) {
-          var colRow = _immutable2.default.List.of('').concat(_this5.columns.toList());
-          return new _structs.Sheet(_immutable2.default.List.of(colRow).concat(_this5.values.map(function (v, idx) {
-            return _immutable2.default.List.of(_this5.index.get(idx)).concat(v);
+          var colRow = _immutable2.default.List.of('').concat(_this7.columns.toList());
+          return new _structs.Sheet(_immutable2.default.List.of(colRow).concat(_this7.values.map(function (v, idx) {
+            return _immutable2.default.List.of(_this7.index.get(idx)).concat(v);
           })));
         }
 
-        return new _structs.Sheet(_immutable2.default.List.of(_this5.columns.toList()).concat(_this5.values));
+        return new _structs.Sheet(_immutable2.default.List.of(_this7.columns.toList()).concat(_this7.values));
       };
 
       if (excel_writer instanceof _structs.Workbook) {
@@ -625,7 +402,6 @@ var DataFrame = function (_NDFrame) {
         var buf = new ArrayBuffer(s.length);
         var view = new Uint8Array(buf);
         for (var i = 0; i < s.length; i += 1) {
-          // noinspection Eslint
           view[i] = s.charCodeAt(i) & 0xFF;
         }
         return buf;
@@ -637,40 +413,10 @@ var DataFrame = function (_NDFrame) {
 
       return wb;
     }
-
-    /**
-     * Convert the DataFrame to a json object
-     *
-     * pandas equivalent: [DataFrame.to_json](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.to_json.html)
-     *
-     * @param kwargs
-     * @param {string} [kwargs.orient=columns] orientation of JSON
-     *
-     * @returns {*}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns {x: {0: 1, 1: 2, 2: 3}, y: {0: 1, 1: 2, 2: 3}}
-     * df.to_json();
-     *
-     * // Returns [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]
-     * df.to_json({orient: 'records'});
-     *
-     * // Returns {0: {x: 1, y: 2}, 1: {x: 2, y: 3}, 2: {x: 3, y: 4}}
-     * df.to_json({orient: 'index'});
-     *
-     * // Returns {index: [0, 1, 2], columns: ['x', 'y'], values: [[1, 2], [2, 3], [3, 4]]}
-     * df.to_json({orient: 'split'});
-     * 
-     * // Returns [[1, 2], [2, 3], [3, 4]]
-     * df.to_json({orient: 'values'});
-     */
-
   }, {
     key: 'to_json',
     value: function to_json() {
-      var _this6 = this;
+      var _this8 = this;
 
       var kwargs = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { orient: 'columns' };
 
@@ -688,7 +434,7 @@ var DataFrame = function (_NDFrame) {
           return this.values.map(function (row) {
             var rowObj = {};
             row.forEach(function (val, idx) {
-              rowObj[_this6.columns.get(idx)] = val;
+              rowObj[_this8.columns.get(idx)] = val;
             });
             return rowObj;
           }).toArray();
@@ -703,9 +449,9 @@ var DataFrame = function (_NDFrame) {
           this.values.forEach(function (row, idx) {
             var rowObj = {};
             row.forEach(function (val, idx2) {
-              rowObj[_this6.columns.get(idx2)] = val;
+              rowObj[_this8.columns.get(idx2)] = val;
             });
-            json[_this6.index.get(idx)] = rowObj;
+            json[_this8.index.get(idx)] = rowObj;
           });
           return json;
         case 'values':
@@ -713,58 +459,27 @@ var DataFrame = function (_NDFrame) {
         case 'columns':
           json = {};
           this.columns.forEach(function (c) {
-            json[c] = _this6.get(c).to_json({ orient: 'index' });
+            json[c] = _this8.get(c).to_json({ orient: 'index' });
           });
           return json;
         default:
           throw new TypeError('orient must be in ' + ALLOWED_ORIENT);
       }
     }
-
-    /**
-     * Return the sum of the values in the `DataFrame` along the axis
-     *
-     * pandas equivalent: [DataFrame.sum](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.sum.html)
-     *
-     * @param {number} axis=0
-     *    Axis along which to sum values
-     *
-     * @returns {Series}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns
-     * // x  6
-     * // y  9
-     * // Name: , dtype: dtype(int)
-     * df.sum().toString();
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns
-     * // 0  3
-     * // 1  5
-     * // 2  7
-     * // Name: , dtype: dtype('int')
-     * df.sum(1).toString();
-     */
-
   }, {
     key: 'sum',
     value: function sum() {
-      var _this7 = this;
+      var _this9 = this;
 
       var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
 
       if (axis === 0) {
         return new _series2.default(this.columns.toArray().map(function (k) {
-          return _this7.get(k).sum();
+          return _this9.get(k).sum();
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
         return new _series2.default(_immutable2.default.Range(0, this.length).map(function (idx) {
-          return _this7.values.get(idx).reduce(function (s, k) {
+          return _this9.values.get(idx).reduce(function (s, k) {
             return s + k;
           }, 0);
         }).toList(), { index: this.index });
@@ -772,99 +487,37 @@ var DataFrame = function (_NDFrame) {
 
       throw new _exceptions.InvalidAxisError();
     }
-
-    /**
-     * Return the mean of the values in the `DataFrame` along the axis
-     *
-     * pandas equivalent: [DataFrame.mean](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.mean.html)
-     *
-     * @param {number} axis=0
-     *    Axis along which to average values
-     *
-     * @returns {Series}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns
-     * // x  2
-     * // y  3
-     * // Name: , dtype: dtype('int')
-     * df.mean().toString();
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns
-     * // 0  1.5
-     * // 1  2.5
-     * // 2  3.5
-     * // Name: , dtype: dtype('float')
-     * df.mean(1).toString();
-     */
-
   }, {
     key: 'mean',
     value: function mean() {
-      var _this8 = this;
+      var _this10 = this;
 
       var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
 
       if (axis === 0) {
         return new _series2.default(this.columns.toArray().map(function (k) {
-          return _this8.get(k).mean();
+          return _this10.get(k).mean();
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
         return new _series2.default(_immutable2.default.Range(0, this.length).map(function (idx) {
-          return _this8.values.get(idx).reduce(function (s, k) {
-            return s + k / _this8.columns.size;
+          return _this10.values.get(idx).reduce(function (s, k) {
+            return s + k / _this10.columns.size;
           }, 0);
         }).toList(), { index: this.index });
       }
 
       throw new _exceptions.InvalidAxisError();
     }
-
-    /**
-     * Return the standard deviation of the values in the `DataFrame` along the axis
-     *
-     * pandas equivalent: [DataFrame.std](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.std.html)
-     *
-     * @param {number} axis=0
-     *    Axis along which to calculate the standard deviation
-     *
-     * @returns {Series}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns
-     * // x  1
-     * // y  1
-     * // Name: , dtype: dtype('int')
-     * df.std().toString();
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 3}]);
-     *
-     * // Returns
-     * // 0  0
-     * // 1  0
-     * // 2  0
-     * // Name: , dtype: dtype('int')
-     * df.std(1).toString();
-     */
-
   }, {
     key: 'std',
     value: function std() {
-      var _this9 = this;
+      var _this11 = this;
 
       var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
 
       if (axis === 0) {
         return new _series2.default(this.columns.toArray().map(function (k) {
-          return _this9.get(k).std();
+          return _this11.get(k).std();
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
         return this.variance(axis).map(function (v) {
@@ -874,58 +527,27 @@ var DataFrame = function (_NDFrame) {
 
       throw new _exceptions.InvalidAxisError();
     }
-
-    /**
-     * Return the variance of the values in the `DataFrame` along the axis
-     *
-     * pandas equivalent: [DataFrame.var](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.var.html)
-     *
-     * @param {number} axis=0
-     *    Axis along which to calculate the variance
-     *
-     * @returns {Series}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns
-     * // x  1
-     * // y  1
-     * // Name: , dtype: dtype('int')
-     * df.std().toString();
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 3}]);
-     *
-     * // Returns
-     * // 0  0
-     * // 1  0
-     * // 2  0
-     * // Name: , dtype: dtype('int')
-     * df.std(1).toString();
-     */
-
   }, {
     key: 'variance',
     value: function variance() {
-      var _this10 = this;
+      var _this12 = this;
 
       var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
 
       if (axis === 0) {
         return new _series2.default(this.columns.toArray().map(function (k) {
-          return _this10.get(k).variance();
+          return _this12.get(k).variance();
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
         var _ret = function () {
-          var means = _this10.mean(axis).values;
+          var means = _this12.mean(axis).values;
           return {
-            v: new _series2.default(_immutable2.default.Range(0, _this10.length).map(function (idx) {
-              return _this10.values.get(idx).reduce(function (s, k) {
+            v: new _series2.default(_immutable2.default.Range(0, _this12.length).map(function (idx) {
+              return _this12.values.get(idx).reduce(function (s, k) {
                 var diff = k - means.get(idx);
-                return s + diff * diff / (_this10.columns.size - 1);
+                return s + diff * diff / (_this12.columns.size - 1);
               }, 0);
-            }).toArray(), { index: _this10.index })
+            }).toArray(), { index: _this12.index })
           };
         }();
 
@@ -937,10 +559,8 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: '_pairwiseDataFrame',
     value: function _pairwiseDataFrame(func) {
-      // Apply the func between all Series in the DataFrame, takes two series and returns a value
       var valArray = [];
 
-      // Calculate upper triangle
       for (var idx1 = 0; idx1 < this.columns.size; idx1 += 1) {
         valArray.push({});
         var ds1 = this.get(this.columns.get(idx1));
@@ -952,7 +572,6 @@ var DataFrame = function (_NDFrame) {
         }
       }
 
-      // Take upper triangle and fill in lower triangle
       for (var _idx = 0; _idx < this.columns.size; _idx += 1) {
         var col1 = this.columns.get(_idx);
         for (var _idx2 = _idx + 1; _idx2 < this.columns.size; _idx2 += 1) {
@@ -963,21 +582,6 @@ var DataFrame = function (_NDFrame) {
 
       return new DataFrame(valArray, { index: this.columns.toList() });
     }
-
-    /**
-     * Calculate the covariance between all `Series` in the `DataFrame`
-     *
-     * pandas equivalent: [DataFrame.cov](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.cov.html)
-     *
-     * @return {DataFrame}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 1, z: 5}, {x: 3, y: 0, z: 7}]);
-     *
-     * // Returns DataFrame([{x: 1, y: -1, z: 2}, {x: -1, y: 1, z: -2}, {x: 2, y: -2, z: 4}])
-     * df.cov();
-     */
-
   }, {
     key: 'cov',
     value: function cov() {
@@ -985,58 +589,18 @@ var DataFrame = function (_NDFrame) {
         return ds1.cov(ds2);
       });
     }
-
-    /**
-     * Calculate the correlation between all `Series` in the `DataFrame`
-     *
-     * pandas equivalent: [DataFrame.corr](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.corr.html)
-     *
-     * @return {DataFrame}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 1, z: 5}, {x: 3, y: 0, z: 7}]);
-     *
-     * // Returns DataFrame([{x: 1, y: -1, z: 1}, {x: -1, y: 1, z: -1}, {x: 1, y: -1, z: 1}])
-     * df.corr();
-     */
-
   }, {
     key: 'corr',
     value: function corr() {
-      // noinspection Eslint
       var corrFunc = function corrFunc(ds1, ds2) {
         return ds1.values === ds2.values ? 1 : ds1.corr(ds2);
       };
       return this._pairwiseDataFrame(corrFunc);
     }
-
-    /**
-     * Return the difference over a given number of periods along the axis
-     *
-     * pandas equivalent: [DataFrame.diff](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.diff.html)
-     *
-     * @param {number} periods=1
-     *    Number of periods to use for difference calculation
-     * @param {number} axis=0
-     *    Axis along which to calculate difference
-     *
-     * @returns {DataFrame}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns
-     * //    x    |  y
-     * // 0  null |  null
-     * // 1  1    |  1
-     * // 2  1  |  1
-     * df.diff().toString();
-     */
-
   }, {
     key: 'diff',
     value: function diff() {
-      var _this11 = this;
+      var _this13 = this;
 
       var periods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
       var axis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
@@ -1046,13 +610,13 @@ var DataFrame = function (_NDFrame) {
 
       if (axis === 0) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k) {
-          return [k, _this11._data.get(k).diff(periods)];
+          return [k, _this13._data.get(k).diff(periods)];
         })), { index: this.index });
       } else if (axis === 1) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k, idx) {
-          if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this11.length).toList(), { name: k, index: _this11.index })];
-          var compareCol = _this11.get(_this11.columns.get(idx - periods));
-          return [k, _this11.get(k).map(function (v, vIdx) {
+          if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this13.length).toList(), { name: k, index: _this13.index })];
+          var compareCol = _this13.get(_this13.columns.get(idx - periods));
+          return [k, _this13.get(k).map(function (v, vIdx) {
             return v - compareCol.iloc(vIdx);
           })];
         })), { index: this.index });
@@ -1060,34 +624,10 @@ var DataFrame = function (_NDFrame) {
 
       throw new _exceptions.InvalidAxisError();
     }
-
-    /**
-     * Return the percentage change over a given number of periods along the axis
-     *
-     * pandas equivalent: [DataFrame.pct_change](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.pct_change.html)
-     *
-     * @param {number} periods=1
-     *    Number of periods to use for percentage change calculation
-     * @param {number} axis=0
-     *    Axis along which to calculate percentage change
-     *
-     * @returns {DataFrame}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns
-     * //    x    |  y
-     * // 0  null |  null
-     * // 1  1    |  0.5
-     * // 2  0.5  |  0.3333
-     * df.pct_change().toString();
-     */
-
   }, {
     key: 'pct_change',
     value: function pct_change() {
-      var _this12 = this;
+      var _this14 = this;
 
       var periods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
       var axis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
@@ -1097,13 +637,13 @@ var DataFrame = function (_NDFrame) {
 
       if (axis === 0) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k) {
-          return [k, _this12._data.get(k).pct_change(periods)];
+          return [k, _this14._data.get(k).pct_change(periods)];
         })), { index: this.index });
       } else if (axis === 1) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k, idx) {
-          if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this12.length).toList(), { name: k, index: _this12.index })];
-          var compareCol = _this12.get(_this12.columns.get(idx - periods));
-          return [k, _this12.get(k).map(function (v, vIdx) {
+          if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this14.length).toList(), { name: k, index: _this14.index })];
+          var compareCol = _this14.get(_this14.columns.get(idx - periods));
+          return [k, _this14.get(k).map(function (v, vIdx) {
             return v / compareCol.iloc(vIdx) - 1;
           })];
         })), { index: this.index });
@@ -1111,30 +651,6 @@ var DataFrame = function (_NDFrame) {
 
       throw new _exceptions.InvalidAxisError();
     }
-
-    /**
-     * Filter the DataFrame by an Iterable (Series, Array, or List) of booleans and return the subset
-     *
-     * pandas equivalent: df[df condition]
-     *
-     * @param {Series|Array|List} iterBool
-     *    Iterable of booleans
-     *
-     * @returns {DataFrame}
-     *
-     * @example
-     * const df = new DataFrame(Immutable.Map({x: new Series([1, 2]), y: new Series([2, 3])}));
-     *
-     * // Returns DataFrame(Immutable.Map({x: Series([2]), y: Series([3]));
-     * df.filter(df.get('x').gt(1));
-     *
-     * // Returns DataFrame(Immutable.Map({x: Series([2]), y: Series([3]));
-     * df.filter([false, true]);
-     *
-     * // Returns DataFrame(Immutable.Map({x: Series([2]), y: Series([3]));
-     * df.filter(Immutable.Map([false, true]));
-     */
-
   }, {
     key: 'filter',
     value: function filter(iterBool) {
@@ -1142,7 +658,6 @@ var DataFrame = function (_NDFrame) {
 
       if (Array.isArray(iterBool) && iterBool.length !== this.length) throw new Error('Array must be of equal length to DataFrame');else if (iterBool instanceof _immutable2.default.List && iterBool.size !== this.length) throw new Error('List must be of equal length to DataFrame');else if (iterBool instanceof _series2.default && iterBool.length !== this.length) throw new Error('Series must be of equal length to DataFrame');
 
-      // noinspection Eslint
       return new DataFrame(_immutable2.default.Map(this._data.mapEntries(function (_ref7) {
         var _ref8 = (0, _slicedToArray3.default)(_ref7, 2),
             k = _ref8[0],
@@ -1151,38 +666,21 @@ var DataFrame = function (_NDFrame) {
         return [k, v.filter(iterBool)];
       })));
     }
-
-    /**
-     * Reshape data (produce a “pivot” table) based on column values. Uses unique values from
-     * index / columns to form axes of the resulting DataFrame.
-     *
-     * pandas equivalent: [DataFrame.pivot](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.pivot.html)
-     *
-     * @param {string|number} index
-     *  Name of the column to use as index
-     * @param {string|number} columns
-     *  Name of the column to use as column values
-     * @param {string|number} values
-     *  Name of the column to use as the value
-     *
-     * @returns {DataFrame}
-     */
-
   }, {
     key: 'pivot',
     value: function pivot(index, columns, values) {
-      var _this13 = this;
+      var _this15 = this;
 
       var uniqueVals = _immutable2.default.Map({});
       var uniqueCols = _immutable2.default.List([]);
 
       this.index.forEach(function (v, idx) {
-        var idxVal = _this13.get(index).iloc(idx);
-        var colVal = _this13.get(columns).iloc(idx);
+        var idxVal = _this15.get(index).iloc(idx);
+        var colVal = _this15.get(columns).iloc(idx);
 
         if (uniqueVals.hasIn([idxVal, colVal])) throw new Error('pivot index and column must be unique');
 
-        var val = _this13.get(values).iloc(idx);
+        var val = _this15.get(values).iloc(idx);
 
         uniqueVals = uniqueVals.setIn([idxVal, colVal], val);
         if (!uniqueCols.has(colVal)) uniqueCols = uniqueCols.push(colVal);
@@ -1199,17 +697,22 @@ var DataFrame = function (_NDFrame) {
       }), { index: sortedIndex });
     }
   }, {
+    key: 'kwargs',
+    get: function get() {
+      return { index: this.index };
+    }
+  }, {
     key: 'values',
     get: function get() {
-      var _this14 = this;
+      var _this16 = this;
 
       if (this._values instanceof _immutable2.default.List) return (0, _get3.default)(DataFrame.prototype.__proto__ || Object.getPrototypeOf(DataFrame.prototype), 'values', this);
 
       var valuesList = _immutable2.default.List([]);
 
       var _loop = function _loop(idx) {
-        valuesList = valuesList.concat([_immutable2.default.List(_this14.columns.map(function (k) {
-          return _this14._data.get(k).iloc(idx);
+        valuesList = valuesList.concat([_immutable2.default.List(_this16.columns.map(function (k) {
+          return _this16._data.get(k).iloc(idx);
         }))]);
       };
 
@@ -1220,52 +723,20 @@ var DataFrame = function (_NDFrame) {
 
       return (0, _get3.default)(DataFrame.prototype.__proto__ || Object.getPrototypeOf(DataFrame.prototype), 'values', this);
     }
-
-    /**
-     * Returns the indexed Immutable.Seq of columns
-     *
-     * pandas equivalent: [DataFrame.columns](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.columns.html)
-     *
-     * @returns {Seq.Indexed<string>}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns Seq ['x', 'y']
-     * df.columns;
-     */
-
   }, {
     key: 'columns',
     get: function get() {
       return this._get_axis(1);
-    }
-
-    /**
-     * Sets columns
-     *
-     * pandas equivalent: [DataFrame.columns](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.columns.html)
-     *
-     * @param {Array} columns
-     *    Next column names
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * df.columns = ['a', 'b'];
-     * // Returns Seq ['a', 'b']
-     * df.columns;
-     */
-    ,
+    },
     set: function set(columns) {
-      var _this15 = this;
+      var _this17 = this;
 
       if (!Array.isArray(columns) || columns.length !== this.columns.size) throw new Error('Columns must be array of same dimension');
 
       var nextData = {};
       columns.forEach(function (k, idx) {
-        var prevColumn = _this15.columns.get(idx);
-        var prevSeries = _this15.get(prevColumn);
+        var prevColumn = _this17.columns.get(idx);
+        var prevSeries = _this17.get(prevColumn);
 
         prevSeries.name = k;
         nextData[k] = prevSeries;
@@ -1274,78 +745,31 @@ var DataFrame = function (_NDFrame) {
       this._data = _immutable2.default.Map(nextData);
       this.set_axis(1, _immutable2.default.Seq(columns));
     }
-
-    /**
-     * Return the index values of the `DataFrame`
-     *
-     * @returns {List}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns List [0, 1, 2, 3]
-     * df.index;
-     */
-
   }, {
     key: 'index',
     get: function get() {
       return this._get_axis(0);
-    }
-
-    /**
-     * Set the index values of the `DataFrame`
-     *
-     * @param {List|Array} index
-     *    Next index values
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns List [0, 1, 2, 3]
-     * df.index;
-     * df.index = Immutable.List([2, 3, 4, 5]);
-     * // Returns List [2, 3, 4, 5]
-     * df.index;
-     */
-    ,
+    },
     set: function set(index) {
-      var _this16 = this;
+      var _this18 = this;
 
       this.set_axis(0, (0, _utils.parseIndex)(index, this._data.get(this.columns.get(0)).values));
 
-      // noinspection Eslint
       this._data.mapEntries(function (_ref9) {
         var _ref10 = (0, _slicedToArray3.default)(_ref9, 2),
             k = _ref10[0],
             v = _ref10[1];
 
-        // noinspection Eslint
-        v.index = _this16.index;
+        v.index = _this18.index;
       });
     }
-
-    /**
-     * Return the length of the `DataFrame`
-     *
-     * pandas equivalent: len(df);
-     *
-     * @returns {number}
-     *
-     * @example
-     * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
-     *
-     * // Returns 3
-     * df.length;
-     */
-
   }, {
     key: 'length',
     get: function get() {
-      var _this17 = this;
+      var _this19 = this;
 
       return Math.max.apply(Math, (0, _toConsumableArray3.default)(this._data.keySeq().map(function (k) {
-        return _this17.get(k).length;
+        return _this19.get(k).length;
       }).toArray()));
     }
   }]);
@@ -1362,7 +786,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
   var cols2 = (0, _utils.nonMergeColumns)(df2.columns, on);
 
   var intersectCols = (0, _utils.intersectingColumns)(cols1, cols2);
-  intersectCols.count(); // Cache intersectCols size
+  intersectCols.count();
 
   var cols1Rename = cols1.map(function (k) {
     return intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_x' : k;
@@ -1489,7 +913,7 @@ var outerMerge = function outerMerge(df1, df2, on) {
   var cols2 = (0, _utils.nonMergeColumns)(df2.columns, on);
 
   var intersectCols = (0, _utils.intersectingColumns)(cols1, cols2);
-  intersectCols.count(); // Cache intersectCols size
+  intersectCols.count();
 
   var matched1 = new Array(df1.length).fill(false);
   var matched2 = new Array(df2.length).fill(false);

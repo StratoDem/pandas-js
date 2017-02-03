@@ -83,15 +83,4 @@ describe('tools', function () {
       expect(ds.index.get(3).getMonth() + 1).toEqual(4);
     });
   });
-}); /**
-     * to_datetime
-     *
-     * Description:
-     * Primary author(s):
-     * Secondary author(s):
-     *
-     * Notes:
-     *
-     * January 11, 2017
-     * StratoDem Analytics, LLC
-     */
+});
