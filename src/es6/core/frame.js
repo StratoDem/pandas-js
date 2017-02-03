@@ -1,3 +1,6 @@
+/**
+ * DataFrame object
+ */
 
 import Immutable from 'immutable';
 import { saveAs } from 'file-saver';
@@ -127,12 +130,6 @@ export default class DataFrame extends NDFrame {
     return new DataFrame(this._data, {index: this.index});
   }
 
-  kwargs() {
-    this.kwargs = {
-      index: this.index,
-    };
-  }
-
   [Symbol.iterator]() {
     let index = -1;
 
@@ -165,6 +162,10 @@ export default class DataFrame extends NDFrame {
    */
   iterrows() {
     return enumerate(this);
+  }
+
+  get kwargs() {
+    return {index: this.index};
   }
 
   /**
@@ -211,12 +212,13 @@ export default class DataFrame extends NDFrame {
     return this._get_axis(1);
   }
 
+  // noinspection JSAnnotator
   /**
    * Sets columns
    *
    * pandas equivalent: [DataFrame.columns](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.columns.html)
    *
-   * @param {Array} columns
+   * @param {Seq.Indexed<string>|Array} columns
    *    Next column names
    *
    * @example
@@ -258,6 +260,7 @@ export default class DataFrame extends NDFrame {
     return this._get_axis(0);
   }
 
+  // noinspection JSAnnotator
   /**
    * Set the index values of the `DataFrame`
    *
@@ -299,6 +302,140 @@ export default class DataFrame extends NDFrame {
     return Math.max(...this._data.keySeq().map(k => this.get(k).length).toArray());
   }
 
+  /**
+   * Return new DataFrame subset at [rowIdx, colIdx]
+   *
+   * pandas equivalent: [DataFrame.iloc](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.iloc.html)
+   *
+   * @param {number|Array.<number>} rowIdx
+   * @param {number|Array.<number>=} colIdx
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame([{x: 1, y: 2, z: 3}, {x: 2, y: 3, z: 4}, {x: 3, y: 4, z: 5}]);
+   *
+   * // Returns DataFrame([{y: 3}], {index: [1]})
+   * df.iloc(1, 1);
+   *
+   * // Returns DataFrame([{y: 3, z: 4}}], {index: [1]})
+   * df.iloc(1, [1, 3]);
+   *
+   * // Returns DataFrame([{y: 3, z: 4}, {y: 4, z: 5}], {index: [1, 2]})
+   * df.iloc([1, 3], [1, 3]);
+   *
+   * // Returns DataFrame([{y: 3}, {y: 4}], {index: [1, 2]})
+   * df.iloc([1, 3], 1);
+   *
+   * // Returns DataFrame([{y: 2}, {y: 3}, {y: 4}], {index: [0, 1, 2]})
+   * df.iloc(1);
+   */
+  iloc(rowIdx, colIdx) {
+    if (typeof rowIdx === 'number') {
+      if (typeof colIdx === 'number') {
+        if (colIdx < 0 || colIdx >= this.shape[1])
+          throw new Error('colIdx out of bounds');
+
+        const getCol = this.columns.get(colIdx);
+        return new DataFrame(
+          Immutable.Map([[getCol, this.get(getCol).iloc(rowIdx, rowIdx + 1)]]),
+          {index: this.index.slice(rowIdx, rowIdx + 1)});
+      } else if (Array.isArray(colIdx)) {
+        if (colIdx.length !== 2)
+          throw new Error('colIdx must be length 2 (start and end positions)');
+        if (colIdx[1] <= colIdx[0])
+          throw new Error('colIdx end position cannot be less than or equal tostart position');
+        if (colIdx[0] < 0 || colIdx[1] > this.shape[1])
+          throw new Error('colIdx position out of bounds');
+
+        return new DataFrame(
+          Immutable.Map(
+            Immutable.Range(colIdx[0], colIdx[1]).map((idx) => {
+              const getCol = this.columns.get(idx);
+              return [getCol, this.get(getCol).iloc(rowIdx, rowIdx + 1)];
+            }).toArray()),
+          {index: this.index.slice(rowIdx, rowIdx + 1)});
+      } else if (typeof colIdx === 'undefined') {
+        return new DataFrame(
+          Immutable.Map(this.columns.map(c =>
+            ([c, this.get(c).iloc(rowIdx, rowIdx + 1)])).toArray()),
+          {index: this.index.slice(rowIdx, rowIdx + 1)});
+      }
+
+      throw new TypeError('colIdx must be either integer or Array of integers');
+    } else if (Array.isArray(rowIdx)) {
+      if (typeof colIdx === 'number') {
+        if (colIdx < 0 || colIdx >= this.shape[1])
+          throw new Error('colIdx out of bounds');
+
+        const getCol = this.columns.get(colIdx);
+        return new DataFrame(
+          Immutable.Map([[getCol, this.get(getCol).iloc(rowIdx[0], rowIdx[1])]]),
+          {index: this.index.slice(rowIdx[0], rowIdx[1])});
+      } else if (Array.isArray(colIdx)) {
+        if (colIdx.length !== 2)
+          throw new Error('colIdx must be length 2 (start and end positions)');
+        if (colIdx[1] <= colIdx[0])
+          throw new Error('colIdx end position cannot be less than or equal tostart position');
+        if (colIdx[0] < 0 || colIdx[1] > this.shape[1])
+          throw new Error('colIdx position out of bounds');
+
+        return new DataFrame(
+          Immutable.Map(
+            Immutable.Range(colIdx[0], colIdx[1]).map((idx) => {
+              const getCol = this.columns.get(idx);
+              return [getCol, this.get(getCol).iloc(rowIdx[0], rowIdx[1])];
+            }).toArray()),
+          {index: this.index.slice(rowIdx[0], rowIdx[1])});
+      } else if (typeof colIdx === 'undefined') {
+        return new DataFrame(
+          Immutable.Map(this.columns.map(c =>
+            ([c, this.get(c).iloc(rowIdx[0], rowIdx[1])])).toArray()),
+          {index: this.index.slice(rowIdx[0], rowIdx[1])});
+      }
+
+      throw new TypeError('colIdx must be either integer or Array of integers');
+    }
+
+    throw new TypeError('rowIdx must be either integer or Array of integers');
+  }
+
+  /**
+   * Return new DataFrame composed of first n rows of this DataFrame
+   *
+   * pandas equivalent: [DataFrame.head](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.head.html)
+   * @param {number} n
+   *    Integer number of n rows to return from the DataFrame
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}, {x: 4, y: 5}]);
+   *
+   * // returns DataFrame([{x: 1, y: 2}, {x: 2, y: 3}])
+   * df.head(2);
+   */
+  head(n = 10) {
+    return this.iloc([0, n]);
+  }
+
+  /**
+   * Return new DataFrame composed of last n rows of this DataFrame
+   *
+   * pandas equivalent: [DataFrame.tail](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.tail.html)
+   * @param {number} n
+   *    Integer number of n rows to return from the DataFrame
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}, {x: 4, y: 5}]);
+   *
+   * // returns DataFrame([{x: 3, y: 4}, {x: 4, y: 5}])
+   * df.tail(2);
+   */
+  tail(n = 10) {
+    return this.iloc([this.length - n, this.length]);
+  }
+
   columnExists(col) {
     return this.columns.indexOf(col) >= 0;
   }
@@ -308,8 +445,8 @@ export default class DataFrame extends NDFrame {
    *
    * pandas equivalent: df['column_name']
    *
-   * @param {string} columns
-   *    Name of the column to retrieve
+   * @param {string|Array.<string>|Immutable.List.<string>|Immutable.Seq.<string>} columns
+   *    Name of the column to retrieve or list of columns to retrieve
    *
    * @returns {Series}
    *
@@ -322,6 +459,13 @@ export default class DataFrame extends NDFrame {
   get(columns) {
     if ((typeof columns === 'string' || typeof columns === 'number') && this.columnExists(columns))
       return this._data.get(columns);
+    else if (Array.isArray(columns) || columns instanceof Immutable.List
+      || columns instanceof Immutable.Seq) {
+      columns.forEach((c) => {
+        if (!this.columnExists(c)) throw new Error(`KeyError: ${c} not found`);});
+      return new DataFrame(
+        Immutable.Map(columns.map(c => ([c, this.get(c)]))), this.kwargs);
+    }
     throw new Error(`KeyError: ${columns} not found`);
   }
 
@@ -648,7 +792,7 @@ export default class DataFrame extends NDFrame {
    *
    * // Returns {index: [0, 1, 2], columns: ['x', 'y'], values: [[1, 2], [2, 3], [3, 4]]}
    * df.to_json({orient: 'split'});
-   * 
+   *
    * // Returns [[1, 2], [2, 3], [3, 4]]
    * df.to_json({orient: 'values'});
    */

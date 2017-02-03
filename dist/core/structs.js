@@ -23,25 +23,7 @@ var _xlsx2 = _interopRequireDefault(_xlsx);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// This does not match the Python pandas
-
-/**
- * structs
- *
- * Description:
- * Primary author(s):
- * Secondary author(s):
- *
- * Notes:
- *
- * January 12, 2017
- * StratoDem Analytics, LLC
- */
-
 var Workbook = exports.Workbook = function () {
-  /**
-   * @param {Sheets} sheets
-   */
   function Workbook() {
     var sheets = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new Sheets({});
     (0, _classCallCheck3.default)(this, Workbook);
@@ -49,31 +31,11 @@ var Workbook = exports.Workbook = function () {
     this._sheets = sheets;
   }
 
-  /**
-   * @returns {Sheets}
-   */
-
-
   (0, _createClass3.default)(Workbook, [{
     key: 'copy',
-
-
-    /**
-     * Create a copy of the Workbook
-     *
-     * @returns {Workbook}
-     */
     value: function copy() {
       return new Workbook(this._sheets);
     }
-
-    /**
-     * Add a values to the Workbook
-     *
-     * @param {string} sheetName
-     * @param {Sheet} sheetContent
-     */
-
   }, {
     key: 'addSheet',
     value: function addSheet(sheetName, sheetContent) {
@@ -112,22 +74,8 @@ var Sheets = function () {
     this._sheets = _immutable2.default.Map(initialSheets);
   }
 
-  /**
-   * List of values names in the Sheets
-   *
-   * @returns {List<string>}
-   */
-
-
   (0, _createClass3.default)(Sheets, [{
     key: 'addSheet',
-
-
-    /**
-     *
-     * @param {string} sheetName
-     * @param {Sheet} sheet
-     */
     value: function addSheet(sheetName, sheet) {
       this._sheets = this._sheets.set(sheetName, sheet.values);
     }
@@ -136,13 +84,6 @@ var Sheets = function () {
     get: function get() {
       return this._sheets.keySeq().toList();
     }
-
-    /**
-     * Map of sheetName, Sheet objects
-     *
-     * @returns {Map<string, Sheet>}
-     */
-
   }, {
     key: 'sheets',
     get: function get() {
@@ -153,11 +94,6 @@ var Sheets = function () {
 }();
 
 var Sheet = exports.Sheet = function () {
-  /**
-   * Construct a Sheet object from a List of Lists of data (from DataFrame.values, e.g.)
-   *
-   * @param {List<List>} data
-   */
   function Sheet(data) {
     (0, _classCallCheck3.default)(this, Sheet);
 
@@ -166,15 +102,6 @@ var Sheet = exports.Sheet = function () {
 
   (0, _createClass3.default)(Sheet, [{
     key: '_sheet_from_list_of_lists',
-
-
-    /**
-     * Get a Sheet object's content from a List of Lists
-     * As inspiration: view-source:http://sheetjs.com/demos/writexlsx.html
-     *
-     * @param data
-     * @private
-     */
     value: function _sheet_from_list_of_lists(data) {
       var range = { s: { c: 10000000, r: 10000000 }, e: { c: 0, r: 0 } };
       var ws = {};

@@ -50,13 +50,6 @@ var DType = exports.DType = function () {
   return DType;
 }();
 
-/**
- *
- * @param el
- * @returns {DType}
- */
-
-
 var elementToDType = exports.elementToDType = function elementToDType(el) {
   var arrayDType = int;
 
@@ -75,12 +68,6 @@ var elementToDType = exports.elementToDType = function elementToDType(el) {
   return new DType(arrayDType);
 };
 
-/**
- * Returns the DType of an array
- *
- * @param array
- * @returns {DType}
- */
 var arrayToDType = exports.arrayToDType = function arrayToDType(array) {
   var arrayDType = void 0;
 

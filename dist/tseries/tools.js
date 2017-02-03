@@ -13,10 +13,6 @@ var _index = require('../core/index');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/**
- *
- * @param {Series|DataFrame|List|Array|string} arg
- */
 var to_datetime = exports.to_datetime = function to_datetime(arg) {
   if (arg instanceof _index.Series) {
     return new _index.Series(arg.values.map(function (v) {

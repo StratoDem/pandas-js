@@ -101,6 +101,48 @@ describe('frame', function () {
       });
     });
 
+    describe('get', function () {
+      it('gets one column as a Series when string passed in', function () {
+        var df = new _frame2.default([{ x: 1, y: 2, z: 3 }, { x: 2, y: 3, z: 4 }, { x: 3, y: 4, z: 5 }]);
+
+        var ds = df.get('y');
+        expect(ds).toBeInstanceOf(_series2.default);
+        expect(ds.values.toArray()).toEqual([2, 3, 4]);
+      });
+
+      it('gets multiple columns as a DataFrame when Iterable of strings passed in', function () {
+        var df = new _frame2.default([{ x: 1, y: 2, z: 3 }, { x: 2, y: 3, z: 4 }, { x: 3, y: 4, z: 5 }]);
+
+        var df2 = df.get(['y', 'z']);
+        expect(df2).toBeInstanceOf(_frame2.default);
+        expect(df2.columns.toArray()).toEqual(['y', 'z']);
+        expect(df2.get('y').values.toArray()).toEqual([2, 3, 4]);
+        expect(df2.get('z').values.toArray()).toEqual([3, 4, 5]);
+      });
+    });
+
+    describe('head', function () {
+      it('returns the first n rows as a new DataFrame', function () {
+        var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 5 }]);
+
+        var df2 = df.head(2);
+        expect(df2.shape.toArray()).toEqual([2, 2]);
+        expect(df2.get('x').values.toArray()).toEqual([1, 2]);
+        expect(df2.index.toArray()).toEqual([0, 1]);
+      });
+    });
+
+    describe('tail', function () {
+      it('returns the last n rows as a new DataFrame', function () {
+        var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 5 }]);
+
+        var df2 = df.tail(2);
+        expect(df2.shape.toArray()).toEqual([2, 2]);
+        expect(df2.get('x').values.toArray()).toEqual([3, 4]);
+        expect(df2.index.toArray()).toEqual([2, 3]);
+      });
+    });
+
     it('measures length properly', function () {
       var df1 = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }]);
       expect(df1.length).toEqual(3);
@@ -298,14 +340,6 @@ describe('frame', function () {
 
   describe('merge', function () {
     it('merges a second DataFrame to this instance on a given key', function () {
-      // n = 10  : .014s
-      // n = 25  : .037s
-      // n = 50  : .11s
-      // n = 100 : .38s
-      // n = 200 : 3.2s
-      // n = 300 : 5.1s
-      // n = 400 : 8.5s
-      // n = 800 : 35.7s
       var n = 25;
       var xSeries = new _series2.default(_immutable2.default.Range(0, n).toList());
       var ySeries = new _series2.default(_immutable2.default.Range(1, n + 1).toList());
@@ -351,8 +385,6 @@ describe('frame', function () {
 
       try {
         for (var _iterator2 = df1.iterrows()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          // console.log(r.values);
-
           var _step2$value = (0, _slicedToArray3.default)(_step2.value, 2),
               r = _step2$value[0],
               idx = _step2$value[1];
@@ -744,6 +776,81 @@ describe('frame', function () {
       expect(function () {
         return df.pivot('x', 'y', 'z');
       }).toThrow();
+    });
+  });
+
+  describe('iloc', function () {
+    it('.iloc(1, 1) returns a DataFrame of shape [1, 1]', function () {
+      var df = new _frame2.default([{ x: 1, y: 2, z: 3 }, { x: 2, y: 3, z: 4 }, { x: 3, y: 4, z: 5 }]);
+
+      var df2 = df.iloc(1, 1);
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.shape.toArray()).toEqual([1, 1]);
+      expect(df2.columns.toArray()).toEqual(['y']);
+      expect(df2.get('y').length).toEqual(1);
+      expect(df2.get('y').iloc(0)).toEqual(3);
+
+      expect(df2.index.toArray()).toEqual([1]);
+    });
+
+    it('.iloc(1, [1, 3]) returns a DataFrame of shape [1, 2]', function () {
+      var df = new _frame2.default([{ x: 1, y: 2, z: 3 }, { x: 2, y: 3, z: 4 }, { x: 3, y: 4, z: 5 }]);
+
+      var df2 = df.iloc(1, [1, 3]);
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.shape.toArray()).toEqual([1, 2]);
+      expect(df2.columns.toArray()).toEqual(['y', 'z']);
+      expect(df2.get('y').length).toEqual(1);
+      expect(df2.get('y').iloc(0)).toEqual(3);
+      expect(df2.get('z').length).toEqual(1);
+      expect(df2.get('z').iloc(0)).toEqual(4);
+
+      expect(df2.index.toArray()).toEqual([1]);
+    });
+
+    it('.iloc(1) returns a DataFrame of shape [1, 3]', function () {
+      var df = new _frame2.default([{ x: 1, y: 2, z: 3 }, { x: 2, y: 3, z: 4 }, { x: 3, y: 4, z: 5 }]);
+
+      var df2 = df.iloc(1);
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.shape.toArray()).toEqual([1, 3]);
+      expect(df2.columns.toArray()).toEqual(['x', 'y', 'z']);
+      expect(df2.get('x').length).toEqual(1);
+      expect(df2.get('x').iloc(0)).toEqual(2);
+      expect(df2.get('y').length).toEqual(1);
+      expect(df2.get('y').iloc(0)).toEqual(3);
+      expect(df2.get('z').length).toEqual(1);
+      expect(df2.get('z').iloc(0)).toEqual(4);
+
+      expect(df2.index.toArray()).toEqual([1]);
+    });
+
+    it('.iloc([1, 3], 1) returns a DataFrame of shape [2, 1]', function () {
+      var df = new _frame2.default([{ x: 1, y: 2, z: 3 }, { x: 2, y: 3, z: 4 }, { x: 3, y: 4, z: 5 }]);
+
+      var df2 = df.iloc([1, 3], 1);
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.shape.toArray()).toEqual([2, 1]);
+      expect(df2.columns.toArray()).toEqual(['y']);
+      expect(df2.get('y').length).toEqual(2);
+      expect(df2.get('y').values.toArray()).toEqual([3, 4]);
+
+      expect(df2.index.toArray()).toEqual([1, 2]);
+    });
+
+    it('.iloc([1, 3], [1, 3]) returns a DataFrame of shape [2, 2]', function () {
+      var df = new _frame2.default([{ x: 1, y: 2, z: 3 }, { x: 2, y: 3, z: 4 }, { x: 3, y: 4, z: 5 }]);
+
+      var df2 = df.iloc([1, 3], [1, 3]);
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.shape.toArray()).toEqual([2, 2]);
+      expect(df2.columns.toArray()).toEqual(['y', 'z']);
+      expect(df2.get('y').length).toEqual(2);
+      expect(df2.get('y').values.toArray()).toEqual([3, 4]);
+      expect(df2.get('z').length).toEqual(2);
+      expect(df2.get('z').values.toArray()).toEqual([4, 5]);
+
+      expect(df2.index.toArray()).toEqual([1, 2]);
     });
   });
 });
