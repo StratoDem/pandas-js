@@ -19,6 +19,7 @@ for rel_dir in ${CORE_DIR}
             DOC_FILE_NAME=$(basename ${ES6_FILE})
             DOC_FILE_NAME="${DOC_FILE_NAME%%.*}"
             DOC_FILE_NAME=${DOC_FILE_NAME}.json
+            echo "Generating ${DOC_FILE_NAME}"
 
             jsdoc2md --json ${ES6_FILE} \
                 > ${DOC_DIR}${DOC_FILE_NAME} 2> /dev/null

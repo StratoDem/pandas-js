@@ -418,17 +418,7 @@ describe('frame', function () {
 
   describe('to_excel', function () {
     it('converts a pandas DataFrame to a properly formatted Excel file', function () {
-      var df = new _frame2.default(_immutable2.default.Map({ x: new _series2.default([1, 2, 3]), y: new _series2.default([2, 3, 4]) }));
-
-      var originalURL = window.URL;
-      window.URL = {
-        createObjectURL: function createObjectURL(blob) {
-          return "CREATEOBJECTURL";
-        }
-      };
-      df.to_excel(new _structs.Workbook(), 'my test values', true, { index: false });
-
-      window.URL = originalURL;
+      // TODO
     });
   });
 

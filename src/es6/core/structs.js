@@ -12,7 +12,7 @@
  */
 
 import Immutable from 'immutable';
-import XLSX from 'xlsx';
+// import XLSX from 'xlsx'; TODO figure out if this is the best package
 
 // This does not match the Python pandas
 
@@ -60,7 +60,8 @@ export class Workbook {
   }
 
   writeWorkbook() {
-    return XLSX.write(this, {bookType: 'xlsx', bookSST: true, type: 'binary'});
+    throw new Error('Workbook writing is not yet implemented');
+    // return XLSX.write(this, {bookType: 'xlsx', bookSST: true, type: 'binary'});
   }
 }
 
@@ -139,7 +140,8 @@ export class Sheet {
         if (range.e.c < idxCol) range.e.c = idxCol;
 
         const cell = {v};
-        const cell_ref = XLSX.utils.encode_cell({c: idxCol, r: idxRow});
+        throw new Error('Sheet not yet implemented');
+        // const cell_ref = XLSX.utils.encode_cell({c: idxCol, r: idxRow}); TODO
 
         if (typeof cell.v === 'number')
           cell.t = 'n';
@@ -153,7 +155,7 @@ export class Sheet {
       });
     });
 
-    if (range.s.c < 10000000) ws['!ref'] = XLSX.utils.encode_range(range);
+    // if (range.s.c < 10000000) ws['!ref'] = XLSX.utils.encode_range(range); TODO
 
     return ws;
   }

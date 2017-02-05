@@ -1,5 +1,9 @@
 # Change Log
 
+0.1.20
+### Changed
+- Dropped support for `to_excel` since XLSX adds 460kb to dependencies. Will revisit later.
+
 0.1.19
 ### Added
 - `.head(n = 10)` method for `DataFrame` returns first `n` rows as new `DataFrame`

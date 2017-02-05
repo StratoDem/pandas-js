@@ -3,12 +3,12 @@
  */
 
 import Immutable from 'immutable';
-import { saveAs } from 'file-saver';
+// import { saveAs } from 'file-saver'; TODO figure out if best way
 
 import { InvalidAxisError } from './exceptions';
 import NDFrame from './generic';
 import Series from './series';
-import { Workbook, Sheet } from './structs';
+// import { Workbook, Sheet } from './structs'; TODO
 import { enumerate, nonMergeColumns, intersectingColumns, parseIndex } from './utils';
 
 
@@ -265,7 +265,7 @@ export default class DataFrame extends NDFrame {
    * Set the index values of the `DataFrame`
    *
    * @param {List|Array} index
-   *    Next index values
+   *  Next index values
    *
    * @example
    * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
@@ -404,8 +404,9 @@ export default class DataFrame extends NDFrame {
    * Return new DataFrame composed of first n rows of this DataFrame
    *
    * pandas equivalent: [DataFrame.head](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.head.html)
-   * @param {number} n
-   *    Integer number of n rows to return from the DataFrame
+   *
+   * @param {number} n=10
+   *  Integer number of n rows to return from the DataFrame
    * @returns {DataFrame}
    *
    * @example
@@ -422,8 +423,9 @@ export default class DataFrame extends NDFrame {
    * Return new DataFrame composed of last n rows of this DataFrame
    *
    * pandas equivalent: [DataFrame.tail](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.tail.html)
-   * @param {number} n
-   *    Integer number of n rows to return from the DataFrame
+   *
+   * @param {number} n=10
+   *  Integer number of n rows to return from the DataFrame
    * @returns {DataFrame}
    *
    * @example
@@ -455,6 +457,9 @@ export default class DataFrame extends NDFrame {
    *
    * // Returns Series([1, 2, 3], {name: 'x', index: [0, 1, 2]})
    * df.get('x');
+   *
+   * // Returns DataFrame([{y: 2}, {y: 3}, {y: 4}])
+   * df.get(['y']);
    */
   get(columns) {
     if ((typeof columns === 'string' || typeof columns === 'number') && this.columnExists(columns))
@@ -725,47 +730,46 @@ export default class DataFrame extends NDFrame {
    *
    * @return {Workbook}
    *
-   * @example
-   *
    */
   to_excel(excel_writer, sheetName = 'Sheet1', download = false, kwargs = {index: true}) {
-    let wb;
-
-    const sheetObject = () => {
-      if (kwargs.index) {
-        const colRow = Immutable.List.of('').concat(this.columns.toList());
-        return new Sheet(
-          Immutable.List.of(colRow)
-            .concat(this.values.map((v, idx) => Immutable.List.of(this.index.get(idx)).concat(v))));
-      }
-
-      return new Sheet(Immutable.List.of(this.columns.toList()).concat(this.values));
-    };
-
-    if (excel_writer instanceof Workbook) {
-      wb = excel_writer.copy();
-      wb.addSheet(sheetName, sheetObject());
-    } else if (typeof excel_writer === 'string') {
-      wb = new Workbook();
-      wb.addSheet(sheetName, sheetObject());
-    } else throw new Error('excel_writer must be a file path or Workbook object');
-
-    function s2ab(s) {
-      const buf = new ArrayBuffer(s.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i < s.length; i += 1) { // noinspection Eslint
-        view[i] = s.charCodeAt(i) & 0xFF;
-      }
-      return buf;
-    }
-
-    if (download) {
-      saveAs(new Blob([s2ab(wb.writeWorkbook())],
-        {type: "application/octet-stream"}),
-        typeof excel_writer === 'string' ? excel_writer : 'StratoDem Download.xlsx');
-    }
-
-    return wb;
+    throw new Error('to_excel not yet implemented');
+    // let wb;
+    //
+    // const sheetObject = () => {
+    //   if (kwargs.index) {
+    //     const colRow = Immutable.List.of('').concat(this.columns.toList());
+    //     return new Sheet(
+    //       Immutable.List.of(colRow)
+    //         .concat(this.values.map((v, idx) => Immutable.List.of(this.index.get(idx)).concat(v))));
+    //   }
+    //
+    //   return new Sheet(Immutable.List.of(this.columns.toList()).concat(this.values));
+    // };
+    //
+    // if (excel_writer instanceof Workbook) {
+    //   wb = excel_writer.copy();
+    //   wb.addSheet(sheetName, sheetObject());
+    // } else if (typeof excel_writer === 'string') {
+    //   wb = new Workbook();
+    //   wb.addSheet(sheetName, sheetObject());
+    // } else throw new Error('excel_writer must be a file path or Workbook object');
+    //
+    // function s2ab(s) {
+    //   const buf = new ArrayBuffer(s.length);
+    //   const view = new Uint8Array(buf);
+    //   for (let i = 0; i < s.length; i += 1) { // noinspection Eslint
+    //     view[i] = s.charCodeAt(i) & 0xFF;
+    //   }
+    //   return buf;
+    // }
+    //
+    // if (download) {
+    //   saveAs(new Blob([s2ab(wb.writeWorkbook())],
+    //     {type: "application/octet-stream"}),
+    //     typeof excel_writer === 'string' ? excel_writer : 'StratoDem Download.xlsx');
+    // }
+    //
+    // return wb;
   }
 
   /**
@@ -1219,7 +1223,7 @@ export default class DataFrame extends NDFrame {
   }
 
   /**
-   * Reshape data (produce a “pivot” table) based on column values. Uses unique values from
+   * Reshape data (produce a 'pivot' table) based on column values. Uses unique values from
    * index / columns to form axes of the resulting DataFrame.
    *
    * pandas equivalent: [DataFrame.pivot](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.pivot.html)

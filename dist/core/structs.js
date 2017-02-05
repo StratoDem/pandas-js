@@ -17,10 +17,6 @@ var _immutable = require('immutable');
 
 var _immutable2 = _interopRequireDefault(_immutable);
 
-var _xlsx = require('xlsx');
-
-var _xlsx2 = _interopRequireDefault(_xlsx);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Workbook = exports.Workbook = function () {
@@ -45,7 +41,7 @@ var Workbook = exports.Workbook = function () {
   }, {
     key: 'writeWorkbook',
     value: function writeWorkbook() {
-      return _xlsx2.default.write(this, { bookType: 'xlsx', bookSST: true, type: 'binary' });
+      throw new Error('Workbook writing is not yet implemented');
     }
   }, {
     key: 'sheets',
@@ -121,18 +117,17 @@ var Sheet = exports.Sheet = function () {
           if (range.e.c < idxCol) range.e.c = idxCol;
 
           var cell = { v: v };
-          var cell_ref = _xlsx2.default.utils.encode_cell({ c: idxCol, r: idxRow });
+          throw new Error('Sheet not yet implemented');
+
 
           if (typeof cell.v === 'number') cell.t = 'n';else if (cell.v instanceof Date) {
-            cell.t = 'n';cell.z = _xlsx2.default.SSF._table[14];
+            cell.t = 'n';cell.z = XLSX.SSF._table[14];
             cell.v = datenum(cell.v);
           } else cell.t = 's';
 
           ws[cell_ref] = cell;
         });
       });
-
-      if (range.s.c < 10000000) ws['!ref'] = _xlsx2.default.utils.encode_range(range);
 
       return ws;
     }

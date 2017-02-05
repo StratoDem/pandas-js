@@ -17,26 +17,11 @@ var _immutable = require('immutable');
 
 var _immutable2 = _interopRequireDefault(_immutable);
 
-var _xlsx = require('xlsx');
-
-var _xlsx2 = _interopRequireDefault(_xlsx);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// This does not match the Python pandas
+// import XLSX from 'xlsx'; TODO figure out if this is the best package
 
-/**
- * structs
- *
- * Description:
- * Primary author(s):
- * Secondary author(s):
- *
- * Notes:
- *
- * January 12, 2017
- * StratoDem Analytics, LLC
- */
+// This does not match the Python pandas
 
 var Workbook = exports.Workbook = function () {
   /**
@@ -83,7 +68,8 @@ var Workbook = exports.Workbook = function () {
   }, {
     key: 'writeWorkbook',
     value: function writeWorkbook() {
-      return _xlsx2.default.write(this, { bookType: 'xlsx', bookSST: true, type: 'binary' });
+      throw new Error('Workbook writing is not yet implemented');
+      // return XLSX.write(this, {bookType: 'xlsx', bookSST: true, type: 'binary'});
     }
   }, {
     key: 'sheets',
@@ -102,7 +88,18 @@ var Workbook = exports.Workbook = function () {
     }
   }]);
   return Workbook;
-}();
+}(); /**
+      * structs
+      *
+      * Description:
+      * Primary author(s):
+      * Secondary author(s):
+      *
+      * Notes:
+      *
+      * January 12, 2017
+      * StratoDem Analytics, LLC
+      */
 
 var Sheets = function () {
   function Sheets() {
@@ -194,10 +191,11 @@ var Sheet = exports.Sheet = function () {
           if (range.e.c < idxCol) range.e.c = idxCol;
 
           var cell = { v: v };
-          var cell_ref = _xlsx2.default.utils.encode_cell({ c: idxCol, r: idxRow });
+          throw new Error('Sheet not yet implemented');
+          // const cell_ref = XLSX.utils.encode_cell({c: idxCol, r: idxRow}); TODO
 
           if (typeof cell.v === 'number') cell.t = 'n';else if (cell.v instanceof Date) {
-            cell.t = 'n';cell.z = _xlsx2.default.SSF._table[14];
+            cell.t = 'n';cell.z = XLSX.SSF._table[14];
             cell.v = datenum(cell.v);
           } else cell.t = 's';
 
@@ -205,7 +203,7 @@ var Sheet = exports.Sheet = function () {
         });
       });
 
-      if (range.s.c < 10000000) ws['!ref'] = _xlsx2.default.utils.encode_range(range);
+      // if (range.s.c < 10000000) ws['!ref'] = XLSX.utils.encode_range(range); TODO
 
       return ws;
     }

@@ -41,8 +41,6 @@ var _immutable = require('immutable');
 
 var _immutable2 = _interopRequireDefault(_immutable);
 
-var _fileSaver = require('file-saver');
-
 var _exceptions = require('./exceptions');
 
 var _generic = require('./generic');
@@ -52,8 +50,6 @@ var _generic2 = _interopRequireDefault(_generic);
 var _series = require('./series');
 
 var _series2 = _interopRequireDefault(_series);
-
-var _structs = require('./structs');
 
 var _utils = require('./utils');
 
@@ -371,52 +367,15 @@ var DataFrame = function (_NDFrame) {
     key: 'to_excel',
     value: function to_excel(excel_writer) {
       var sheetName = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'Sheet1';
-
-      var _this7 = this;
-
       var download = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
       var kwargs = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : { index: true };
 
-      var wb = void 0;
-
-      var sheetObject = function sheetObject() {
-        if (kwargs.index) {
-          var colRow = _immutable2.default.List.of('').concat(_this7.columns.toList());
-          return new _structs.Sheet(_immutable2.default.List.of(colRow).concat(_this7.values.map(function (v, idx) {
-            return _immutable2.default.List.of(_this7.index.get(idx)).concat(v);
-          })));
-        }
-
-        return new _structs.Sheet(_immutable2.default.List.of(_this7.columns.toList()).concat(_this7.values));
-      };
-
-      if (excel_writer instanceof _structs.Workbook) {
-        wb = excel_writer.copy();
-        wb.addSheet(sheetName, sheetObject());
-      } else if (typeof excel_writer === 'string') {
-        wb = new _structs.Workbook();
-        wb.addSheet(sheetName, sheetObject());
-      } else throw new Error('excel_writer must be a file path or Workbook object');
-
-      function s2ab(s) {
-        var buf = new ArrayBuffer(s.length);
-        var view = new Uint8Array(buf);
-        for (var i = 0; i < s.length; i += 1) {
-          view[i] = s.charCodeAt(i) & 0xFF;
-        }
-        return buf;
-      }
-
-      if (download) {
-        (0, _fileSaver.saveAs)(new Blob([s2ab(wb.writeWorkbook())], { type: "application/octet-stream" }), typeof excel_writer === 'string' ? excel_writer : 'StratoDem Download.xlsx');
-      }
-
-      return wb;
+      throw new Error('to_excel not yet implemented');
     }
   }, {
     key: 'to_json',
     value: function to_json() {
-      var _this8 = this;
+      var _this7 = this;
 
       var kwargs = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { orient: 'columns' };
 
@@ -434,7 +393,7 @@ var DataFrame = function (_NDFrame) {
           return this.values.map(function (row) {
             var rowObj = {};
             row.forEach(function (val, idx) {
-              rowObj[_this8.columns.get(idx)] = val;
+              rowObj[_this7.columns.get(idx)] = val;
             });
             return rowObj;
           }).toArray();
@@ -449,9 +408,9 @@ var DataFrame = function (_NDFrame) {
           this.values.forEach(function (row, idx) {
             var rowObj = {};
             row.forEach(function (val, idx2) {
-              rowObj[_this8.columns.get(idx2)] = val;
+              rowObj[_this7.columns.get(idx2)] = val;
             });
-            json[_this8.index.get(idx)] = rowObj;
+            json[_this7.index.get(idx)] = rowObj;
           });
           return json;
         case 'values':
@@ -459,7 +418,7 @@ var DataFrame = function (_NDFrame) {
         case 'columns':
           json = {};
           this.columns.forEach(function (c) {
-            json[c] = _this8.get(c).to_json({ orient: 'index' });
+            json[c] = _this7.get(c).to_json({ orient: 'index' });
           });
           return json;
         default:
@@ -469,17 +428,17 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'sum',
     value: function sum() {
-      var _this9 = this;
+      var _this8 = this;
 
       var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
 
       if (axis === 0) {
         return new _series2.default(this.columns.toArray().map(function (k) {
-          return _this9.get(k).sum();
+          return _this8.get(k).sum();
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
         return new _series2.default(_immutable2.default.Range(0, this.length).map(function (idx) {
-          return _this9.values.get(idx).reduce(function (s, k) {
+          return _this8.values.get(idx).reduce(function (s, k) {
             return s + k;
           }, 0);
         }).toList(), { index: this.index });
@@ -490,18 +449,18 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'mean',
     value: function mean() {
-      var _this10 = this;
+      var _this9 = this;
 
       var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
 
       if (axis === 0) {
         return new _series2.default(this.columns.toArray().map(function (k) {
-          return _this10.get(k).mean();
+          return _this9.get(k).mean();
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
         return new _series2.default(_immutable2.default.Range(0, this.length).map(function (idx) {
-          return _this10.values.get(idx).reduce(function (s, k) {
-            return s + k / _this10.columns.size;
+          return _this9.values.get(idx).reduce(function (s, k) {
+            return s + k / _this9.columns.size;
           }, 0);
         }).toList(), { index: this.index });
       }
@@ -511,13 +470,13 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'std',
     value: function std() {
-      var _this11 = this;
+      var _this10 = this;
 
       var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
 
       if (axis === 0) {
         return new _series2.default(this.columns.toArray().map(function (k) {
-          return _this11.get(k).std();
+          return _this10.get(k).std();
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
         return this.variance(axis).map(function (v) {
@@ -530,24 +489,24 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'variance',
     value: function variance() {
-      var _this12 = this;
+      var _this11 = this;
 
       var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
 
       if (axis === 0) {
         return new _series2.default(this.columns.toArray().map(function (k) {
-          return _this12.get(k).variance();
+          return _this11.get(k).variance();
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
         var _ret = function () {
-          var means = _this12.mean(axis).values;
+          var means = _this11.mean(axis).values;
           return {
-            v: new _series2.default(_immutable2.default.Range(0, _this12.length).map(function (idx) {
-              return _this12.values.get(idx).reduce(function (s, k) {
+            v: new _series2.default(_immutable2.default.Range(0, _this11.length).map(function (idx) {
+              return _this11.values.get(idx).reduce(function (s, k) {
                 var diff = k - means.get(idx);
-                return s + diff * diff / (_this12.columns.size - 1);
+                return s + diff * diff / (_this11.columns.size - 1);
               }, 0);
-            }).toArray(), { index: _this12.index })
+            }).toArray(), { index: _this11.index })
           };
         }();
 
@@ -600,7 +559,7 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'diff',
     value: function diff() {
-      var _this13 = this;
+      var _this12 = this;
 
       var periods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
       var axis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
@@ -610,13 +569,13 @@ var DataFrame = function (_NDFrame) {
 
       if (axis === 0) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k) {
-          return [k, _this13._data.get(k).diff(periods)];
+          return [k, _this12._data.get(k).diff(periods)];
         })), { index: this.index });
       } else if (axis === 1) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k, idx) {
-          if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this13.length).toList(), { name: k, index: _this13.index })];
-          var compareCol = _this13.get(_this13.columns.get(idx - periods));
-          return [k, _this13.get(k).map(function (v, vIdx) {
+          if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this12.length).toList(), { name: k, index: _this12.index })];
+          var compareCol = _this12.get(_this12.columns.get(idx - periods));
+          return [k, _this12.get(k).map(function (v, vIdx) {
             return v - compareCol.iloc(vIdx);
           })];
         })), { index: this.index });
@@ -627,7 +586,7 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'pct_change',
     value: function pct_change() {
-      var _this14 = this;
+      var _this13 = this;
 
       var periods = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
       var axis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
@@ -637,13 +596,13 @@ var DataFrame = function (_NDFrame) {
 
       if (axis === 0) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k) {
-          return [k, _this14._data.get(k).pct_change(periods)];
+          return [k, _this13._data.get(k).pct_change(periods)];
         })), { index: this.index });
       } else if (axis === 1) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k, idx) {
-          if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this14.length).toList(), { name: k, index: _this14.index })];
-          var compareCol = _this14.get(_this14.columns.get(idx - periods));
-          return [k, _this14.get(k).map(function (v, vIdx) {
+          if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this13.length).toList(), { name: k, index: _this13.index })];
+          var compareCol = _this13.get(_this13.columns.get(idx - periods));
+          return [k, _this13.get(k).map(function (v, vIdx) {
             return v / compareCol.iloc(vIdx) - 1;
           })];
         })), { index: this.index });
@@ -669,18 +628,18 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'pivot',
     value: function pivot(index, columns, values) {
-      var _this15 = this;
+      var _this14 = this;
 
       var uniqueVals = _immutable2.default.Map({});
       var uniqueCols = _immutable2.default.List([]);
 
       this.index.forEach(function (v, idx) {
-        var idxVal = _this15.get(index).iloc(idx);
-        var colVal = _this15.get(columns).iloc(idx);
+        var idxVal = _this14.get(index).iloc(idx);
+        var colVal = _this14.get(columns).iloc(idx);
 
         if (uniqueVals.hasIn([idxVal, colVal])) throw new Error('pivot index and column must be unique');
 
-        var val = _this15.get(values).iloc(idx);
+        var val = _this14.get(values).iloc(idx);
 
         uniqueVals = uniqueVals.setIn([idxVal, colVal], val);
         if (!uniqueCols.has(colVal)) uniqueCols = uniqueCols.push(colVal);
@@ -704,15 +663,15 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'values',
     get: function get() {
-      var _this16 = this;
+      var _this15 = this;
 
       if (this._values instanceof _immutable2.default.List) return (0, _get3.default)(DataFrame.prototype.__proto__ || Object.getPrototypeOf(DataFrame.prototype), 'values', this);
 
       var valuesList = _immutable2.default.List([]);
 
       var _loop = function _loop(idx) {
-        valuesList = valuesList.concat([_immutable2.default.List(_this16.columns.map(function (k) {
-          return _this16._data.get(k).iloc(idx);
+        valuesList = valuesList.concat([_immutable2.default.List(_this15.columns.map(function (k) {
+          return _this15._data.get(k).iloc(idx);
         }))]);
       };
 
@@ -729,14 +688,14 @@ var DataFrame = function (_NDFrame) {
       return this._get_axis(1);
     },
     set: function set(columns) {
-      var _this17 = this;
+      var _this16 = this;
 
       if (!Array.isArray(columns) || columns.length !== this.columns.size) throw new Error('Columns must be array of same dimension');
 
       var nextData = {};
       columns.forEach(function (k, idx) {
-        var prevColumn = _this17.columns.get(idx);
-        var prevSeries = _this17.get(prevColumn);
+        var prevColumn = _this16.columns.get(idx);
+        var prevSeries = _this16.get(prevColumn);
 
         prevSeries.name = k;
         nextData[k] = prevSeries;
@@ -751,7 +710,7 @@ var DataFrame = function (_NDFrame) {
       return this._get_axis(0);
     },
     set: function set(index) {
-      var _this18 = this;
+      var _this17 = this;
 
       this.set_axis(0, (0, _utils.parseIndex)(index, this._data.get(this.columns.get(0)).values));
 
@@ -760,16 +719,16 @@ var DataFrame = function (_NDFrame) {
             k = _ref10[0],
             v = _ref10[1];
 
-        v.index = _this18.index;
+        v.index = _this17.index;
       });
     }
   }, {
     key: 'length',
     get: function get() {
-      var _this19 = this;
+      var _this18 = this;
 
       return Math.max.apply(Math, (0, _toConsumableArray3.default)(this._data.keySeq().map(function (k) {
-        return _this19.get(k).length;
+        return _this18.get(k).length;
       }).toArray()));
     }
   }]);

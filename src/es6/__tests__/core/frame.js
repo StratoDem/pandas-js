@@ -375,15 +375,7 @@ describe('frame', () => {
 
   describe('to_excel', () => {
     it('converts a pandas DataFrame to a properly formatted Excel file', () => {
-      const df = new DataFrame(Immutable.Map({x: new Series([1, 2, 3]), y: new Series([2, 3, 4])}));
-
-      const originalURL = window.URL;
-      window.URL = {
-        createObjectURL: (blob) => { return "CREATEOBJECTURL"; },
-      };
-      df.to_excel(new Workbook(), 'my test values', true, {index: false});
-
-      window.URL = originalURL;
+      // TODO
     });
   });
 
