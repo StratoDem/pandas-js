@@ -6,3 +6,5 @@ node_modules/
 
 # Documentation
 docs/
+__tests__/
+scripts/
