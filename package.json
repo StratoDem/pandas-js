@@ -42,7 +42,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/StratoDem/pandas.js.git"
+    "url": "https://github.com/StratoDem/pandas-js.git"
   },
   "jest": {
     "modulePaths": [
@@ -66,12 +66,14 @@
     "analytics"
   ],
   "bugs": {
-    "url": "https://github.com/StratoDem/pandas.js/issues"
+    "url": "https://github.com/StratoDem/pandas-js/issues"
   },
-  "homepage": "https://github.com/StratoDem/pandas.js",
+  "homepage": "https://github.com/StratoDem/pandas-js",
   "scripts": {
     "build": "babel src/es6 --out-dir dist --no-comments",
-    "test": "jest --verbose --runInBand"
+    "test": "jest --verbose --runInBand",
+    "version_patch": "npm version patch",
+    "_publish": "npm publish"
   },
   "license": "MIT"
 }
