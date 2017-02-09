@@ -1,4 +1,4 @@
-# pandas.js
+# pandas-js
 Pandas for JavaScript
 
 pandas.js is an open source (experimental) library mimicking the Python [pandas](http://pandas.pydata.org/) library. It relies on [Immutable.js](https://facebook.github.io/immutable-js/) as the [NumPy](http://www.numpy.org/) logical equivalent. The main data objects in pandas.js are the [`pandas.Series`](#series) and the [`pandas.DataFrame`](#dataframe)
