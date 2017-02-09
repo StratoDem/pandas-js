@@ -23,7 +23,7 @@ console.log(`Standard deviation: ${ds_1.std()}`);
 
 const ds_2 = new Series([2, 3, 4, 5], {name: 'My Data 2'});
 console.log('Summing two Series:');
-console.log(ds_1.plus(ds_2).toString());
+console.log(ds_1.add(ds_2).toString());
 ```
 ```
 > This is a Series
@@ -65,7 +65,9 @@ This is a DataFrame
 
 See [the docs](https://stratodem.github.io/pandas.js-docs/)
 
-## Testing and build
+## Development
+
+### Testing and build
 ```
 $ npm run test
 $ npm run build

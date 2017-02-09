@@ -1,5 +1,10 @@
 # Change Log
 
+0.1.21
+### Changed
+- Removed uncessary tests from `npm install`.
+- Added `reset_index` method for `DataFrame`
+
 0.1.20
 ### Changed
 - Dropped support for `to_excel` since XLSX adds 460kb to dependencies. Will revisit later.

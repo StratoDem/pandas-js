@@ -303,6 +303,50 @@ export default class DataFrame extends NDFrame {
   }
 
   /**
+   * Reset the index for a DataFrame
+   *
+   * pandas equivalent: [DataFrame.reset_index](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.reset_index.html)
+   *
+   * @param {object} args
+   * @param {boolean} args.drop
+   *  Drop the index when resetting? Otherwise, add as new column
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}], {index: [1, 2]});
+   *
+   * // returns DataFrame([{index: 1, x: 1, y: 2}, {index: 2, x: 2, y: 3}], {index: [0, 1]})
+   * df.reset_index();
+   *
+   * // returns DataFrame([{x: 1, y: 2}, {x: 2, y: 3}], {index: [0, 1]});
+   * df.reset_index({drop: true});
+   *
+   * const df2 = new DataFrame([{index: 1}, {index: 2}], {index: [1, 2]});
+   * // returns DataFrame([{level_0: 1, index: 1}, {level_0: 1, index: 2}], {index: [1, 2]});
+   * df2.reset_index();
+   */
+  reset_index(args = {drop: false}) {
+    if (typeof args.drop !== 'undefined' && typeof args.drop !== 'boolean')
+      throw new TypeError('drop must be a boolean');
+    const drop = typeof args.drop === 'undefined' ? false : args.drop;
+
+    let indexName = 'index';
+    if (this.columnExists('index')) {
+      let i = 0;
+      while (this.columnExists(`level_${i}`)) {
+        i += 1;
+      }
+      indexName = `level_${i}`;
+    }
+
+    let data = Immutable.Map(this.columns.map(c => ([c, new Series(this.get(c).values)])));
+    if (!args.drop) data = data.set(indexName, new Series(this.index));
+
+    return new DataFrame(data);
+  }
+
+  /**
    * Return new DataFrame subset at [rowIdx, colIdx]
    *
    * pandas equivalent: [DataFrame.iloc](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.iloc.html)
