@@ -121,6 +121,34 @@ describe('frame', function () {
       });
     });
 
+    describe('reset_index', function () {
+      it('resets the index to a range and places "index" as a column in the DataFrame', function () {
+        var df = new _frame2.default([{ x: 1, y: 2, z: 3 }, { x: 2, y: 3, z: 4 }, { x: 3, y: 4, z: 5 }], { index: [1, 2, 3] }).reset_index();
+
+        expect(df.get('index')).toBeInstanceOf(_series2.default);
+        expect(df.get('index').values.toArray()).toEqual([1, 2, 3]);
+        expect(df.get('y').values.toArray()).toEqual([2, 3, 4]);
+        expect(df.index.toArray()).toEqual([0, 1, 2]);
+      });
+
+      it('resets the index to a range and does not include "index" in the DataFrame', function () {
+        var df = new _frame2.default([{ x: 1, y: 2, z: 3 }, { x: 2, y: 3, z: 4 }, { x: 3, y: 4, z: 5 }], { index: [1, 2, 3] }).reset_index({ drop: true });
+
+        expect(df.columns.toArray()).toEqual(['x', 'y', 'z']);
+        expect(df.index.toArray()).toEqual([0, 1, 2]);
+      });
+
+      it('resets the index to a range and includes "level_0" in the DataFrame', function () {
+        var df = new _frame2.default([{ index: 1, y: 2, z: 3 }, { index: 2, y: 3, z: 4 }, { index: 3, y: 4, z: 5 }], { index: [2, 3, 4] }).reset_index();
+
+        expect(df.get('index')).toBeInstanceOf(_series2.default);
+        expect(df.get('index').values.toArray()).toEqual([1, 2, 3]);
+        expect(df.get('level_0')).toBeInstanceOf(_series2.default);
+        expect(df.get('level_0').values.toArray()).toEqual([2, 3, 4]);
+        expect(df.index.toArray()).toEqual([0, 1, 2]);
+      });
+    });
+
     describe('head', function () {
       it('returns the first n rows as a new DataFrame', function () {
         var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 5 }]);
