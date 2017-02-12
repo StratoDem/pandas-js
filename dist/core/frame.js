@@ -99,7 +99,7 @@ var DataFrame = function (_NDFrame) {
       _this._data = parseArrayToSeriesMap(data, _this.index);
       _this.set_axis(1, _this._data.keySeq());
     } else if (data instanceof _immutable2.default.Map) {
-      _this._data = _immutable2.default.Map(data.keySeq().map(function (k) {
+      _this._data = _immutable2.default.OrderedMap(data.keySeq().map(function (k) {
         if (!(data.get(k) instanceof _series2.default)) throw new Error('Map must have [column, series] key-value pairs');
 
         return [k, data.get(k).copy()];
@@ -673,7 +673,7 @@ var DataFrame = function (_NDFrame) {
       var sortedIndex = uniqueVals.keySeq().sort().toArray();
       var sortedColumns = uniqueCols.sort();
 
-      var data = _immutable2.default.Map(sortedColumns.map(function (col) {
+      var data = _immutable2.default.OrderedMap(sortedColumns.map(function (col) {
         return [col, new _series2.default(sortedIndex.map(function (idx) {
           var val = uniqueVals.getIn([idx, col]);
           return typeof val === 'undefined' ? null : val;

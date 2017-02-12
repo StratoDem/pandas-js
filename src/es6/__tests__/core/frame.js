@@ -758,6 +758,45 @@ describe('frame', () => {
 
       expect(() => df.pivot('x', 'y', 'z')).toThrow();
     });
+
+    it('properly sorts columns', () => {
+      const data = JSON.parse("[" +
+        "{\"name\":\"Boston, MA - Hispanic - American Indian or Alaska Native\",\"val\":0,\"idx\":1}," +
+        "{\"name\":\"Cambridge-Newton-Framingham, MA - Hispanic - American Indian or Alaska Native\",\"val\":1,\"idx\":1}," +
+        "{\"name\":\"Worcester, MA-CT - Not Hispanic - Black\",\"val\":4,\"idx\":1}," +
+        "{\"name\":\"Worcester, MA-CT - Not Hispanic - American Indian or Alaska Native\",\"val\":9,\"idx\":1}," +
+        "{\"name\":\"Cambridge-Newton-Framingham, MA - Hispanic - Black\",\"val\":16,\"idx\":1}," +
+        "{\"name\":\"Boston, MA - Hispanic - Black\",\"val\":25,\"idx\":1}," +
+        "{\"name\":\"Providence-Warwick, RI-MA - Not Hispanic - American Indian or Alaska Native\",\"val\":36,\"idx\":1}," +
+        "{\"name\":\"Providence-Warwick, RI-MA - Hispanic - Black\",\"val\":49,\"idx\":1}," +
+        "{\"name\":\"Boston, MA - Not Hispanic - American Indian or Alaska Native\",\"val\":64,\"idx\":1}," +
+        "{\"name\":\"Cambridge-Newton-Framingham, MA - Not Hispanic - American Indian or Alaska Native\",\"val\":81,\"idx\":1}," +
+        "{\"name\":\"Worcester, MA-CT - Hispanic - American Indian or Alaska Native\",\"val\":100,\"idx\":1}," +
+        "{\"name\":\"Worcester, MA-CT - Hispanic - Black\",\"val\":121,\"idx\":1}," +
+        "{\"name\":\"Cambridge-Newton-Framingham, MA - Not Hispanic - Black\",\"val\":144,\"idx\":1}," +
+        "{\"name\":\"Boston, MA - Not Hispanic - Black\",\"val\":169,\"idx\":1}," +
+        "{\"name\":\"Providence-Warwick, RI-MA - Hispanic - American Indian or Alaska Native\",\"val\":196,\"idx\":1}," +
+        "{\"name\":\"Providence-Warwick, RI-MA - Not Hispanic - Black\",\"val\":225,\"idx\":1}]");
+      const df = new DataFrame(data);
+
+      const dfPv = df.pivot('idx', 'name', 'val');
+      expect(dfPv.columns.toArray()).toEqual([ 'Boston, MA - Hispanic - American Indian or Alaska Native',
+        'Boston, MA - Hispanic - Black',
+        'Boston, MA - Not Hispanic - American Indian or Alaska Native',
+        'Boston, MA - Not Hispanic - Black',
+        'Cambridge-Newton-Framingham, MA - Hispanic - American Indian or Alaska Native',
+        'Cambridge-Newton-Framingham, MA - Hispanic - Black',
+        'Cambridge-Newton-Framingham, MA - Not Hispanic - American Indian or Alaska Native',
+        'Cambridge-Newton-Framingham, MA - Not Hispanic - Black',
+        'Providence-Warwick, RI-MA - Hispanic - American Indian or Alaska Native',
+        'Providence-Warwick, RI-MA - Hispanic - Black',
+        'Providence-Warwick, RI-MA - Not Hispanic - American Indian or Alaska Native',
+        'Providence-Warwick, RI-MA - Not Hispanic - Black',
+        'Worcester, MA-CT - Hispanic - American Indian or Alaska Native',
+        'Worcester, MA-CT - Hispanic - Black',
+        'Worcester, MA-CT - Not Hispanic - American Indian or Alaska Native',
+        'Worcester, MA-CT - Not Hispanic - Black' ]);
+    });
   });
 
   describe('iloc', () => {

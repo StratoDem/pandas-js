@@ -73,7 +73,7 @@ export default class DataFrame extends NDFrame {
       this._data = parseArrayToSeriesMap(data, this.index);
       this.set_axis(1, this._data.keySeq());
     } else if (data instanceof Immutable.Map) {
-      this._data = Immutable.Map(data.keySeq().map((k) => {
+      this._data = Immutable.OrderedMap(data.keySeq().map((k) => {
         if (!(data.get(k) instanceof Series))
           throw new Error('Map must have [column, series] key-value pairs');
 
@@ -1301,7 +1301,7 @@ export default class DataFrame extends NDFrame {
     const sortedIndex = uniqueVals.keySeq().sort().toArray();
     const sortedColumns = uniqueCols.sort();
 
-    const data = Immutable.Map(
+    const data = Immutable.OrderedMap(
       sortedColumns.map((col) => {
         return [col, new Series(sortedIndex.map((idx) => {
           const val = uniqueVals.getIn([idx, col]);
