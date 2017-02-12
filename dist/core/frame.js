@@ -672,14 +672,15 @@ var DataFrame = function (_NDFrame) {
       });
       var sortedIndex = uniqueVals.keySeq().sort().toArray();
       var sortedColumns = uniqueCols.sort();
-      return new DataFrame(sortedIndex.map(function (idx) {
-        var rowMap = _immutable2.default.Map({});
-        sortedColumns.forEach(function (col) {
+
+      var data = _immutable2.default.Map(sortedColumns.map(function (col) {
+        return [col, new _series2.default(sortedIndex.map(function (idx) {
           var val = uniqueVals.getIn([idx, col]);
-          rowMap = rowMap.set(col, typeof val === 'undefined' ? null : val);
-        });
-        return rowMap;
-      }), { index: sortedIndex });
+          return typeof val === 'undefined' ? null : val;
+        }), { name: col, index: sortedIndex })];
+      }));
+
+      return new DataFrame(data, { index: sortedIndex });
     }
   }, {
     key: 'kwargs',

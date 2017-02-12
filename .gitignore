@@ -4,5 +4,7 @@ node_modules/
 # IntelliJ project files
 .idea
 
+*.map
+
 # Documentation
 docs/

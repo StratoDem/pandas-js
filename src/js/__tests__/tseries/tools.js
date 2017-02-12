@@ -95,3 +95,5 @@ describe('tools', function () {
      * January 11, 2017
      * StratoDem Analytics, LLC
      */
+
+//# sourceMappingURL=tools.js.map
