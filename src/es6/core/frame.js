@@ -1300,14 +1300,16 @@ export default class DataFrame extends NDFrame {
     });
     const sortedIndex = uniqueVals.keySeq().sort().toArray();
     const sortedColumns = uniqueCols.sort();
-    return new DataFrame(sortedIndex.map((idx) => {
-      let rowMap = Immutable.Map({});
-      sortedColumns.forEach((col) => {
-        const val = uniqueVals.getIn([idx, col]);
-        rowMap = rowMap.set(col, typeof val === 'undefined' ? null : val);
-      });
-      return rowMap;
-    }), {index: sortedIndex});
+
+    const data = Immutable.Map(
+      sortedColumns.map((col) => {
+        return [col, new Series(sortedIndex.map((idx) => {
+          const val = uniqueVals.getIn([idx, col]);
+          return typeof val === 'undefined' ? null : val;
+        }), {name: col, index: sortedIndex})]
+      }));
+
+    return new DataFrame(data, {index: sortedIndex});
   }
 }
 

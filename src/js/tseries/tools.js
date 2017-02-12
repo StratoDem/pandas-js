@@ -35,3 +35,5 @@ var to_datetime = exports.to_datetime = function to_datetime(arg) {
   }
   throw new Error('Must be Series, DataFrame, List or Array');
 };
+
+//# sourceMappingURL=tools.js.map

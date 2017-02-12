@@ -882,3 +882,5 @@ describe('frame', function () {
     });
   });
 });
+
+//# sourceMappingURL=frame.js.map
