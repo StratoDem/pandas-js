@@ -174,6 +174,12 @@ var DataFrame = function (_NDFrame) {
       return (0, _utils.enumerate)(this);
     }
   }, {
+    key: 'set',
+    value: function set(column, series) {
+      if (series instanceof _series2.default) return new DataFrame(this._data.set(column, series), this.kwargs);else if (series instanceof _immutable2.default.List || Array.isArray(series)) return new DataFrame(this._data.set(column, new _series2.default(series, { index: this.index, name: column })), this.kwargs);
+      throw new TypeError('series must be a Series!');
+    }
+  }, {
     key: 'reset_index',
     value: function reset_index() {
       var _this4 = this;

@@ -28,6 +28,26 @@ describe('frame', () => {
       });
     });
 
+    describe('set', () => {
+      it('sets a new Series column at the index', () => {
+        const df = new DataFrame([{x: 1}, {x: 2}, {x: 3}]);
+        const df2 = df.set('y', new Series([2, 3, 4]));
+        expect(df2.get('y').values.toArray()).toEqual([2, 3, 4]);
+      });
+
+      it('sets a new List column at the index', () => {
+        const df = new DataFrame([{x: 1}, {x: 2}, {x: 3}]);
+        const df2 = df.set('y', Immutable.List([2, 3, 4]));
+        expect(df2.get('y').values.toArray()).toEqual([2, 3, 4]);
+      });
+
+      it('sets a new Array column at the index', () => {
+        const df = new DataFrame([{x: 1}, {x: 2}, {x: 3}]);
+        const df2 = df.set('y', [2, 3, 4]);
+        expect(df2.get('y').values.toArray()).toEqual([2, 3, 4]);
+      });
+    });
+
     describe('index', () => {
       it('index is set properly as the [0, ..., length - 1] if not passed in constructor', () => {
         const df1 = new DataFrame([{x: 1.5}, {x: 1.2}, {x: 1.3}]);

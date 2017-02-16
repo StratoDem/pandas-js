@@ -44,6 +44,26 @@ describe('frame', function () {
       });
     });
 
+    describe('set', function () {
+      it('sets a new Series column at the index', function () {
+        var df = new _frame2.default([{ x: 1 }, { x: 2 }, { x: 3 }]);
+        var df2 = df.set('y', new _series2.default([2, 3, 4]));
+        expect(df2.get('y').values.toArray()).toEqual([2, 3, 4]);
+      });
+
+      it('sets a new List column at the index', function () {
+        var df = new _frame2.default([{ x: 1 }, { x: 2 }, { x: 3 }]);
+        var df2 = df.set('y', _immutable2.default.List([2, 3, 4]));
+        expect(df2.get('y').values.toArray()).toEqual([2, 3, 4]);
+      });
+
+      it('sets a new Array column at the index', function () {
+        var df = new _frame2.default([{ x: 1 }, { x: 2 }, { x: 3 }]);
+        var df2 = df.set('y', [2, 3, 4]);
+        expect(df2.get('y').values.toArray()).toEqual([2, 3, 4]);
+      });
+    });
+
     describe('index', function () {
       it('index is set properly as the [0, ..., length - 1] if not passed in constructor', function () {
         var df1 = new _frame2.default([{ x: 1.5 }, { x: 1.2 }, { x: 1.3 }]);

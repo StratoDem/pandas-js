@@ -303,6 +303,29 @@ export default class DataFrame extends NDFrame {
   }
 
   /**
+   * Set a `Series` at `column`
+   *
+   * @param {string|number} column
+   * @param {Series|List|Array} series
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df = new DataFrame([{x: 1}, {x: 2}, {x: 3}]);
+   *
+   * // Returns DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
+   * df.set('y', new Series([2, 3, 4]));
+   */
+  set(column, series) {
+    if (series instanceof Series)
+      return new DataFrame(this._data.set(column, series), this.kwargs);
+    else if (series instanceof Immutable.List || Array.isArray(series))
+      return new DataFrame(this._data.set(
+        column,
+        new Series(series, {index: this.index, name: column})), this.kwargs);
+    throw new TypeError('series must be a Series!');
+  }
+
+  /**
    * Reset the index for a DataFrame
    *
    * pandas equivalent: [DataFrame.reset_index](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.reset_index.html)
