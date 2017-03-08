@@ -19,10 +19,11 @@ for rel_dir in ${CORE_DIR}
             DOC_FILE_NAME=$(basename ${ES6_FILE})
             DOC_FILE_NAME="${DOC_FILE_NAME%%.*}"
             DOC_FILE_NAME=${DOC_FILE_NAME}.json
-            echo "Generating ${DOC_FILE_NAME}"
+            echo "Generating ${PWD}/${DOC_DIR}${DOC_FILE_NAME} from ${ES6_FILE}"
 
-            jsdoc2md --json ${ES6_FILE} \
-                > ${DOC_DIR}${DOC_FILE_NAME} 2> /dev/null
+            ${PWD}/node_modules/.bin/flow-remove-types ${ES6_FILE} > ${ES6_DIR}/temporary.js
+            ${PWD}/node_modules/.bin/jsdoc2md --json ${ES6_DIR}/temporary.js > ${DOC_DIR}${DOC_FILE_NAME}
+            rm ${ES6_DIR}/temporary.js
         fi
     done
 done

@@ -80,3 +80,5 @@ var NDFrame = function () {
 }();
 
 exports.default = NDFrame;
+
+//# sourceMappingURL=generic.js.map

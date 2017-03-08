@@ -617,5 +617,39 @@ describe('series', function () {
         expect(dsJSON).toEqual({ name: 'x', index: [0, 1, 2, 3], values: [1, 2, 3, 4] });
       });
     });
+
+    describe('cumulative functions', function () {
+      it('cumsum', function () {
+        var ds = new _series2.default([1, 2, 3, 4, 5], { index: [2, 3, 4, 5, 6] });
+        var ds2 = ds.cumsum();
+        expect(ds2).toBeInstanceOf(_series2.default);
+        expect(ds2.values.toArray()).toEqual([1, 3, 6, 10, 15]);
+        expect(ds2.index.toArray()).toEqual([2, 3, 4, 5, 6]);
+      });
+
+      it('cummul', function () {
+        var ds = new _series2.default([1, 2, 3, 4, 5], { index: [2, 3, 4, 5, 6] });
+        var ds2 = ds.cummul();
+        expect(ds2).toBeInstanceOf(_series2.default);
+        expect(ds2.values.toArray()).toEqual([1, 2, 6, 24, 120]);
+        expect(ds2.index.toArray()).toEqual([2, 3, 4, 5, 6]);
+      });
+
+      it('cummax', function () {
+        var ds = new _series2.default([1, 2, 6, 4, 5], { index: [2, 3, 4, 5, 6] });
+        var ds2 = ds.cummax();
+        expect(ds2).toBeInstanceOf(_series2.default);
+        expect(ds2.values.toArray()).toEqual([1, 2, 6, 6, 6]);
+        expect(ds2.index.toArray()).toEqual([2, 3, 4, 5, 6]);
+      });
+
+      it('cummin', function () {
+        var ds = new _series2.default([3, 2, 6, 1, 5], { index: [2, 3, 4, 5, 6] });
+        var ds2 = ds.cummin();
+        expect(ds2).toBeInstanceOf(_series2.default);
+        expect(ds2.values.toArray()).toEqual([3, 2, 2, 1, 1]);
+        expect(ds2.index.toArray()).toEqual([2, 3, 4, 5, 6]);
+      });
+    });
   });
 });

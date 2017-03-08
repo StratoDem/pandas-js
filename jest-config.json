@@ -1,0 +1,16 @@
+{
+  "modulePaths": [
+    "/shared/vendor/modules"
+  ],
+  "moduleFileExtensions": [
+    "js"
+  ],
+  "moduleDirectories": [
+    "node_modules",
+    "bower_components",
+    "shared"
+  ],
+  "testPathDirs": [
+    "src/js"
+  ]
+}

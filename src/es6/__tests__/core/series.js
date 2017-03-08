@@ -588,5 +588,39 @@ describe('series', () => {
         expect(dsJSON).toEqual({name: 'x', index: [0, 1, 2, 3], values: [1, 2, 3, 4]});
       });
     });
+
+    describe('cumulative functions', () => {
+      it('cumsum', () => {
+        const ds = new Series([1, 2, 3, 4, 5], {index: [2, 3, 4, 5, 6]});
+        const ds2 = ds.cumsum();
+        expect(ds2).toBeInstanceOf(Series);
+        expect(ds2.values.toArray()).toEqual([1, 3, 6, 10, 15]);
+        expect(ds2.index.toArray()).toEqual([2, 3, 4, 5, 6]);
+      });
+
+      it('cummul', () => {
+        const ds = new Series([1, 2, 3, 4, 5], {index: [2, 3, 4, 5, 6]});
+        const ds2 = ds.cummul();
+        expect(ds2).toBeInstanceOf(Series);
+        expect(ds2.values.toArray()).toEqual([1, 2, 6, 24, 120]);
+        expect(ds2.index.toArray()).toEqual([2, 3, 4, 5, 6]);
+      });
+
+      it('cummax', () => {
+        const ds = new Series([1, 2, 6, 4, 5], {index: [2, 3, 4, 5, 6]});
+        const ds2 = ds.cummax();
+        expect(ds2).toBeInstanceOf(Series);
+        expect(ds2.values.toArray()).toEqual([1, 2, 6, 6, 6]);
+        expect(ds2.index.toArray()).toEqual([2, 3, 4, 5, 6]);
+      });
+
+      it('cummin', () => {
+        const ds = new Series([3, 2, 6, 1, 5], {index: [2, 3, 4, 5, 6]});
+        const ds2 = ds.cummin();
+        expect(ds2).toBeInstanceOf(Series);
+        expect(ds2.values.toArray()).toEqual([3, 2, 2, 1, 1]);
+        expect(ds2.index.toArray()).toEqual([2, 3, 4, 5, 6]);
+      });
+    });
   });
 });

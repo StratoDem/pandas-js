@@ -1,5 +1,12 @@
 # Change Log
 
+0.1.27
+### Added
+- `cumsum`, `cummul`, `cummax` and `cummin` for `DataFrame` and `Series`
+
+### Changed
+- `pivot` returns `DataFrame` with (now) consistently-sorted columns
+
 0.1.21
 ### Changed
 - Removed uncessary tests from `npm install`.

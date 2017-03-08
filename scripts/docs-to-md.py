@@ -173,12 +173,10 @@ def main():
         for folder, files in docs_files(doc_dir):
             for file in [f for f in files if f[-5:] == '.json']:
                 with open(os.path.join(folder, file), 'r') as f:
-                    doc_json = json.load(f)
-
                     if file == 'series.json':
-                        document_series(doc_json)
+                        document_series(json.load(f))
                     elif file == 'frame.json':
-                        document_dataframe(doc_json)
+                        document_dataframe(json.load(f))
                     else:
                         continue
 
