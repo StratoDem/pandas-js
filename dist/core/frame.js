@@ -92,8 +92,6 @@ var DataFrame = function (_NDFrame) {
     var kwargs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     (0, _classCallCheck3.default)(this, DataFrame);
 
-    console.log(typeof data === 'undefined' ? 'undefined' : (0, _typeof3.default)(data));
-
     var _this = (0, _possibleConstructorReturn3.default)(this, (DataFrame.__proto__ || Object.getPrototypeOf(DataFrame)).call(this, data, kwargs));
 
     if (Array.isArray(data)) {
@@ -110,7 +108,18 @@ var DataFrame = function (_NDFrame) {
       _this.set_axis(1, _this._data.keySeq());
       _this.set_axis(0, _this._data.get(_this.columns.get(0)).index);
     } else if (data instanceof _immutable2.default.List) {
-      throw new TypeError('Invalid type');
+      var columns = void 0;
+      if (Array.isArray(kwargs.columns) || kwargs.columns instanceof _immutable2.default.Seq) columns = _immutable2.default.List(kwargs.columns);else if (kwargs.columns instanceof _immutable2.default.List) columns = kwargs.columns;else if (typeof kwargs.columns === 'undefined') columns = _immutable2.default.Range(0, data.get(0).size).toList();else throw new Error('Invalid columns');
+
+      _this._values = data;
+      _this._data = _immutable2.default.OrderedMap(columns.map(function (c, colIdx) {
+        return [c, new _series2.default(data.map(function (row) {
+          return row.get(colIdx);
+        }), { index: kwargs.index })];
+      }));
+
+      _this.set_axis(1, _this._data.keySeq());
+      _this.set_axis(0, _this._data.get(_this.columns.get(0)).index);
     } else if (typeof data === 'undefined') {
       _this._data = _immutable2.default.Map({});
       _this.set_axis(0, _immutable2.default.List.of());
@@ -641,6 +650,7 @@ var DataFrame = function (_NDFrame) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k, idx) {
           if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this14.length).toList(), { name: k, index: _this14.index })];
           var compareCol = _this14.get(_this14.columns.get(idx - periods));
+
           return [k, _this14.get(k).map(function (v, vIdx) {
             return v / compareCol.iloc(vIdx) - 1;
           })];
@@ -700,15 +710,17 @@ var DataFrame = function (_NDFrame) {
     value: function _cumulativeHelper() {
       var _this16 = this;
 
-      var operation = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'sum';
+      var operation = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _utils.OP_CUMSUM;
       var axis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
       if (axis === 0) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (c) {
-          return [c, _this16.get(c).cumulativeHelper(operation)];
+          return [c, _this16.get(c)._cumulativeHelper(operation)];
         })), this.kwargs);
       } else if (axis === 1) {
-        throw new Error('Not supported');
+        return new DataFrame(this.values.map(function (row) {
+          return (0, _utils.generateCumulativeFunc)(operation)(row);
+        }), this.kwargs);
       } else throw new Error('invalid axis');
     }
   }, {
@@ -716,12 +728,33 @@ var DataFrame = function (_NDFrame) {
     value: function cumsum() {
       var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
 
-      return this._cumulativeHelper('sum', axis);
+      return this._cumulativeHelper(_utils.OP_CUMSUM, axis);
+    }
+  }, {
+    key: 'cummul',
+    value: function cummul() {
+      var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      return this._cumulativeHelper(_utils.OP_CUMMUL, axis);
+    }
+  }, {
+    key: 'cummax',
+    value: function cummax() {
+      var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      return this._cumulativeHelper(_utils.OP_CUMMAX, axis);
+    }
+  }, {
+    key: 'cummin',
+    value: function cummin() {
+      var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      return this._cumulativeHelper(_utils.OP_CUMMIN, axis);
     }
   }, {
     key: 'kwargs',
     get: function get() {
-      return { index: this.index };
+      return { index: this.index, columns: this.columns };
     }
   }, {
     key: 'values',

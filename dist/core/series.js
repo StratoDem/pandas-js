@@ -45,8 +45,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var Series = function (_NDFrame) {
   (0, _inherits3.default)(Series, _NDFrame);
 
-  function Series() {
-    var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+  function Series(data) {
     var kwargs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     (0, _classCallCheck3.default)(this, Series);
 
@@ -69,6 +68,7 @@ var Series = function (_NDFrame) {
     _this._setup_axes(_immutable2.default.List.of(0));
 
     _this._sort_ascending = _this._sort_ascending.bind(_this);
+
     _this._sort_descending = _this._sort_descending.bind(_this);
     return _this;
   }
@@ -241,14 +241,14 @@ var Series = function (_NDFrame) {
     key: 'add',
     value: function add(val) {
       if (typeof val === 'number') return this.map(function (v) {
-        return v + val;
-      });else if (val instanceof Series) return this.map(function (v, idx) {
-        return v + val.iloc(idx);
-      });else if (Array.isArray(val)) return this.map(function (v, idx) {
-        return v + val[idx];
-      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
-        return v + val.get(idx);
-      });
+          return v + val;
+        });else if (val instanceof Series) return this.map(function (v, idx) {
+          return v + val.iloc(idx);
+        });else if (Array.isArray(val)) return this.map(function (v, idx) {
+          return v + val[idx];
+        });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
+          return v + val.get(idx);
+        });
 
       throw new Error('add only supports numbers, Arrays, Immutable List and pandas.Series');
     }
@@ -256,14 +256,14 @@ var Series = function (_NDFrame) {
     key: 'sub',
     value: function sub(val) {
       if (typeof val === 'number') return this.map(function (v) {
-        return v - val;
-      });else if (val instanceof Series) return this.map(function (v, idx) {
-        return v - val.iloc(idx);
-      });else if (Array.isArray(val)) return this.map(function (v, idx) {
-        return v - val[idx];
-      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
-        return v - val.get(idx);
-      });
+          return v - val;
+        });else if (val instanceof Series) return this.map(function (v, idx) {
+          return v - val.iloc(idx);
+        });else if (Array.isArray(val)) return this.map(function (v, idx) {
+          return v - val[idx];
+        });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
+          return v - val.get(idx);
+        });
 
       throw new Error('sub only supports numbers, Arrays, Immutable List and pandas.Series');
     }
@@ -271,14 +271,14 @@ var Series = function (_NDFrame) {
     key: 'mul',
     value: function mul(val) {
       if (typeof val === 'number') return this.map(function (v) {
-        return v * val;
-      });else if (val instanceof Series) return this.map(function (v, idx) {
-        return v * val.iloc(idx);
-      });else if (Array.isArray(val)) return this.map(function (v, idx) {
-        return v * val[idx];
-      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
-        return v * val.get(idx);
-      });
+          return v * val;
+        });else if (val instanceof Series) return this.map(function (v, idx) {
+          return v * val.iloc(idx);
+        });else if (Array.isArray(val)) return this.map(function (v, idx) {
+          return v * val[idx];
+        });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
+          return v * val.get(idx);
+        });
 
       throw new Error('mul only supports numbers, Arrays, Immutable List and pandas.Series');
     }
@@ -291,14 +291,14 @@ var Series = function (_NDFrame) {
     key: 'div',
     value: function div(val) {
       if (typeof val === 'number') return this.map(function (v) {
-        return v / val;
-      });else if (val instanceof Series) return this.map(function (v, idx) {
-        return v / val.iloc(idx);
-      });else if (Array.isArray(val)) return this.map(function (v, idx) {
-        return v / val[idx];
-      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
-        return v / val.get(idx);
-      });
+          return v / val;
+        });else if (val instanceof Series) return this.map(function (v, idx) {
+          return v / val.iloc(idx);
+        });else if (Array.isArray(val)) return this.map(function (v, idx) {
+          return v / val[idx];
+        });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
+          return v / val.get(idx);
+        });
 
       throw new Error('div only supports numbers, Arrays, Immutable List and pandas.Series');
     }
@@ -570,25 +570,31 @@ var Series = function (_NDFrame) {
       return new Series(valueIndexMap.values, { name: this.name, index: valueIndexMap.index });
     }
   }, {
-    key: 'cumulativeHelper',
-    value: function cumulativeHelper() {
-      var operation = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'sum';
+    key: '_cumulativeHelper',
+    value: function _cumulativeHelper() {
+      var operation = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _utils.OP_CUMSUM;
 
-      var agg = 0;
-      switch (operation) {
-        case 'sum':
-          agg = 0;
-          return new Series(this.values.map(function (v) {
-            agg += v;return agg;
-          }), this.kwargs);
-        default:
-          throw new Error('invalid operation');
-      }
+      return new Series((0, _utils.generateCumulativeFunc)(operation)(this.values), this.kwargs);
     }
   }, {
     key: 'cumsum',
     value: function cumsum() {
-      return this.cumulativeHelper('sum');
+      return this._cumulativeHelper(_utils.OP_CUMSUM);
+    }
+  }, {
+    key: 'cummul',
+    value: function cummul() {
+      return this._cumulativeHelper(_utils.OP_CUMMUL);
+    }
+  }, {
+    key: 'cummax',
+    value: function cummax() {
+      return this._cumulativeHelper(_utils.OP_CUMMAX);
+    }
+  }, {
+    key: 'cummin',
+    value: function cummin() {
+      return this._cumulativeHelper(_utils.OP_CUMMIN);
     }
   }, {
     key: 'to_json',

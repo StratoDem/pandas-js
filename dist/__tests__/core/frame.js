@@ -912,8 +912,68 @@ describe('frame', function () {
       var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
       var df2 = df.cumsum(1);
       expect(df2).toBeInstanceOf(_frame2.default);
-      expect(df2.get('x').values.toArray()).toEqual([1, 3, 6]);
+      expect(df2.get('x').values.toArray()).toEqual([1, 2, 3]);
       expect(df2.get('y').values.toArray()).toEqual([3, 5, 7]);
+      expect(df2.index.toArray()).toEqual([1, 2, 3]);
+    });
+  });
+
+  describe('cummul', function () {
+    it('multiplies along axis 0', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
+      var df2 = df.cummul();
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([1, 2, 6]);
+      expect(df2.get('y').values.toArray()).toEqual([2, 6, 24]);
+      expect(df2.index.toArray()).toEqual([1, 2, 3]);
+    });
+
+    it('multiplies along axis 1', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
+      var df2 = df.cummul(1);
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([1, 2, 3]);
+      expect(df2.get('y').values.toArray()).toEqual([2, 6, 12]);
+      expect(df2.index.toArray()).toEqual([1, 2, 3]);
+    });
+  });
+
+  describe('cummin', function () {
+    it('Cumulative minimum along axis 0', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
+      var df2 = df.cummin();
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([1, 1, 1]);
+      expect(df2.get('y').values.toArray()).toEqual([2, 2, 2]);
+      expect(df2.index.toArray()).toEqual([1, 2, 3]);
+    });
+
+    it('Cumulative minimum along axis 1', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
+      var df2 = df.cummin(1);
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([1, 2, 3]);
+      expect(df2.get('y').values.toArray()).toEqual([1, 2, 3]);
+      expect(df2.index.toArray()).toEqual([1, 2, 3]);
+    });
+  });
+
+  describe('cummax', function () {
+    it('Cumulative maximum along axis 0', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
+      var df2 = df.cummax();
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([1, 2, 3]);
+      expect(df2.get('y').values.toArray()).toEqual([2, 3, 4]);
+      expect(df2.index.toArray()).toEqual([1, 2, 3]);
+    });
+
+    it('Cumulative maximum along axis 1', function () {
+      var df = new _frame2.default([{ x: 2, y: 1 }, { x: 2, y: 3 }, { x: 7, y: 4 }], { index: [1, 2, 3] });
+      var df2 = df.cummax(1);
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([2, 2, 7]);
+      expect(df2.get('y').values.toArray()).toEqual([2, 3, 7]);
       expect(df2.index.toArray()).toEqual([1, 2, 3]);
     });
   });

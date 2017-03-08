@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.round10 = exports.parseIndex = exports.intersectingColumns = exports.nonMergeColumns = exports.sum = undefined;
+exports.generateCumulativeFunc = exports.OP_CUMMIN = exports.OP_CUMMAX = exports.OP_CUMMUL = exports.OP_CUMSUM = exports.round10 = exports.parseIndex = exports.intersectingColumns = exports.nonMergeColumns = exports.sum = undefined;
 
 var _regenerator = require('babel-runtime/regenerator');
 
@@ -157,4 +157,42 @@ var decimalAdjust = function decimalAdjust(type, value, exp) {
 
 var round10 = exports.round10 = function round10(value, exp) {
   return decimalAdjust('round', value, exp);
+};
+
+var OP_CUMSUM = exports.OP_CUMSUM = 'OP_CUMSUM';
+var OP_CUMMUL = exports.OP_CUMMUL = 'OP_CUMMUL';
+var OP_CUMMAX = exports.OP_CUMMAX = 'OP_CUMMAX';
+var OP_CUMMIN = exports.OP_CUMMIN = 'OP_CUMMIN';
+
+var generateCumulativeFunc = exports.generateCumulativeFunc = function generateCumulativeFunc(operation) {
+  switch (operation) {
+    case OP_CUMSUM:
+      return function (values) {
+        var agg = 0;return values.map(function (v) {
+          agg += v;return agg;
+        });
+      };
+    case OP_CUMMUL:
+      return function (values) {
+        var agg = 1;return values.map(function (v) {
+          agg *= v;return agg;
+        });
+      };
+    case OP_CUMMAX:
+      return function (values) {
+        var maxVal = Number.NEGATIVE_INFINITY;
+        return values.map(function (v) {
+          maxVal = Math.max(maxVal, v);return maxVal;
+        });
+      };
+    case OP_CUMMIN:
+      return function (values) {
+        var minVal = Number.POSITIVE_INFINITY;
+        return values.map(function (v) {
+          minVal = Math.min(minVal, v);return minVal;
+        });
+      };
+    default:
+      throw new Error('Not implemented for ' + operation);
+  }
 };
