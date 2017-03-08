@@ -6,7 +6,7 @@
 import Immutable from 'immutable';
 
 import NDFrame from './generic';
-import {enumerate, sum, parseIndex, round10} from './utils';
+import {enumerate, sum, parseIndex, round10, OP_CUMSUM, generateCumulativeFunc} from './utils';
 import {DType, arrayToDType} from './dtype';
 
 
@@ -185,7 +185,7 @@ export default class Series extends NDFrame {
   get kwargs() {
     return {
       name: this.name,
-      index: this._index,
+      index: this.index,
     };
   }
 
@@ -1157,6 +1157,27 @@ export default class Series extends NDFrame {
     }
 
     return new Series(valueIndexMap.values, {name: this.name, index: valueIndexMap.index});
+  }
+
+  _cumulativeHelper(operation = OP_CUMSUM) {
+    return new Series(generateCumulativeFunc(operation)(this.values), this.kwargs);
+  }
+
+  /**
+   * Return cumulative sum over requested axis
+   *
+   * pandas equivalent: [Series.cumsum](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.cumsum.html)
+   *
+   * @returns {Series}
+   *
+   * @example
+   * const ds = new Series([1, 2, 3], {index: [2, 3, 4]});
+   *
+   * // Returns Series([1, 3, 6], {index: [2, 3, 4]});
+   * ds.cumsum();
+   */
+  cumsum() {
+    return this._cumulativeHelper(OP_CUMSUM);
   }
 
   /**

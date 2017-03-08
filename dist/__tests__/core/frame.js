@@ -897,4 +897,24 @@ describe('frame', function () {
       expect(df2.index.toArray()).toEqual([1, 2]);
     });
   });
+
+  describe('cumsum', function () {
+    it('sums along axis 0', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
+      var df2 = df.cumsum();
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([1, 3, 6]);
+      expect(df2.get('y').values.toArray()).toEqual([2, 5, 9]);
+      expect(df2.index.toArray()).toEqual([1, 2, 3]);
+    });
+
+    it('sums along axis 1', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
+      var df2 = df.cumsum(1);
+      expect(df2).toBeInstanceOf(_frame2.default);
+      expect(df2.get('x').values.toArray()).toEqual([1, 3, 6]);
+      expect(df2.get('y').values.toArray()).toEqual([3, 5, 7]);
+      expect(df2.index.toArray()).toEqual([1, 2, 3]);
+    });
+  });
 });

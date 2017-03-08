@@ -588,5 +588,13 @@ describe('series', () => {
         expect(dsJSON).toEqual({name: 'x', index: [0, 1, 2, 3], values: [1, 2, 3, 4]});
       });
     });
+
+    describe('cumsum', () => {
+      const ds = new Series([1, 2, 3, 4, 5], {index: [2, 3, 4, 5, 6]});
+      const ds2 = ds.cumsum();
+      expect(ds2).toBeInstanceOf(Series);
+      expect(ds2.values.toArray()).toEqual([1, 3, 6, 10, 15]);
+      expect(ds2.index.toArray()).toEqual([2, 3, 4, 5, 6]);
+    });
   });
 });

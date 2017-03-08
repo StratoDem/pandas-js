@@ -92,6 +92,8 @@ var DataFrame = function (_NDFrame) {
     var kwargs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     (0, _classCallCheck3.default)(this, DataFrame);
 
+    console.log(typeof data === 'undefined' ? 'undefined' : (0, _typeof3.default)(data));
+
     var _this = (0, _possibleConstructorReturn3.default)(this, (DataFrame.__proto__ || Object.getPrototypeOf(DataFrame)).call(this, data, kwargs));
 
     if (Array.isArray(data)) {
@@ -100,12 +102,15 @@ var DataFrame = function (_NDFrame) {
       _this.set_axis(1, _this._data.keySeq());
     } else if (data instanceof _immutable2.default.Map) {
       _this._data = _immutable2.default.OrderedMap(data.keySeq().map(function (k) {
-        if (!(data.get(k) instanceof _series2.default)) throw new Error('Map must have [column, series] key-value pairs');
+        if (data instanceof _immutable2.default.Map && !(data.get(k) instanceof _series2.default)) throw new Error('Map must have [column, series] key-value pairs');
 
-        return [k, data.get(k).copy()];
+        if (data instanceof _immutable2.default.Map) return [k, data.get(k).copy()];
+        throw new Error('Data is not Map');
       }));
       _this.set_axis(1, _this._data.keySeq());
       _this.set_axis(0, _this._data.get(_this.columns.get(0)).index);
+    } else if (data instanceof _immutable2.default.List) {
+      throw new TypeError('Invalid type');
     } else if (typeof data === 'undefined') {
       _this._data = _immutable2.default.Map({});
       _this.set_axis(0, _immutable2.default.List.of());
@@ -223,6 +228,7 @@ var DataFrame = function (_NDFrame) {
 
           return new DataFrame(_immutable2.default.Map(_immutable2.default.Range(colIdx[0], colIdx[1]).map(function (idx) {
             var getCol = _this5.columns.get(idx);
+
             return [getCol, _this5.get(getCol).iloc(rowIdx, rowIdx + 1)];
           }).toArray()), { index: this.index.slice(rowIdx, rowIdx + 1) });
         } else if (typeof colIdx === 'undefined') {
@@ -245,6 +251,7 @@ var DataFrame = function (_NDFrame) {
 
           return new DataFrame(_immutable2.default.Map(_immutable2.default.Range(colIdx[0], colIdx[1]).map(function (idx) {
             var getCol = _this5.columns.get(idx);
+
             return [getCol, _this5.get(getCol).iloc(rowIdx[0], rowIdx[1])];
           }).toArray()), { index: this.index.slice(rowIdx[0], rowIdx[1]) });
         } else if (typeof colIdx === 'undefined') {
@@ -415,7 +422,7 @@ var DataFrame = function (_NDFrame) {
       var orient = 'columns';
 
       if (typeof kwargs.orient !== 'undefined') {
-        if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0) throw new TypeError('orient must be in ' + ALLOWED_ORIENT);
+        if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0) throw new TypeError('orient must be in ' + ALLOWED_ORIENT.toString());
         orient = kwargs.orient;
       }
 
@@ -454,7 +461,7 @@ var DataFrame = function (_NDFrame) {
           });
           return json;
         default:
-          throw new TypeError('orient must be in ' + ALLOWED_ORIENT);
+          throw new TypeError('orient must be in ' + ALLOWED_ORIENT.toString());
       }
     }
   }, {
@@ -689,6 +696,29 @@ var DataFrame = function (_NDFrame) {
       return new DataFrame(data, { index: sortedIndex });
     }
   }, {
+    key: '_cumulativeHelper',
+    value: function _cumulativeHelper() {
+      var _this16 = this;
+
+      var operation = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'sum';
+      var axis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+      if (axis === 0) {
+        return new DataFrame(_immutable2.default.Map(this.columns.map(function (c) {
+          return [c, _this16.get(c).cumulativeHelper(operation)];
+        })), this.kwargs);
+      } else if (axis === 1) {
+        throw new Error('Not supported');
+      } else throw new Error('invalid axis');
+    }
+  }, {
+    key: 'cumsum',
+    value: function cumsum() {
+      var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      return this._cumulativeHelper('sum', axis);
+    }
+  }, {
     key: 'kwargs',
     get: function get() {
       return { index: this.index };
@@ -696,15 +726,15 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'values',
     get: function get() {
-      var _this16 = this;
+      var _this17 = this;
 
       if (this._values instanceof _immutable2.default.List) return (0, _get3.default)(DataFrame.prototype.__proto__ || Object.getPrototypeOf(DataFrame.prototype), 'values', this);
 
       var valuesList = _immutable2.default.List([]);
 
       var _loop = function _loop(idx) {
-        valuesList = valuesList.concat([_immutable2.default.List(_this16.columns.map(function (k) {
-          return _this16._data.get(k).iloc(idx);
+        valuesList = valuesList.concat([_immutable2.default.List(_this17.columns.map(function (k) {
+          return _this17._data.get(k).iloc(idx);
         }))]);
       };
 
@@ -721,14 +751,14 @@ var DataFrame = function (_NDFrame) {
       return this._get_axis(1);
     },
     set: function set(columns) {
-      var _this17 = this;
+      var _this18 = this;
 
       if (!Array.isArray(columns) || columns.length !== this.columns.size) throw new Error('Columns must be array of same dimension');
 
       var nextData = {};
       columns.forEach(function (k, idx) {
-        var prevColumn = _this17.columns.get(idx);
-        var prevSeries = _this17.get(prevColumn);
+        var prevColumn = _this18.columns.get(idx);
+        var prevSeries = _this18.get(prevColumn);
 
         prevSeries.name = k;
         nextData[k] = prevSeries;
@@ -743,7 +773,7 @@ var DataFrame = function (_NDFrame) {
       return this._get_axis(0);
     },
     set: function set(index) {
-      var _this18 = this;
+      var _this19 = this;
 
       this.set_axis(0, (0, _utils.parseIndex)(index, this._data.get(this.columns.get(0)).values));
 
@@ -752,16 +782,16 @@ var DataFrame = function (_NDFrame) {
             k = _ref10[0],
             v = _ref10[1];
 
-        v.index = _this18.index;
+        v.index = _this19.index;
       });
     }
   }, {
     key: 'length',
     get: function get() {
-      var _this19 = this;
+      var _this20 = this;
 
       return Math.max.apply(Math, (0, _toConsumableArray3.default)(this._data.keySeq().map(function (k) {
-        return _this19.get(k).length;
+        return _this20.get(k).length;
       }).toArray()));
     }
   }]);

@@ -1285,6 +1285,33 @@ var Series = function (_NDFrame) {
 
       return new Series(valueIndexMap.values, { name: this.name, index: valueIndexMap.index });
     }
+  }, {
+    key: '_cumulativeHelper',
+    value: function _cumulativeHelper() {
+      var operation = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _utils.OP_CUMSUM;
+
+      return new Series((0, _utils.generateCumulativeFunc)(operation)(this.values), this.kwargs);
+    }
+
+    /**
+     * Return cumulative sum over requested axis
+     *
+     * pandas equivalent: [Series.cumsum](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.cumsum.html)
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {index: [2, 3, 4]});
+     *
+     * // Returns Series([1, 3, 6], {index: [2, 3, 4]});
+     * ds.cumsum();
+     */
+
+  }, {
+    key: 'cumsum',
+    value: function cumsum() {
+      return this._cumulativeHelper(_utils.OP_CUMSUM);
+    }
 
     /**
      * Convert the Series to a json object
@@ -1345,7 +1372,7 @@ var Series = function (_NDFrame) {
     get: function get() {
       return {
         name: this.name,
-        index: this._index
+        index: this.index
       };
     }
 
@@ -1447,3 +1474,5 @@ var Series = function (_NDFrame) {
 }(_generic2.default);
 
 exports.default = Series;
+
+//# sourceMappingURL=series.js.map

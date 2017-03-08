@@ -1,7 +1,9 @@
+// @flow
 /**
  * DataFrame object
  */
 
+// $FlowIssue
 import Immutable from 'immutable';
 // import { saveAs } from 'file-saver'; TODO figure out if best way
 
@@ -9,10 +11,17 @@ import { InvalidAxisError } from './exceptions';
 import NDFrame from './generic';
 import Series from './series';
 // import { Workbook, Sheet } from './structs'; TODO
-import { enumerate, nonMergeColumns, intersectingColumns, parseIndex } from './utils';
+import { enumerate, nonMergeColumns, intersectingColumns, parseIndex,
+  OP_CUMSUM, OP_CUMMUL, OP_CUMMIN, OP_CUMMAX, generateCumulativeFunc } from './utils';
 
 
-const parseArrayToSeriesMap = (array, index) => {
+declare type T_LIST = Immutable.List
+declare type T_MAP = Immutable.Map;
+declare type T_SK = string|number;
+declare type T_COTHER = Array<T_SK>|T_LIST|Series|DataFrame|T_SK;
+
+
+const parseArrayToSeriesMap = (array: Array<Object>, index: T_LIST): T_MAP => {
   let dataMap = Immutable.Map({});
 
   array.forEach((el) => {
@@ -65,7 +74,7 @@ export default class DataFrame extends NDFrame {
    * // 2  3  |  4
    * df.toString();
    */
-  constructor(data, kwargs = {}) {
+  constructor(data: Array<Object>|Object, kwargs: Object = {}) {
     super(data, kwargs);
 
     if (Array.isArray(data)) {
@@ -74,11 +83,29 @@ export default class DataFrame extends NDFrame {
       this.set_axis(1, this._data.keySeq());
     } else if (data instanceof Immutable.Map) {
       this._data = Immutable.OrderedMap(data.keySeq().map((k) => {
-        if (!(data.get(k) instanceof Series))
+        if (data instanceof Immutable.Map && !(data.get(k) instanceof Series))
           throw new Error('Map must have [column, series] key-value pairs');
-
-        return [k, data.get(k).copy()];
+        
+        if (data instanceof Immutable.Map) return [k, data.get(k).copy()];
+        throw new Error('Data is not Map');
       }));
+      this.set_axis(1, this._data.keySeq());
+      this.set_axis(0, this._data.get(this.columns.get(0)).index);
+    } else if (data instanceof Immutable.List) {  // List of List of row values
+      let columns;
+      if (Array.isArray(kwargs.columns) || kwargs.columns instanceof Immutable.Seq)
+        columns = Immutable.List(kwargs.columns);
+      else if (kwargs.columns instanceof Immutable.List)
+        columns = kwargs.columns;
+      else if (typeof kwargs.columns === 'undefined')
+        columns = Immutable.Range(0, data.get(0).size).toList();
+      else
+        throw new Error('Invalid columns');
+
+      this._values = data;  // Cache the values since we're in List of List or row data already
+      this._data = Immutable.OrderedMap(columns.map((c, colIdx) =>
+        ([c, new Series(data.map(row => row.get(colIdx)), {index: kwargs.index})])));
+
       this.set_axis(1, this._data.keySeq());
       this.set_axis(0, this._data.get(this.columns.get(0)).index);
     } else if (typeof data === 'undefined') {
@@ -90,7 +117,7 @@ export default class DataFrame extends NDFrame {
     this._setup_axes(Immutable.List.of(0, 1));
   }
 
-  toString() {
+  toString(): string {
     let string = '\t|';
     this.columns.forEach((k) => { string += `  ${k}  |`; });
     const headerRow = '-'.repeat(string.length);
@@ -126,10 +153,11 @@ export default class DataFrame extends NDFrame {
    * df.index   // [0, 1, 2];
    * df2.index  // [1, 2, 3];
    */
-  copy() {
+  copy(): DataFrame {
     return new DataFrame(this._data, {index: this.index});
   }
 
+  // $FlowIssue
   [Symbol.iterator]() {
     let index = -1;
 
@@ -164,8 +192,8 @@ export default class DataFrame extends NDFrame {
     return enumerate(this);
   }
 
-  get kwargs() {
-    return {index: this.index};
+  get kwargs(): Object {
+    return {index: this.index, columns: this.columns};
   }
 
   /**
@@ -181,7 +209,7 @@ export default class DataFrame extends NDFrame {
    * // Returns List [ List[1, 2, 3], List[2, 3, 4]]
    * df.values;
    */
-  get values() {
+  get values(): T_LIST {
     if (this._values instanceof Immutable.List)
       return super.values;
 
@@ -208,7 +236,7 @@ export default class DataFrame extends NDFrame {
    * // Returns Seq ['x', 'y']
    * df.columns;
    */
-  get columns() {
+  get columns(): Immutable.Seq {
     return this._get_axis(1);
   }
 
@@ -228,7 +256,7 @@ export default class DataFrame extends NDFrame {
    * // Returns Seq ['a', 'b']
    * df.columns;
    */
-  set columns(columns) {
+  set columns(columns: Immutable.Seq|Array<T_SK>) {
     if (!Array.isArray(columns) || columns.length !== this.columns.size)
       throw new Error('Columns must be array of same dimension');
 
@@ -256,7 +284,7 @@ export default class DataFrame extends NDFrame {
    * // Returns List [0, 1, 2, 3]
    * df.index;
    */
-  get index() {
+  get index(): T_LIST {
     return this._get_axis(0);
   }
 
@@ -276,7 +304,7 @@ export default class DataFrame extends NDFrame {
    * // Returns List [2, 3, 4, 5]
    * df.index;
    */
-  set index(index) {
+  set index(index: T_LIST|Array<T_SK>) {
     this.set_axis(0, parseIndex(index, this._data.get(this.columns.get(0)).values));
 
     // noinspection Eslint
@@ -298,7 +326,7 @@ export default class DataFrame extends NDFrame {
    * // Returns 3
    * df.length;
    */
-  get length() {
+  get length(): number {
     return Math.max(...this._data.keySeq().map(k => this.get(k).length).toArray());
   }
 
@@ -315,7 +343,7 @@ export default class DataFrame extends NDFrame {
    * // Returns DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
    * df.set('y', new Series([2, 3, 4]));
    */
-  set(column, series) {
+  set(column: T_SK, series: Series|T_LIST|Array<T_SK>): DataFrame {
     if (series instanceof Series)
       return new DataFrame(this._data.set(column, series), this.kwargs);
     else if (series instanceof Immutable.List || Array.isArray(series))
@@ -349,7 +377,7 @@ export default class DataFrame extends NDFrame {
    * // returns DataFrame([{level_0: 1, index: 1}, {level_0: 1, index: 2}], {index: [1, 2]});
    * df2.reset_index();
    */
-  reset_index(args = {drop: false}) {
+  reset_index(args: Object = {drop: false}): DataFrame {
     if (typeof args.drop !== 'undefined' && typeof args.drop !== 'boolean')
       throw new TypeError('drop must be a boolean');
     const drop = typeof args.drop === 'undefined' ? false : args.drop;
@@ -397,7 +425,7 @@ export default class DataFrame extends NDFrame {
    * // Returns DataFrame([{y: 2}, {y: 3}, {y: 4}], {index: [0, 1, 2]})
    * df.iloc(1);
    */
-  iloc(rowIdx, colIdx) {
+  iloc(rowIdx: number|[number, number], colIdx?: number|[number, number]): any {
     if (typeof rowIdx === 'number') {
       if (typeof colIdx === 'number') {
         if (colIdx < 0 || colIdx >= this.shape[1])
@@ -419,12 +447,14 @@ export default class DataFrame extends NDFrame {
           Immutable.Map(
             Immutable.Range(colIdx[0], colIdx[1]).map((idx) => {
               const getCol = this.columns.get(idx);
+              // $FlowIssue TODO
               return [getCol, this.get(getCol).iloc(rowIdx, rowIdx + 1)];
             }).toArray()),
           {index: this.index.slice(rowIdx, rowIdx + 1)});
       } else if (typeof colIdx === 'undefined') {
         return new DataFrame(
           Immutable.Map(this.columns.map(c =>
+            // $FlowIssue TODO
             ([c, this.get(c).iloc(rowIdx, rowIdx + 1)])).toArray()),
           {index: this.index.slice(rowIdx, rowIdx + 1)});
       }
@@ -451,12 +481,14 @@ export default class DataFrame extends NDFrame {
           Immutable.Map(
             Immutable.Range(colIdx[0], colIdx[1]).map((idx) => {
               const getCol = this.columns.get(idx);
+              // $FlowIssue TODO
               return [getCol, this.get(getCol).iloc(rowIdx[0], rowIdx[1])];
             }).toArray()),
           {index: this.index.slice(rowIdx[0], rowIdx[1])});
       } else if (typeof colIdx === 'undefined') {
         return new DataFrame(
           Immutable.Map(this.columns.map(c =>
+            // $FlowIssue TODO
             ([c, this.get(c).iloc(rowIdx[0], rowIdx[1])])).toArray()),
           {index: this.index.slice(rowIdx[0], rowIdx[1])});
       }
@@ -482,7 +514,7 @@ export default class DataFrame extends NDFrame {
    * // returns DataFrame([{x: 1, y: 2}, {x: 2, y: 3}])
    * df.head(2);
    */
-  head(n = 10) {
+  head(n: number = 10): DataFrame {
     return this.iloc([0, n]);
   }
 
@@ -501,11 +533,11 @@ export default class DataFrame extends NDFrame {
    * // returns DataFrame([{x: 3, y: 4}, {x: 4, y: 5}])
    * df.tail(2);
    */
-  tail(n = 10) {
+  tail(n: number = 10): DataFrame {
     return this.iloc([this.length - n, this.length]);
   }
 
-  columnExists(col) {
+  columnExists(col: T_SK): boolean {
     return this.columns.indexOf(col) >= 0;
   }
 
@@ -528,7 +560,7 @@ export default class DataFrame extends NDFrame {
    * // Returns DataFrame([{y: 2}, {y: 3}, {y: 4}])
    * df.get(['y']);
    */
-  get(columns) {
+  get(columns: T_SK|Array<T_SK>): Series|DataFrame {
     if ((typeof columns === 'string' || typeof columns === 'number') && this.columnExists(columns))
       return this._data.get(columns);
     else if (Array.isArray(columns) || columns instanceof Immutable.List
@@ -566,7 +598,7 @@ export default class DataFrame extends NDFrame {
    *    b: new Series([3, 3])})),
    *    (a, b) => a === b);
    */
-  where(other, op) {
+  where(other: T_COTHER, op: (a: any, b: any) => boolean): DataFrame {
     if (!(Array.isArray(other))
       && !(other instanceof Immutable.List)
       && !(other instanceof Series)
@@ -589,6 +621,7 @@ export default class DataFrame extends NDFrame {
         throw new Error('DataFrame must have the same shape');
       // noinspection Eslint
       return new DataFrame(Immutable.Map(this._data.mapEntries(([k, v], idx) => {
+        // $FlowIssue TODO
         return [k, v.where(other.get(other.columns.get(idx)), op)];
       })));
     }
@@ -617,7 +650,7 @@ export default class DataFrame extends NDFrame {
    *    a: new Series([1, 1]),
    *    b: new Series([1, 2])})));
    */
-  eq(other) {
+  eq(other: T_COTHER): DataFrame {
     return this.where(other, (a, b) => a === b);
   }
 
@@ -642,7 +675,7 @@ export default class DataFrame extends NDFrame {
    *    a: new Series([1, 1]),
    *    b: new Series([1, 2])})));
    */
-  gt(other) {
+  gt(other: T_COTHER): DataFrame {
     return this.where(other, (a, b) => a > b);
   }
 
@@ -667,7 +700,7 @@ export default class DataFrame extends NDFrame {
    *    a: new Series([1, 1]),
    *    b: new Series([1, 2])})));
    */
-  gte(other) {
+  gte(other: T_COTHER): DataFrame {
     return this.where(other, (a, b) => a >= b);
   }
 
@@ -692,7 +725,7 @@ export default class DataFrame extends NDFrame {
    *    a: new Series([1, 1]),
    *    b: new Series([1, 2])})));
    */
-  lt(other) {
+  lt(other: T_COTHER): DataFrame {
     return this.where(other, (a, b) => a < b);
   }
 
@@ -717,7 +750,7 @@ export default class DataFrame extends NDFrame {
    *    a: new Series([1, 1]),
    *    b: new Series([1, 2])})));
    */
-  lte(other) {
+  lte(other: T_COTHER): DataFrame {
     return this.where(other, (a, b) => a <= b);
   }
 
@@ -746,7 +779,7 @@ export default class DataFrame extends NDFrame {
    * // 2  3  |  4  |  5
    * df.merge(df2, ['x'], 'inner');
    */
-  merge(df, on, how = 'inner') {
+  merge(df: DataFrame, on: Array<string|number>, how: string = 'inner'): DataFrame {
     return mergeDataFrame(this, df, on, how);
   }
 
@@ -763,7 +796,7 @@ export default class DataFrame extends NDFrame {
    * // Returns x,y,\r\n1,2,\r\n2,3\r\n3,4\r\n
    * df.to_csv();
    */
-  to_csv() {
+  to_csv(): string {
     let csvString = '';
     this.columns.forEach((k) => {
       csvString += `${k},`;
@@ -798,7 +831,8 @@ export default class DataFrame extends NDFrame {
    * @return {Workbook}
    *
    */
-  to_excel(excel_writer, sheetName = 'Sheet1', download = false, kwargs = {index: true}) {
+  to_excel(excel_writer: string, sheetName: string = 'Sheet1',
+           download:bool = false, kwargs: Object = {index: true}) {
     throw new Error('to_excel not yet implemented');
     // let wb;
     //
@@ -867,13 +901,13 @@ export default class DataFrame extends NDFrame {
    * // Returns [[1, 2], [2, 3], [3, 4]]
    * df.to_json({orient: 'values'});
    */
-  to_json(kwargs = {orient: 'columns'}) {
+  to_json(kwargs: Object = {orient: 'columns'}): Object {
     const ALLOWED_ORIENT = ['records', 'split', 'index', 'values', 'columns'];
     let orient = 'columns';
 
     if (typeof kwargs.orient !== 'undefined') {
       if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0)
-        throw new TypeError(`orient must be in ${ALLOWED_ORIENT}`);
+        throw new TypeError(`orient must be in ${ALLOWED_ORIENT.toString()}`);
       orient = kwargs.orient;
     }
 
@@ -908,7 +942,7 @@ export default class DataFrame extends NDFrame {
         });
         return json;
       default:
-        throw new TypeError(`orient must be in ${ALLOWED_ORIENT}`);
+        throw new TypeError(`orient must be in ${ALLOWED_ORIENT.toString()}`);
     }
   }
 
@@ -941,7 +975,7 @@ export default class DataFrame extends NDFrame {
    * // Name: , dtype: dtype('int')
    * df.sum(1).toString();
    */
-  sum(axis = 0) {
+  sum(axis: number = 0): DataFrame {
     if (axis === 0) {
       return new Series(
         this.columns.toArray().map(k => this.get(k).sum()),
@@ -985,7 +1019,7 @@ export default class DataFrame extends NDFrame {
    * // Name: , dtype: dtype('float')
    * df.mean(1).toString();
    */
-  mean(axis = 0) {
+  mean(axis: number = 0): DataFrame {
     if (axis === 0) {
       return new Series(
         this.columns.toArray().map(k => this.get(k).mean()),
@@ -1030,7 +1064,7 @@ export default class DataFrame extends NDFrame {
    * // Name: , dtype: dtype('int')
    * df.std(1).toString();
    */
-  std(axis = 0) {
+  std(axis: number = 0): DataFrame {
     if (axis === 0) {
       return new Series(
         this.columns.toArray().map(k => this.get(k).std()),
@@ -1071,7 +1105,7 @@ export default class DataFrame extends NDFrame {
    * // Name: , dtype: dtype('int')
    * df.std(1).toString();
    */
-  variance(axis = 0) {
+  variance(axis: number = 0): DataFrame {
     if (axis === 0) {
       return new Series(
         this.columns.toArray().map(k => this.get(k).variance()),
@@ -1090,7 +1124,7 @@ export default class DataFrame extends NDFrame {
     throw new InvalidAxisError();
   }
 
-  _pairwiseDataFrame(func) {
+  _pairwiseDataFrame(func: (Series, Series) => Series): DataFrame {
     // Apply the func between all Series in the DataFrame, takes two series and returns a value
     const valArray = [];
 
@@ -1131,7 +1165,7 @@ export default class DataFrame extends NDFrame {
    * // Returns DataFrame([{x: 1, y: -1, z: 2}, {x: -1, y: 1, z: -2}, {x: 2, y: -2, z: 4}])
    * df.cov();
    */
-  cov() {
+  cov(): DataFrame {
     return this._pairwiseDataFrame((ds1, ds2) => ds1.cov(ds2));
   }
 
@@ -1148,7 +1182,7 @@ export default class DataFrame extends NDFrame {
    * // Returns DataFrame([{x: 1, y: -1, z: 1}, {x: -1, y: 1, z: -1}, {x: 1, y: -1, z: 1}])
    * df.corr();
    */
-  corr() {
+  corr(): DataFrame {
     // noinspection Eslint
     const corrFunc = (ds1, ds2) => {
       return ds1.values === ds2.values ? 1 : ds1.corr(ds2);
@@ -1178,7 +1212,7 @@ export default class DataFrame extends NDFrame {
    * // 2  1  |  1
    * df.diff().toString();
    */
-  diff(periods = 1, axis = 0) {
+  diff(periods: number = 1, axis: number = 0): DataFrame {
     if (typeof periods !== 'number' || !Number.isInteger(periods))
       throw new Error('periods must be an integer');
     if (periods <= 0)
@@ -1224,7 +1258,7 @@ export default class DataFrame extends NDFrame {
    * // 2  0.5  |  0.3333
    * df.pct_change().toString();
    */
-  pct_change(periods = 1, axis = 0) {
+  pct_change(periods: number = 1, axis: number = 0): DataFrame {
     if (typeof periods !== 'number' || !Number.isInteger(periods))
       throw new Error('periods must be an integer');
     if (periods <= 0)
@@ -1270,7 +1304,7 @@ export default class DataFrame extends NDFrame {
    * // Returns DataFrame(Immutable.Map({x: Series([2]), y: Series([3]));
    * df.filter(Immutable.Map([false, true]));
    */
-  filter(iterBool) {
+  filter(iterBool: Array<boolean>|Series|T_LIST): DataFrame {
     if (!Array.isArray(iterBool)
       && !(iterBool instanceof Immutable.List)
       && !(iterBool instanceof Series))
@@ -1304,11 +1338,11 @@ export default class DataFrame extends NDFrame {
    *
    * @returns {DataFrame}
    */
-  pivot(index, columns, values) {
+  pivot(index: T_SK, columns: T_SK, values: T_SK): DataFrame {
     let uniqueVals = Immutable.Map({});
     let uniqueCols = Immutable.List([]);
 
-    this.index.forEach((v, idx) => {
+    this.index.forEach((v: T_SK, idx: number) => {
       const idxVal = this.get(index).iloc(idx);
       const colVal = this.get(columns).iloc(idx);
 
@@ -1325,7 +1359,7 @@ export default class DataFrame extends NDFrame {
     const sortedColumns = uniqueCols.sort();
 
     const data = Immutable.OrderedMap(
-      sortedColumns.map((col) => {
+      sortedColumns.map((col: T_SK) => {
         return [col, new Series(sortedIndex.map((idx) => {
           const val = uniqueVals.getIn([idx, col]);
           return typeof val === 'undefined' ? null : val;
@@ -1334,9 +1368,101 @@ export default class DataFrame extends NDFrame {
 
     return new DataFrame(data, {index: sortedIndex});
   }
+
+  _cumulativeHelper(operation: string = OP_CUMSUM, axis: number = 0): DataFrame {
+    if (axis === 0) {
+      return new DataFrame(
+        Immutable.Map(this.columns.map(
+          c => ([c, this.get(c)._cumulativeHelper(operation)]))), this.kwargs)
+    } else if (axis === 1) {
+      return new DataFrame(
+        this.values.map(row => generateCumulativeFunc(operation)(row)),
+        this.kwargs);
+    } else throw new Error('invalid axis');
+  }
+
+  /**
+   * Return cumulative sum over requested axis
+   *
+   * pandas equivalent: [DataFrame.cumsum](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.cumsum.html)
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const ds = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [2, 3, 4]});
+   *
+   * // Returns DataFrame([{x: 1, y: 2}, {x: 3, y: 5}, {x: 6, y: 9}], {index: [2, 3, 4]});
+   * ds.cumsum();
+   *
+   * // Returns DataFrame([{x: 1, y: 3}, {x: 2, y: 5}, {x: 3, y: 7}], {index: [2, 3 ,4]});
+   * ds.cumsum(1);
+   */
+  cumsum(axis: number = 0): DataFrame {
+    return this._cumulativeHelper(OP_CUMSUM, axis);
+  }
+
+  /**
+   * Return cumulative multiple over requested axis
+   *
+   * pandas equivalent: [DataFrame.cummul](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.cummul.html)
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const ds = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [2, 3, 4]});
+   *
+   * // Returns DataFrame([{x: 1, y: 2}, {x: 2, y: 6}, {x: 6, y: 24}], {index: [2, 3, 4]});
+   * ds.cummul();
+   *
+   * // Returns DataFrame([{x: 1, y: 2}, {x: 2, y: 6}, {x: 3, y: 12}], {index: [2, 3 ,4]});
+   * ds.cummul(1);
+   */
+  cummul(axis: number = 0): DataFrame {
+    return this._cumulativeHelper(OP_CUMMUL, axis);
+  }
+
+  /**
+   * Return cumulative maximum over requested axis
+   *
+   * pandas equivalent: [DataFrame.cummax](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.cummax.html)
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const ds = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [2, 3, 4]});
+   *
+   * // Returns DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [2, 3, 4]});
+   * ds.cummax();
+   *
+   * // Returns DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [2, 3 ,4]});
+   * ds.cummax(1);
+   */
+  cummax(axis: number = 0): DataFrame {
+    return this._cumulativeHelper(OP_CUMMAX, axis);
+  }
+
+  /**
+   * Return cumulative minimum over requested axis
+   *
+   * pandas equivalent: [DataFrame.cummin](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.cummin.html)
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const ds = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [2, 3, 4]});
+   *
+   * // Returns DataFrame([{x: 1, y: 1}, {x: 1, y: 1}, {x: 1, y: 1}], {index: [2, 3, 4]});
+   * ds.cummin();
+   *
+   * // Returns DataFrame([{x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 3}], {index: [2, 3 ,4]});
+   * ds.cummin(1);
+   */
+  cummin(axis: number = 0): DataFrame {
+    return this._cumulativeHelper(OP_CUMMIN, axis);
+  }
 }
 
-const innerMerge = (df1, df2, on) => {
+const innerMerge = (df1: DataFrame, df2: DataFrame, on: Array<string|number>): DataFrame => {
   const data = [];
 
   const cols1 = nonMergeColumns(df1.columns, on);
@@ -1388,7 +1514,7 @@ const innerMerge = (df1, df2, on) => {
   return new DataFrame(data);
 };
 
-const outerMerge = (df1, df2, on) => {
+const outerMerge = (df1: DataFrame, df2: DataFrame, on: Array<string|number>): DataFrame => {
   const data = [];
 
   const cols1 = nonMergeColumns(df1.columns, on);
@@ -1487,7 +1613,8 @@ const outerMerge = (df1, df2, on) => {
   return new DataFrame(data);
 };
 
-export const mergeDataFrame = (df1, df2, on, how = 'inner') => {
+export const mergeDataFrame
+  = (df1: DataFrame, df2: DataFrame, on: Array<string|number>, how: string = 'inner'): DataFrame => {
   let mergeOn;
   if (typeof on === 'undefined') {
     mergeOn = df1.columns.filter(c1 => df2.columns.filter(c2 => c1 === c2).size > 0);

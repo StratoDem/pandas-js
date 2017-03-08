@@ -126,3 +126,39 @@ const decimalAdjust = (type, value, exp) => {
  * round10(1.65234123415, -2);
  */
 export const round10 = (value, exp) => decimalAdjust('round', value, exp);
+
+
+export const OP_CUMSUM = 'OP_CUMSUM';
+export const OP_CUMMUL = 'OP_CUMMUL';
+export const OP_CUMMAX = 'OP_CUMMAX';
+export const OP_CUMMIN = 'OP_CUMMIN';
+
+/**
+ * Generate a cumulative function which takes in an iterable `values`
+ * and returns the accumulated iterable
+ *
+ * @param {string} operation
+ *  Type of operation for which to generate the cumulative function (takes an iterable)
+ *
+ * @returns {function(*)}
+ */
+export const generateCumulativeFunc = (operation) => {
+  switch (operation) {
+    case OP_CUMSUM:
+      return (values) => { let agg = 0; return values.map((v) => { agg += v; return agg; }); };
+    case OP_CUMMUL:
+      return (values) => { let agg = 1; return values.map((v) => { agg *= v; return agg; }); };
+    case OP_CUMMAX:
+      return (values) => {
+        let maxVal = Number.NEGATIVE_INFINITY;
+        return values.map((v) => { maxVal = Math.max(maxVal, v); return maxVal; });
+      };
+    case OP_CUMMIN:
+      return (values) => {
+        let minVal = Number.POSITIVE_INFINITY;
+        return values.map((v) => { minVal = Math.min(minVal, v); return minVal; });
+      };
+    default:
+      throw new Error(`Not implemented for ${operation}`);
+  }
+};

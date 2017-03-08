@@ -87,9 +87,12 @@ var parseArrayToSeriesMap = function parseArrayToSeriesMap(array, index) {
   return _immutable2.default.Map(dataMap);
 };
 // import { Workbook, Sheet } from './structs'; TODO
+
 /**
  * DataFrame object
  */
+
+// $FlowIssue
 
 var DataFrame = function (_NDFrame) {
   (0, _inherits3.default)(DataFrame, _NDFrame);
@@ -128,10 +131,25 @@ var DataFrame = function (_NDFrame) {
       _this.set_axis(1, _this._data.keySeq());
     } else if (data instanceof _immutable2.default.Map) {
       _this._data = _immutable2.default.OrderedMap(data.keySeq().map(function (k) {
-        if (!(data.get(k) instanceof _series2.default)) throw new Error('Map must have [column, series] key-value pairs');
+        if (data instanceof _immutable2.default.Map && !(data.get(k) instanceof _series2.default)) throw new Error('Map must have [column, series] key-value pairs');
 
-        return [k, data.get(k).copy()];
+        if (data instanceof _immutable2.default.Map) return [k, data.get(k).copy()];
+        throw new Error('Data is not Map');
       }));
+      _this.set_axis(1, _this._data.keySeq());
+      _this.set_axis(0, _this._data.get(_this.columns.get(0)).index);
+    } else if (data instanceof _immutable2.default.List) {
+      // List of List of row values
+      var columns = void 0;
+      if (Array.isArray(kwargs.columns) || kwargs.columns instanceof _immutable2.default.Seq) columns = _immutable2.default.List(kwargs.columns);else if (kwargs.columns instanceof _immutable2.default.List) columns = kwargs.columns;else if (typeof kwargs.columns === 'undefined') columns = _immutable2.default.Range(0, data.get(0).size).toList();else throw new Error('Invalid columns');
+
+      _this._values = data; // Cache the values since we're in List of List or row data already
+      _this._data = _immutable2.default.OrderedMap(columns.map(function (c, colIdx) {
+        return [c, new _series2.default(data.map(function (row) {
+          return row.get(colIdx);
+        }), { index: kwargs.index })];
+      }));
+
       _this.set_axis(1, _this._data.keySeq());
       _this.set_axis(0, _this._data.get(_this.columns.get(0)).index);
     } else if (typeof data === 'undefined') {
@@ -194,6 +212,9 @@ var DataFrame = function (_NDFrame) {
     value: function copy() {
       return new DataFrame(this._data, { index: this.index });
     }
+
+    // $FlowIssue
+
   }, {
     key: Symbol.iterator,
     value: function value() {
@@ -355,11 +376,15 @@ var DataFrame = function (_NDFrame) {
 
           return new DataFrame(_immutable2.default.Map(_immutable2.default.Range(colIdx[0], colIdx[1]).map(function (idx) {
             var getCol = _this5.columns.get(idx);
+            // $FlowIssue TODO
             return [getCol, _this5.get(getCol).iloc(rowIdx, rowIdx + 1)];
           }).toArray()), { index: this.index.slice(rowIdx, rowIdx + 1) });
         } else if (typeof colIdx === 'undefined') {
           return new DataFrame(_immutable2.default.Map(this.columns.map(function (c) {
-            return [c, _this5.get(c).iloc(rowIdx, rowIdx + 1)];
+            return (
+              // $FlowIssue TODO
+              [c, _this5.get(c).iloc(rowIdx, rowIdx + 1)]
+            );
           }).toArray()), { index: this.index.slice(rowIdx, rowIdx + 1) });
         }
 
@@ -377,11 +402,15 @@ var DataFrame = function (_NDFrame) {
 
           return new DataFrame(_immutable2.default.Map(_immutable2.default.Range(colIdx[0], colIdx[1]).map(function (idx) {
             var getCol = _this5.columns.get(idx);
+            // $FlowIssue TODO
             return [getCol, _this5.get(getCol).iloc(rowIdx[0], rowIdx[1])];
           }).toArray()), { index: this.index.slice(rowIdx[0], rowIdx[1]) });
         } else if (typeof colIdx === 'undefined') {
           return new DataFrame(_immutable2.default.Map(this.columns.map(function (c) {
-            return [c, _this5.get(c).iloc(rowIdx[0], rowIdx[1])];
+            return (
+              // $FlowIssue TODO
+              [c, _this5.get(c).iloc(rowIdx[0], rowIdx[1])]
+            );
           }).toArray()), { index: this.index.slice(rowIdx[0], rowIdx[1]) });
         }
 
@@ -537,6 +566,7 @@ var DataFrame = function (_NDFrame) {
               k = _ref6[0],
               v = _ref6[1];
 
+          // $FlowIssue TODO
           return [k, v.where(other.get(other.columns.get(idx)), op)];
         })));
       }
@@ -871,7 +901,7 @@ var DataFrame = function (_NDFrame) {
       var orient = 'columns';
 
       if (typeof kwargs.orient !== 'undefined') {
-        if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0) throw new TypeError('orient must be in ' + ALLOWED_ORIENT);
+        if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0) throw new TypeError('orient must be in ' + ALLOWED_ORIENT.toString());
         orient = kwargs.orient;
       }
 
@@ -910,7 +940,7 @@ var DataFrame = function (_NDFrame) {
           });
           return json;
         default:
-          throw new TypeError('orient must be in ' + ALLOWED_ORIENT);
+          throw new TypeError('orient must be in ' + ALLOWED_ORIENT.toString());
       }
     }
 
@@ -1393,9 +1423,127 @@ var DataFrame = function (_NDFrame) {
       return new DataFrame(data, { index: sortedIndex });
     }
   }, {
+    key: '_cumulativeHelper',
+    value: function _cumulativeHelper() {
+      var _this16 = this;
+
+      var operation = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _utils.OP_CUMSUM;
+      var axis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+      if (axis === 0) {
+        return new DataFrame(_immutable2.default.Map(this.columns.map(function (c) {
+          return [c, _this16.get(c)._cumulativeHelper(operation)];
+        })), this.kwargs);
+      } else if (axis === 1) {
+        return new DataFrame(this.values.map(function (row) {
+          return (0, _utils.generateCumulativeFunc)(operation)(row);
+        }), this.kwargs);
+      } else throw new Error('invalid axis');
+    }
+
+    /**
+     * Return cumulative sum over requested axis
+     *
+     * pandas equivalent: [DataFrame.cumsum](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.cumsum.html)
+     *
+     * @returns {DataFrame}
+     *
+     * @example
+     * const ds = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [2, 3, 4]});
+     *
+     * // Returns DataFrame([{x: 1, y: 2}, {x: 3, y: 5}, {x: 6, y: 9}], {index: [2, 3, 4]});
+     * ds.cumsum();
+     *
+     * // Returns DataFrame([{x: 1, y: 3}, {x: 2, y: 5}, {x: 3, y: 7}], {index: [2, 3 ,4]});
+     * ds.cumsum(1);
+     */
+
+  }, {
+    key: 'cumsum',
+    value: function cumsum() {
+      var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      return this._cumulativeHelper(_utils.OP_CUMSUM, axis);
+    }
+
+    /**
+     * Return cumulative multiple over requested axis
+     *
+     * pandas equivalent: [DataFrame.cummul](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.cummul.html)
+     *
+     * @returns {DataFrame}
+     *
+     * @example
+     * const ds = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [2, 3, 4]});
+     *
+     * // Returns DataFrame([{x: 1, y: 2}, {x: 2, y: 6}, {x: 6, y: 24}], {index: [2, 3, 4]});
+     * ds.cummul();
+     *
+     * // Returns DataFrame([{x: 1, y: 2}, {x: 2, y: 6}, {x: 3, y: 12}], {index: [2, 3 ,4]});
+     * ds.cummul(1);
+     */
+
+  }, {
+    key: 'cummul',
+    value: function cummul() {
+      var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      return this._cumulativeHelper(_utils.OP_CUMMUL, axis);
+    }
+
+    /**
+     * Return cumulative maximum over requested axis
+     *
+     * pandas equivalent: [DataFrame.cummax](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.cummax.html)
+     *
+     * @returns {DataFrame}
+     *
+     * @example
+     * const ds = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [2, 3, 4]});
+     *
+     * // Returns DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [2, 3, 4]});
+     * ds.cummax();
+     *
+     * // Returns DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [2, 3 ,4]});
+     * ds.cummax(1);
+     */
+
+  }, {
+    key: 'cummax',
+    value: function cummax() {
+      var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      return this._cumulativeHelper(_utils.OP_CUMMAX, axis);
+    }
+
+    /**
+     * Return cumulative minimum over requested axis
+     *
+     * pandas equivalent: [DataFrame.cummin](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.cummin.html)
+     *
+     * @returns {DataFrame}
+     *
+     * @example
+     * const ds = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [2, 3, 4]});
+     *
+     * // Returns DataFrame([{x: 1, y: 1}, {x: 1, y: 1}, {x: 1, y: 1}], {index: [2, 3, 4]});
+     * ds.cummin();
+     *
+     * // Returns DataFrame([{x: 1, y: 1}, {x: 2, y: 2}, {x: 3, y: 3}], {index: [2, 3 ,4]});
+     * ds.cummin(1);
+     */
+
+  }, {
+    key: 'cummin',
+    value: function cummin() {
+      var axis = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+      return this._cumulativeHelper(_utils.OP_CUMMIN, axis);
+    }
+  }, {
     key: 'kwargs',
     get: function get() {
-      return { index: this.index };
+      return { index: this.index, columns: this.columns };
     }
 
     /**
@@ -1415,15 +1563,15 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'values',
     get: function get() {
-      var _this16 = this;
+      var _this17 = this;
 
       if (this._values instanceof _immutable2.default.List) return (0, _get3.default)(DataFrame.prototype.__proto__ || Object.getPrototypeOf(DataFrame.prototype), 'values', this);
 
       var valuesList = _immutable2.default.List([]);
 
       var _loop = function _loop(idx) {
-        valuesList = valuesList.concat([_immutable2.default.List(_this16.columns.map(function (k) {
-          return _this16._data.get(k).iloc(idx);
+        valuesList = valuesList.concat([_immutable2.default.List(_this17.columns.map(function (k) {
+          return _this17._data.get(k).iloc(idx);
         }))]);
       };
 
@@ -1473,14 +1621,14 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(columns) {
-      var _this17 = this;
+      var _this18 = this;
 
       if (!Array.isArray(columns) || columns.length !== this.columns.size) throw new Error('Columns must be array of same dimension');
 
       var nextData = {};
       columns.forEach(function (k, idx) {
-        var prevColumn = _this17.columns.get(idx);
-        var prevSeries = _this17.get(prevColumn);
+        var prevColumn = _this18.columns.get(idx);
+        var prevSeries = _this18.get(prevColumn);
 
         prevSeries.name = k;
         nextData[k] = prevSeries;
@@ -1526,7 +1674,7 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(index) {
-      var _this18 = this;
+      var _this19 = this;
 
       this.set_axis(0, (0, _utils.parseIndex)(index, this._data.get(this.columns.get(0)).values));
 
@@ -1537,7 +1685,7 @@ var DataFrame = function (_NDFrame) {
             v = _ref10[1];
 
         // noinspection Eslint
-        v.index = _this18.index;
+        v.index = _this19.index;
       });
     }
 
@@ -1558,10 +1706,10 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'length',
     get: function get() {
-      var _this19 = this;
+      var _this20 = this;
 
       return Math.max.apply(Math, (0, _toConsumableArray3.default)(this._data.keySeq().map(function (k) {
-        return _this19.get(k).length;
+        return _this20.get(k).length;
       }).toArray()));
     }
   }]);

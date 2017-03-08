@@ -570,6 +570,27 @@ var Series = function (_NDFrame) {
       return new Series(valueIndexMap.values, { name: this.name, index: valueIndexMap.index });
     }
   }, {
+    key: 'cumulativeHelper',
+    value: function cumulativeHelper() {
+      var operation = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'sum';
+
+      var agg = 0;
+      switch (operation) {
+        case 'sum':
+          agg = 0;
+          return new Series(this.values.map(function (v) {
+            agg += v;return agg;
+          }), this.kwargs);
+        default:
+          throw new Error('invalid operation');
+      }
+    }
+  }, {
+    key: 'cumsum',
+    value: function cumsum() {
+      return this.cumulativeHelper('sum');
+    }
+  }, {
     key: 'to_json',
     value: function to_json() {
       var _this9 = this;
@@ -605,7 +626,7 @@ var Series = function (_NDFrame) {
     get: function get() {
       return {
         name: this.name,
-        index: this._index
+        index: this.index
       };
     }
   }, {
