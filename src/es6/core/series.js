@@ -1,13 +1,22 @@
+// @flow
 /**
  * A pandas.Series one-dimensional array with axis labels, with an Immutable.List instead of
  * numpy.ndarray as the values
  */
 
+// $FlowIssue
 import Immutable from 'immutable';
 
 import NDFrame from './generic';
-import {enumerate, sum, parseIndex, round10, OP_CUMSUM, generateCumulativeFunc} from './utils';
+import {enumerate, sum, parseIndex, round10,
+  OP_CUMSUM, OP_CUMMUL, OP_CUMMAX, OP_CUMMIN, generateCumulativeFunc} from './utils';
 import {DType, arrayToDType} from './dtype';
+
+
+declare type T_MF = (string, number) => number|(number, number) => number
+  |(string, number) => string;
+declare type T_BF = (number, number) => boolean|(number, string) => boolean
+  |(string, string) => boolean|(string, number) => boolean
 
 
 export default class Series extends NDFrame {
@@ -36,7 +45,7 @@ export default class Series extends NDFrame {
    * // 5  4
    * // Name: My test name, dtype: dtype(int)
    */
-  constructor(data = null, kwargs = {}) {
+  constructor(data: Array<Object>|Object, kwargs: Object = {}) {
     super(data, kwargs);
 
     if (Array.isArray(data)) {
@@ -55,10 +64,13 @@ export default class Series extends NDFrame {
     this.set_axis(0, parseIndex(kwargs.index, this.values));
     this._setup_axes(Immutable.List.of(0));
 
+    // $FlowIssue TODO
     this._sort_ascending = this._sort_ascending.bind(this);
+    // $FlowIssue TODO
     this._sort_descending = this._sort_descending.bind(this);
   }
 
+  // $FlowIssue
   [Symbol.iterator]() {
     const values = this.values;
     let index = -1;
@@ -87,9 +99,10 @@ export default class Series extends NDFrame {
    * // Returns Series([1, 4, 9, 16], {name: 'New Series', index: [1, 2]})
    * ds.map((val, idx) => val ** 2;
    */
-  map(func) {
+  map(func: T_MF): Series {
     const array = [];
     for (const [val, idx] of enumerate(this)) {
+      // $FlowIssue TODO
       array.push(func(val, idx));
     }
 
@@ -111,7 +124,8 @@ export default class Series extends NDFrame {
    * // 5  4
    * // Name: My test name, dtype: dtype(int)
    */
-  toString() {
+  toString(): string {
+    // $FlowIssue TODO
     const vals = this.iloc(0, 10).values;
 
     let valString = '';
@@ -139,7 +153,8 @@ export default class Series extends NDFrame {
    * // Returns Series([1, 2, 3])
    * ds.head(3);
    */
-  head(n = 5) {
+  head(n: number = 5): Series {
+    // $FlowIssue TODO
     return this.iloc(0, n);
   }
 
@@ -160,7 +175,8 @@ export default class Series extends NDFrame {
    * // Returns Series([6, 7, 8])
    * ds.tail(3);
    */
-  tail(n = 5) {
+  tail(n: number = 5): Series {
+    // $FlowIssue TODO
     return this.iloc(this.length - n, this.length);
   }
 
@@ -178,11 +194,11 @@ export default class Series extends NDFrame {
    * ds.index   // [0, 1, 2];
    * ds2.index  // [1, 2, 3];
    */
-  copy() {
+  copy(): Series {
     return new Series(this.values, {index: this.index, name: this.name});
   }
 
-  get kwargs() {
+  get kwargs(): Object {
     return {
       name: this.name,
       index: this.index,
@@ -201,7 +217,7 @@ export default class Series extends NDFrame {
    * ds.dtype;    // dtype('float');
 
    */
-  get dtype() {
+  get dtype(): DType {
     return this._dtype;
   }
 
@@ -216,7 +232,7 @@ export default class Series extends NDFrame {
    * // Returns List [0, 1, 2]
    * ds.index;
    */
-  get index() {
+  get index(): Immutable.List {
     return this._get_axis(0);
   }
 
@@ -233,7 +249,7 @@ export default class Series extends NDFrame {
    * // Returns List [1, 2, 3]
    * ds.index;
    */
-  set index(index) {
+  set index(index: Immutable.List|Array<number|string>) {
     this.set_axis(0, parseIndex(index, this.values));
   }
 
@@ -250,7 +266,7 @@ export default class Series extends NDFrame {
    * // Returns 3
    * ds.length;
    */
-  get length() {
+  get length(): number {
     return this.values.size;
   }
 
@@ -267,7 +283,7 @@ export default class Series extends NDFrame {
    * // Returns List [1.5, 2, 3]
    * ds.values;
    */
-  get values() {
+  get values(): Immutable.List {
     return super.values;
   }
 
@@ -287,7 +303,7 @@ export default class Series extends NDFrame {
    * // Series([1, 2, 3])
    * ds.astype(new DType('int'))
    */
-  astype(nextType) {
+  astype(nextType: DType): Series {
     if (!(nextType instanceof DType))
       throw new Error('Next type must be a DType');
 
@@ -325,7 +341,7 @@ export default class Series extends NDFrame {
    * ds.iloc(1)      // 2
    * ds.iloc(1, 3)   // Series([2, 3], {name: 'New Series', index: [1, 2]})
    */
-  iloc(startVal, endVal) {
+  iloc(startVal: number, endVal: ?number): Series|number {
     if (typeof endVal === 'undefined')
       return this.values.get(startVal);
 
@@ -348,7 +364,7 @@ export default class Series extends NDFrame {
    * // Returns 10
    * ds.sum();
    */
-  sum() {
+  sum(): number {
     return sum(this.values);
   }
 
@@ -365,7 +381,7 @@ export default class Series extends NDFrame {
    * // Returns 2.5
    * ds.mean();
    */
-  mean() {
+  mean(): number {
     return this.sum() / this.length;
   }
 
@@ -382,7 +398,7 @@ export default class Series extends NDFrame {
    * // Returns 3
    * ds.median();
    */
-  median() {
+  median(): number {
     const sortedVals = this.values.sort();
 
     if (this.length % 2 === 1)
@@ -405,7 +421,7 @@ export default class Series extends NDFrame {
    * // Returns 1
    * ds.variance();
    */
-  variance() {
+  variance(): number {
     const mean = this.mean();
 
     return this.values.reduce((s, v) => {
@@ -427,7 +443,7 @@ export default class Series extends NDFrame {
    * // Returns 1
    * ds.std();
    */
-  std() {
+  std(): number {
     return Math.sqrt(this.variance());
   }
 
@@ -444,7 +460,7 @@ export default class Series extends NDFrame {
    * // Returns Series([1, 2, 4, 5, 1, 2]);
    * ds.abs();
    */
-  abs() {
+  abs(): Series {
     if (['bool', 'string', 'object'].indexOf(this.dtype.dtype) >= 0) return this.copy();
 
     return new Series(this.values.map(v => Math.abs(v)), {name: this.name, index: this.index});
@@ -467,14 +483,14 @@ export default class Series extends NDFrame {
    * ds.add([2, 3, 4])                   // Series([3, 5, 7], {name: 'New Series'})
    * ds.add(Immutable.List([2, 3, 4]))   // Series([3, 5, 7], {name: 'New Series'})
    */
-  add(val) {
-    if (typeof val === 'number')
+  add(val: any): Series {
+    if (typeof val === 'number') // $FlowIssue TODO
       return this.map(v => v + val);
-    else if (val instanceof Series)
+    else if (val instanceof Series) // $FlowIssue TODO
       return this.map((v, idx) => v + val.iloc(idx));
-    else if (Array.isArray(val))
+    else if (Array.isArray(val)) // $FlowIssue TODO
       return this.map((v, idx) => v + val[idx]);
-    else if (val instanceof Immutable.List)
+    else if (val instanceof Immutable.List) // $FlowIssue TODO
       return this.map((v, idx) => v + val.get(idx));
 
     throw new Error('add only supports numbers, Arrays, Immutable List and pandas.Series');
@@ -498,14 +514,14 @@ export default class Series extends NDFrame {
    * ds.sub([2, 3, 4])                   // Series([-1, -1, -1], {name: 'New Series'})
    * ds.sub(Immutable.List([2, 3, 4]))   // Series([-1, -1, -1], {name: 'New Series'})
    */
-  sub(val) {
-    if (typeof val === 'number')
+  sub(val: any): Series {
+    if (typeof val === 'number') // $FlowIssue TODO
       return this.map(v => v - val);
-    else if (val instanceof Series)
+    else if (val instanceof Series) // $FlowIssue TODO
       return this.map((v, idx) => v - val.iloc(idx));
-    else if (Array.isArray(val))
+    else if (Array.isArray(val)) // $FlowIssue TODO
       return this.map((v, idx) => v - val[idx]);
-    else if (val instanceof Immutable.List)
+    else if (val instanceof Immutable.List) // $FlowIssue TODO
       return this.map((v, idx) => v - val.get(idx));
 
     throw new Error('sub only supports numbers, Arrays, Immutable List and pandas.Series');
@@ -529,14 +545,14 @@ export default class Series extends NDFrame {
    * ds.mul([2, 3, 4])                   // Series([2, 6, 12], {name: 'New Series'})
    * ds.mul(Immutable.List([2, 3, 4]))   // Series([2, 6, 12], {name: 'New Series'})
    */
-  mul(val) {
-    if (typeof val === 'number')
+  mul(val: any): Series {
+    if (typeof val === 'number') // $FlowIssue TODO
       return this.map(v => v * val);
-    else if (val instanceof Series)
+    else if (val instanceof Series) // $FlowIssue TODO
       return this.map((v, idx) => v * val.iloc(idx));
-    else if (Array.isArray(val))
+    else if (Array.isArray(val)) // $FlowIssue TODO
       return this.map((v, idx) => v * val[idx]);
-    else if (val instanceof Immutable.List)
+    else if (val instanceof Immutable.List) // $FlowIssue TODO
       return this.map((v, idx) => v * val.get(idx));
 
     throw new Error('mul only supports numbers, Arrays, Immutable List and pandas.Series');
@@ -560,7 +576,7 @@ export default class Series extends NDFrame {
    * ds.multiply([2, 3, 4])                   // Series([2, 6, 12], {name: 'New Series'})
    * ds.multiply(Immutable.List([2, 3, 4]))   // Series([2, 6, 12], {name: 'New Series'})
    */
-  multiply(val) {
+  multiply(val: any): Series {
     return this.mul(val);
   }
 
@@ -582,14 +598,15 @@ export default class Series extends NDFrame {
    * ds.div([4, 2, 1])                   // Series([0.25, 1, 3], {name: 'New Series'})
    * ds.div(Immutable.List([4, 2, 1]))   // Series([0.25, 1, 3], {name: 'New Series'})
    */
-  div(val) {
-    if (typeof val === 'number')
+  div(val: any): Series {
+    // TODO roll this up into one method above (div, mul, add, etc.)
+    if (typeof val === 'number') // $FlowIssue TODO
       return this.map(v => v / val);
-    else if (val instanceof Series)
+    else if (val instanceof Series) // $FlowIssue TODO
       return this.map((v, idx) => v / val.iloc(idx));
-    else if (Array.isArray(val))
+    else if (Array.isArray(val)) // $FlowIssue TODO
       return this.map((v, idx) => v / val[idx]);
-    else if (val instanceof Immutable.List)
+    else if (val instanceof Immutable.List) // $FlowIssue TODO
       return this.map((v, idx) => v / val.get(idx));
 
     throw new Error('div only supports numbers, Arrays, Immutable List and pandas.Series');
@@ -613,7 +630,7 @@ export default class Series extends NDFrame {
    * ds.divide([4, 2, 1])                   // Series([0.25, 1, 3], {name: 'New Series'})
    * ds.divide(Immutable.List([4, 2, 1]))   // Series([0.25, 1, 3], {name: 'New Series'})
    */
-  divide(val) {
+  divide(val: any): Series {
     return this.div(val);
   }
 
@@ -637,7 +654,7 @@ export default class Series extends NDFrame {
    * // Also returns 5
    * ds2.cov(ds1);
    */
-  cov(ds) {
+  cov(ds: Series): number {
     if (!(ds instanceof Series))
       throw new Error('ds must be a Series');
 
@@ -682,7 +699,7 @@ export default class Series extends NDFrame {
    * // Also returns 1
    * ds2.corr(ds1);
    */
-  corr(ds) {
+  corr(ds: Series): number {
     if (!(ds instanceof Series))
       throw new Error('ds must be a Series');
 
@@ -711,7 +728,7 @@ export default class Series extends NDFrame {
    * // Returns Series([null, null, 5, 3])
    * ds.diff(2);
    */
-  diff(periods = 1) {
+  diff(periods: number = 1): Series {
     if (typeof periods !== 'number' || !Number.isInteger(periods))
       throw new Error('periods must be an integer');
     if (periods <= 0)
@@ -740,7 +757,7 @@ export default class Series extends NDFrame {
    * ds.pct_change(1)    // Series([null, 1, 0.5, 0.333, 0.25], {name: 'New Series'})
    * ds.pct_change(2)    // Series([null, null, 2, 1, 0.66666], {name: 'New Series'})
    */
-  pct_change(periods = 1) {
+  pct_change(periods: number = 1): Series {
     if (typeof periods !== 'number' || !Number.isInteger(periods))
       throw new Error('periods must be an integer');
     if (periods <= 0)
@@ -753,20 +770,24 @@ export default class Series extends NDFrame {
       {index: this.index, name: this.name});
   }
 
-  _sort_ascending(valueA, valueB) {
-    const valA = this.iloc(valueA);
-    const valB = this.iloc(valueB);
+  _sort_ascending(valueA: number, valueB: number) {
+    const valA: number|string = this.iloc(valueA);
+    const valB: number|string = this.iloc(valueB);
 
+    // $FlowIssue TODO
     if (valA < valB) return -1;
+    // $FlowIssue TODO
     else if (valA > valB) return 1;
     return 0;
   }
 
-  _sort_descending(valueA, valueB) {
-    const valA = this.iloc(valueA);
-    const valB = this.iloc(valueB);
+  _sort_descending(valueA: number, valueB: number) {
+    const valA: number|string = this.iloc(valueA);
+    const valB: number|string = this.iloc(valueB);
 
+    // $FlowIssue TODO
     if (valA > valB) return -1;
+    // $FlowIssue TODO
     else if (valA < valB) return 1;
     return 0;
   }
@@ -787,7 +808,7 @@ export default class Series extends NDFrame {
    * ds.sort_values(true)    // Series([0, 1, 2, 3], {name: 'New Series', index: [2, 1, 0, 3]})
    * ds.sort_values(false)   // Series([3, 2, 1, 0], {name: 'New Series', index: [3, 0, 1, 2]})
    */
-  sort_values(ascending = true) {
+  sort_values(ascending: boolean = true): Series {
     const sortedIndex = ascending
       ? this.index.sort(this._sort_ascending)
       : this.index.sort(this._sort_descending);
@@ -809,13 +830,13 @@ export default class Series extends NDFrame {
    * // Returns Series([1.3, 1.5, 1.3])
    * ds.round(1);
    */
-  round(decimals = 0) {
+  round(decimals: number = 0): Series {
     return new Series(this.values.map(v => round10(v, -1 * decimals)));
   }
 
   // Filtering methods
 
-  _alignSeries(series) {
+  _alignSeries(series: Series): Immutable.Map {
     // Align two series by index values, returning a Map with index values as keys and
     // values as Maps with 1: List [value locations at index], 2: [value locations at index]
 
@@ -824,11 +845,11 @@ export default class Series extends NDFrame {
     this.index.forEach((idx1) => {
       if (!(seriesAlignment.has(idx1))) {
         seriesAlignment = seriesAlignment
-          .set(idx1, Immutable.Map({
+          .set(idx1, Immutable.Map({ // $FlowIssue TODO
             first: Immutable.List.of(this.iloc(idx1)),
             second: Immutable.List([]),
           }));
-      } else {
+      } else { // $FlowIssue TODO
         seriesAlignment = seriesAlignment.updateIn([idx1, 'first'], l => l.concat(this.iloc(idx1)));
       }
     });
@@ -837,11 +858,11 @@ export default class Series extends NDFrame {
       if (!(seriesAlignment.has(idx2))) {
         seriesAlignment = seriesAlignment
           .set(idx2, Immutable.Map({
-            first: Immutable.List([]),
+            first: Immutable.List([]), // $FlowIssue TODO
             second: Immutable.List.of(series.iloc(idx2)),
           }));
       } else {
-        seriesAlignment = seriesAlignment.updateIn([idx2, 'second'],
+        seriesAlignment = seriesAlignment.updateIn([idx2, 'second'], // $FlowIssue TODO
           l => l.concat(series.iloc(idx2)));
       }
     });
@@ -870,7 +891,7 @@ export default class Series extends NDFrame {
    * // Returns Series([false, true, true])
    * ds.where(new Series([0, 2, 3]), (v1, v2) => v1 === v2);
    */
-  where(other, op) {
+  where(other: any, op: T_BF) {
     const name = this.name;
     const index = this.index;
     const kwargs = {name, index};
@@ -917,7 +938,7 @@ export default class Series extends NDFrame {
    * // Returns Series([false, true, true])
    * ds.eq([0, 2, 3]);
    */
-  eq(other) {
+  eq(other: any): Series {
     return this.where(other, (a, b) => a === b);
   }
 
@@ -946,7 +967,7 @@ export default class Series extends NDFrame {
    * // Returns Series([false, false, true])
    * ds.lt([0, 2, 5]);
    */
-  lt(other) {
+  lt(other: any): Series {
     return this.where(other, (a, b) => a < b);
   }
 
@@ -975,7 +996,7 @@ export default class Series extends NDFrame {
    * // Returns Series([false, false, true])
    * ds.lte([0, 2, 5]);
    */
-  lte(other) {
+  lte(other: any): Series {
     return this.where(other, (a, b) => a <= b);
   }
 
@@ -1004,7 +1025,7 @@ export default class Series extends NDFrame {
    * // Returns Series([true, false, false])
    * ds.gt([0, 2, 3]);
    */
-  gt(other) {
+  gt(other: any): Series {
     return this.where(other, (a, b) => a > b);
   }
 
@@ -1033,7 +1054,7 @@ export default class Series extends NDFrame {
    * // Returns Series([true, true, false])
    * ds.gte([0, 2, 4]);
    */
-  gte(other) {
+  gte(other: any): Series {
     return this.where(other, (a, b) => a >= b);
   }
 
@@ -1050,7 +1071,7 @@ export default class Series extends NDFrame {
    * // Returns Series([true, true, false, false, true])
    * ds.notnull();
    */
-  notnull() {
+  notnull(): Series {
     return this.where(null, (a, b) => a !== b);
   }
 
@@ -1076,7 +1097,7 @@ export default class Series extends NDFrame {
    * // Returns Series([3, 4, null, null]);
    * ds.shift(-2);
    */
-  shift(periods = 1) {
+  shift(periods: number = 1): Series {
     if (!Number.isInteger(periods)) throw new Error('periods must be an integer');
 
     if (periods === 0) {
@@ -1113,7 +1134,7 @@ export default class Series extends NDFrame {
    * // Returns ['foo', 'bar', 'test', 'hi']
    * ds.unique();
    */
-  unique() {
+  unique(): Immutable.List {
     return this.values.toSet().toList();
   }
 
@@ -1133,7 +1154,7 @@ export default class Series extends NDFrame {
    * // Returns Series([2, 3]);
    * ds.filter(ds.gte(2));
    */
-  filter(iterBool) {
+  filter(iterBool: Series|Array<boolean>|Immutable.List): Series {
     if (!Array.isArray(iterBool)
       && !(iterBool instanceof Immutable.List)
       && !(iterBool instanceof Series))
@@ -1159,7 +1180,7 @@ export default class Series extends NDFrame {
     return new Series(valueIndexMap.values, {name: this.name, index: valueIndexMap.index});
   }
 
-  _cumulativeHelper(operation = OP_CUMSUM) {
+  _cumulativeHelper(operation: string = OP_CUMSUM): Series {
     return new Series(generateCumulativeFunc(operation)(this.values), this.kwargs);
   }
 
@@ -1176,10 +1197,61 @@ export default class Series extends NDFrame {
    * // Returns Series([1, 3, 6], {index: [2, 3, 4]});
    * ds.cumsum();
    */
-  cumsum() {
+  cumsum(): Series {
     return this._cumulativeHelper(OP_CUMSUM);
   }
 
+  /**
+   * Return cumulative mul over requested axis
+   *
+   * pandas equivalent: [Series.cummul](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.cummul.html)
+   *
+   * @returns {Series}
+   *
+   * @example
+   * const ds = new Series([1, 2, 3], {index: [2, 3, 4]});
+   *
+   * // Returns Series([1, 2, 6], {index: [2, 3, 4]});
+   * ds.cummul();
+   */
+  cummul(): Series {
+    return this._cumulativeHelper(OP_CUMMUL);
+  }
+
+  /**
+   * Return cumulative max over requested axis
+   *
+   * pandas equivalent: [Series.cummax](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.cummax.html)
+   *
+   * @returns {Series}
+   *
+   * @example
+   * const ds = new Series([3, 2, 4], {index: [2, 3, 4]});
+   *
+   * // Returns Series([3, 3, 4], {index: [2, 3, 4]});
+   * ds.cummax();
+   */
+  cummax(): Series {
+    return this._cumulativeHelper(OP_CUMMAX);
+  }
+
+  /**
+   * Return cumulative min over requested axis
+   *
+   * pandas equivalent: [Series.cummin](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.cummin.html)
+   *
+   * @returns {Series}
+   *
+   * @example
+   * const ds = new Series([1, 2, 3], {index: [2, 3, 4]});
+   *
+   * // Returns Series([1, 1, 1], {index: [2, 3, 4]});
+   * ds.cummin();
+   */
+  cummin(): Series {
+    return this._cumulativeHelper(OP_CUMMIN);
+  }
+  
   /**
    * Convert the Series to a json object
    *
@@ -1202,12 +1274,12 @@ export default class Series extends NDFrame {
    * // Returns {index: [0, 1, 2], name: 'x', values: [1, 2, 3]}
    * ds.to_json({orient: 'split'});
    */
-  to_json(kwargs = {orient: 'index'}) {
+  to_json(kwargs: Object = {orient: 'index'}): Object {
     const ALLOWED_ORIENT = ['records', 'split', 'index'];
     let orient = 'index';
 
     if (typeof kwargs.orient !== 'undefined') {
-      if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0)
+      if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0) // $FlowIssue TODO
         throw new TypeError(`orient must be in ${ALLOWED_ORIENT}`);
       orient = kwargs.orient;
     }
@@ -1225,6 +1297,7 @@ export default class Series extends NDFrame {
         });
         return json;
       default:
+        // $FlowIssue TODO
         throw new TypeError(`orient must be in ${ALLOWED_ORIENT}`);
     }
   }

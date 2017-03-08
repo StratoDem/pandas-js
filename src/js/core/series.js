@@ -47,6 +47,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * numpy.ndarray as the values
  */
 
+// $FlowIssue
 var Series = function (_NDFrame) {
   (0, _inherits3.default)(Series, _NDFrame);
 
@@ -75,8 +76,7 @@ var Series = function (_NDFrame) {
    * // 5  4
    * // Name: My test name, dtype: dtype(int)
    */
-  function Series() {
-    var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+  function Series(data) {
     var kwargs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     (0, _classCallCheck3.default)(this, Series);
 
@@ -98,10 +98,15 @@ var Series = function (_NDFrame) {
     _this.set_axis(0, (0, _utils.parseIndex)(kwargs.index, _this.values));
     _this._setup_axes(_immutable2.default.List.of(0));
 
+    // $FlowIssue TODO
     _this._sort_ascending = _this._sort_ascending.bind(_this);
+    // $FlowIssue TODO
     _this._sort_descending = _this._sort_descending.bind(_this);
     return _this;
   }
+
+  // $FlowIssue
+
 
   (0, _createClass3.default)(Series, [{
     key: Symbol.iterator,
@@ -148,6 +153,7 @@ var Series = function (_NDFrame) {
               val = _step$value[0],
               idx = _step$value[1];
 
+          // $FlowIssue TODO
           array.push(func(val, idx));
         }
       } catch (err) {
@@ -189,6 +195,7 @@ var Series = function (_NDFrame) {
     value: function toString() {
       var _this2 = this;
 
+      // $FlowIssue TODO
       var vals = this.iloc(0, 10).values;
 
       var valString = '';
@@ -222,6 +229,7 @@ var Series = function (_NDFrame) {
     value: function head() {
       var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 5;
 
+      // $FlowIssue TODO
       return this.iloc(0, n);
     }
 
@@ -248,6 +256,7 @@ var Series = function (_NDFrame) {
     value: function tail() {
       var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 5;
 
+      // $FlowIssue TODO
       return this.iloc(this.length - n, this.length);
     }
 
@@ -503,15 +512,19 @@ var Series = function (_NDFrame) {
   }, {
     key: 'add',
     value: function add(val) {
-      if (typeof val === 'number') return this.map(function (v) {
-        return v + val;
-      });else if (val instanceof Series) return this.map(function (v, idx) {
-        return v + val.iloc(idx);
-      });else if (Array.isArray(val)) return this.map(function (v, idx) {
-        return v + val[idx];
-      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
-        return v + val.get(idx);
-      });
+      if (typeof val === 'number') // $FlowIssue TODO
+        return this.map(function (v) {
+          return v + val;
+        });else if (val instanceof Series) // $FlowIssue TODO
+        return this.map(function (v, idx) {
+          return v + val.iloc(idx);
+        });else if (Array.isArray(val)) // $FlowIssue TODO
+        return this.map(function (v, idx) {
+          return v + val[idx];
+        });else if (val instanceof _immutable2.default.List) // $FlowIssue TODO
+        return this.map(function (v, idx) {
+          return v + val.get(idx);
+        });
 
       throw new Error('add only supports numbers, Arrays, Immutable List and pandas.Series');
     }
@@ -538,15 +551,19 @@ var Series = function (_NDFrame) {
   }, {
     key: 'sub',
     value: function sub(val) {
-      if (typeof val === 'number') return this.map(function (v) {
-        return v - val;
-      });else if (val instanceof Series) return this.map(function (v, idx) {
-        return v - val.iloc(idx);
-      });else if (Array.isArray(val)) return this.map(function (v, idx) {
-        return v - val[idx];
-      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
-        return v - val.get(idx);
-      });
+      if (typeof val === 'number') // $FlowIssue TODO
+        return this.map(function (v) {
+          return v - val;
+        });else if (val instanceof Series) // $FlowIssue TODO
+        return this.map(function (v, idx) {
+          return v - val.iloc(idx);
+        });else if (Array.isArray(val)) // $FlowIssue TODO
+        return this.map(function (v, idx) {
+          return v - val[idx];
+        });else if (val instanceof _immutable2.default.List) // $FlowIssue TODO
+        return this.map(function (v, idx) {
+          return v - val.get(idx);
+        });
 
       throw new Error('sub only supports numbers, Arrays, Immutable List and pandas.Series');
     }
@@ -573,15 +590,19 @@ var Series = function (_NDFrame) {
   }, {
     key: 'mul',
     value: function mul(val) {
-      if (typeof val === 'number') return this.map(function (v) {
-        return v * val;
-      });else if (val instanceof Series) return this.map(function (v, idx) {
-        return v * val.iloc(idx);
-      });else if (Array.isArray(val)) return this.map(function (v, idx) {
-        return v * val[idx];
-      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
-        return v * val.get(idx);
-      });
+      if (typeof val === 'number') // $FlowIssue TODO
+        return this.map(function (v) {
+          return v * val;
+        });else if (val instanceof Series) // $FlowIssue TODO
+        return this.map(function (v, idx) {
+          return v * val.iloc(idx);
+        });else if (Array.isArray(val)) // $FlowIssue TODO
+        return this.map(function (v, idx) {
+          return v * val[idx];
+        });else if (val instanceof _immutable2.default.List) // $FlowIssue TODO
+        return this.map(function (v, idx) {
+          return v * val.get(idx);
+        });
 
       throw new Error('mul only supports numbers, Arrays, Immutable List and pandas.Series');
     }
@@ -633,15 +654,20 @@ var Series = function (_NDFrame) {
   }, {
     key: 'div',
     value: function div(val) {
-      if (typeof val === 'number') return this.map(function (v) {
-        return v / val;
-      });else if (val instanceof Series) return this.map(function (v, idx) {
-        return v / val.iloc(idx);
-      });else if (Array.isArray(val)) return this.map(function (v, idx) {
-        return v / val[idx];
-      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
-        return v / val.get(idx);
-      });
+      // TODO roll this up into one method above (div, mul, add, etc.)
+      if (typeof val === 'number') // $FlowIssue TODO
+        return this.map(function (v) {
+          return v / val;
+        });else if (val instanceof Series) // $FlowIssue TODO
+        return this.map(function (v, idx) {
+          return v / val.iloc(idx);
+        });else if (Array.isArray(val)) // $FlowIssue TODO
+        return this.map(function (v, idx) {
+          return v / val[idx];
+        });else if (val instanceof _immutable2.default.List) // $FlowIssue TODO
+        return this.map(function (v, idx) {
+          return v / val.get(idx);
+        });
 
       throw new Error('div only supports numbers, Arrays, Immutable List and pandas.Series');
     }
@@ -820,7 +846,10 @@ var Series = function (_NDFrame) {
       var valA = this.iloc(valueA);
       var valB = this.iloc(valueB);
 
-      if (valA < valB) return -1;else if (valA > valB) return 1;
+      // $FlowIssue TODO
+      if (valA < valB) return -1;
+      // $FlowIssue TODO
+      else if (valA > valB) return 1;
       return 0;
     }
   }, {
@@ -829,7 +858,10 @@ var Series = function (_NDFrame) {
       var valA = this.iloc(valueA);
       var valB = this.iloc(valueB);
 
-      if (valA > valB) return -1;else if (valA < valB) return 1;
+      // $FlowIssue TODO
+      if (valA > valB) return -1;
+      // $FlowIssue TODO
+      else if (valA < valB) return 1;
       return 0;
     }
 
@@ -903,11 +935,12 @@ var Series = function (_NDFrame) {
 
       this.index.forEach(function (idx1) {
         if (!seriesAlignment.has(idx1)) {
-          seriesAlignment = seriesAlignment.set(idx1, _immutable2.default.Map({
+          seriesAlignment = seriesAlignment.set(idx1, _immutable2.default.Map({ // $FlowIssue TODO
             first: _immutable2.default.List.of(_this7.iloc(idx1)),
             second: _immutable2.default.List([])
           }));
         } else {
+          // $FlowIssue TODO
           seriesAlignment = seriesAlignment.updateIn([idx1, 'first'], function (l) {
             return l.concat(_this7.iloc(idx1));
           });
@@ -917,11 +950,12 @@ var Series = function (_NDFrame) {
       series.index.forEach(function (idx2) {
         if (!seriesAlignment.has(idx2)) {
           seriesAlignment = seriesAlignment.set(idx2, _immutable2.default.Map({
-            first: _immutable2.default.List([]),
+            first: _immutable2.default.List([]), // $FlowIssue TODO
             second: _immutable2.default.List.of(series.iloc(idx2))
           }));
         } else {
-          seriesAlignment = seriesAlignment.updateIn([idx2, 'second'], function (l) {
+          seriesAlignment = seriesAlignment.updateIn([idx2, 'second'], // $FlowIssue TODO
+          function (l) {
             return l.concat(series.iloc(idx2));
           });
         }
@@ -1314,6 +1348,66 @@ var Series = function (_NDFrame) {
     }
 
     /**
+     * Return cumulative mul over requested axis
+     *
+     * pandas equivalent: [Series.cummul](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.cummul.html)
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {index: [2, 3, 4]});
+     *
+     * // Returns Series([1, 2, 6], {index: [2, 3, 4]});
+     * ds.cummul();
+     */
+
+  }, {
+    key: 'cummul',
+    value: function cummul() {
+      return this._cumulativeHelper(_utils.OP_CUMMUL);
+    }
+
+    /**
+     * Return cumulative max over requested axis
+     *
+     * pandas equivalent: [Series.cummax](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.cummax.html)
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([3, 2, 4], {index: [2, 3, 4]});
+     *
+     * // Returns Series([3, 3, 4], {index: [2, 3, 4]});
+     * ds.cummax();
+     */
+
+  }, {
+    key: 'cummax',
+    value: function cummax() {
+      return this._cumulativeHelper(_utils.OP_CUMMAX);
+    }
+
+    /**
+     * Return cumulative min over requested axis
+     *
+     * pandas equivalent: [Series.cummin](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.cummin.html)
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {index: [2, 3, 4]});
+     *
+     * // Returns Series([1, 1, 1], {index: [2, 3, 4]});
+     * ds.cummin();
+     */
+
+  }, {
+    key: 'cummin',
+    value: function cummin() {
+      return this._cumulativeHelper(_utils.OP_CUMMIN);
+    }
+
+    /**
      * Convert the Series to a json object
      *
      * pandas equivalent: [Series.to_json](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.to_json.html)
@@ -1347,7 +1441,8 @@ var Series = function (_NDFrame) {
       var orient = 'index';
 
       if (typeof kwargs.orient !== 'undefined') {
-        if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0) throw new TypeError('orient must be in ' + ALLOWED_ORIENT);
+        if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0) // $FlowIssue TODO
+          throw new TypeError('orient must be in ' + ALLOWED_ORIENT);
         orient = kwargs.orient;
       }
 
@@ -1364,6 +1459,7 @@ var Series = function (_NDFrame) {
           });
           return json;
         default:
+          // $FlowIssue TODO
           throw new TypeError('orient must be in ' + ALLOWED_ORIENT);
       }
     }

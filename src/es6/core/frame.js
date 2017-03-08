@@ -348,7 +348,7 @@ export default class DataFrame extends NDFrame {
       return new DataFrame(this._data.set(column, series), this.kwargs);
     else if (series instanceof Immutable.List || Array.isArray(series))
       return new DataFrame(this._data.set(
-        column,
+        column, // $FlowIssue TODO
         new Series(series, {index: this.index, name: column})), this.kwargs);
     throw new TypeError('series must be a Series!');
   }
@@ -804,7 +804,7 @@ export default class DataFrame extends NDFrame {
     csvString += '\r\n';
 
     const updateString = (idx) => {
-      let s = '';
+      let s = ''; // $FlowIssue TODO
       this.columns.forEach((k) => { s += `${this.get(k).iloc(idx)},`; });
       return s;
     };
@@ -1165,7 +1165,7 @@ export default class DataFrame extends NDFrame {
    * // Returns DataFrame([{x: 1, y: -1, z: 2}, {x: -1, y: 1, z: -2}, {x: 2, y: -2, z: 4}])
    * df.cov();
    */
-  cov(): DataFrame {
+  cov(): DataFrame { // $FlowIssue TODO
     return this._pairwiseDataFrame((ds1, ds2) => ds1.cov(ds2));
   }
 
@@ -1184,7 +1184,7 @@ export default class DataFrame extends NDFrame {
    */
   corr(): DataFrame {
     // noinspection Eslint
-    const corrFunc = (ds1, ds2) => {
+    const corrFunc = (ds1, ds2) => { // $FlowIssue TODO
       return ds1.values === ds2.values ? 1 : ds1.corr(ds2);
     };
     return this._pairwiseDataFrame(corrFunc);
@@ -1228,7 +1228,7 @@ export default class DataFrame extends NDFrame {
           if (idx < periods)
             return [k, new Series(Immutable.Repeat(null, this.length).toList(),
               {name: k, index: this.index})];
-          const compareCol = this.get(this.columns.get(idx - periods));
+          const compareCol = this.get(this.columns.get(idx - periods)); // $FlowIssue TODO
           return [k, this.get(k).map((v, vIdx) => v - compareCol.iloc(vIdx))];
         })), {index: this.index});
     }
@@ -1275,6 +1275,7 @@ export default class DataFrame extends NDFrame {
             return [k, new Series(Immutable.Repeat(null, this.length).toList(),
               {name: k, index: this.index})];
           const compareCol = this.get(this.columns.get(idx - periods));
+          // $FlowIssue TODO
           return [k, this.get(k).map((v, vIdx) => (v / compareCol.iloc(vIdx)) - 1)];
         })), {index: this.index});
     }

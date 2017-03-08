@@ -273,7 +273,8 @@ var DataFrame = function (_NDFrame) {
      * df.set('y', new Series([2, 3, 4]));
      */
     value: function set(column, series) {
-      if (series instanceof _series2.default) return new DataFrame(this._data.set(column, series), this.kwargs);else if (series instanceof _immutable2.default.List || Array.isArray(series)) return new DataFrame(this._data.set(column, new _series2.default(series, { index: this.index, name: column })), this.kwargs);
+      if (series instanceof _series2.default) return new DataFrame(this._data.set(column, series), this.kwargs);else if (series instanceof _immutable2.default.List || Array.isArray(series)) return new DataFrame(this._data.set(column, // $FlowIssue TODO
+      new _series2.default(series, { index: this.index, name: column })), this.kwargs);
       throw new TypeError('series must be a Series!');
     }
 
@@ -784,7 +785,7 @@ var DataFrame = function (_NDFrame) {
       csvString += '\r\n';
 
       var updateString = function updateString(idx) {
-        var s = '';
+        var s = ''; // $FlowIssue TODO
         _this7.columns.forEach(function (k) {
           s += _this7.get(k).iloc(idx) + ',';
         });
@@ -1204,6 +1205,7 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'cov',
     value: function cov() {
+      // $FlowIssue TODO
       return this._pairwiseDataFrame(function (ds1, ds2) {
         return ds1.cov(ds2);
       });
@@ -1228,6 +1230,7 @@ var DataFrame = function (_NDFrame) {
     value: function corr() {
       // noinspection Eslint
       var corrFunc = function corrFunc(ds1, ds2) {
+        // $FlowIssue TODO
         return ds1.values === ds2.values ? 1 : ds1.corr(ds2);
       };
       return this._pairwiseDataFrame(corrFunc);
@@ -1274,7 +1277,7 @@ var DataFrame = function (_NDFrame) {
       } else if (axis === 1) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k, idx) {
           if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this13.length).toList(), { name: k, index: _this13.index })];
-          var compareCol = _this13.get(_this13.columns.get(idx - periods));
+          var compareCol = _this13.get(_this13.columns.get(idx - periods)); // $FlowIssue TODO
           return [k, _this13.get(k).map(function (v, vIdx) {
             return v - compareCol.iloc(vIdx);
           })];
@@ -1326,6 +1329,7 @@ var DataFrame = function (_NDFrame) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k, idx) {
           if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this14.length).toList(), { name: k, index: _this14.index })];
           var compareCol = _this14.get(_this14.columns.get(idx - periods));
+          // $FlowIssue TODO
           return [k, _this14.get(k).map(function (v, vIdx) {
             return v / compareCol.iloc(vIdx) - 1;
           })];
