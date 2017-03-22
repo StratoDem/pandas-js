@@ -469,6 +469,11 @@ var DataFrame = function (_NDFrame) {
       return this.iloc([this.length - n, this.length]);
     }
   }, {
+    key: '_assertColumnExists',
+    value: function _assertColumnExists(col) {
+      if (!this.columnExists(col)) throw new Error('Column ' + col + ' not in DataFrame');
+    }
+  }, {
     key: 'columnExists',
     value: function columnExists(col) {
       return this.columns.indexOf(col) >= 0;
@@ -1426,17 +1431,59 @@ var DataFrame = function (_NDFrame) {
 
       return new DataFrame(data, { index: sortedIndex });
     }
+
+    /**
+     * Reshape data (produce a 'pivot' table) based on a set of index, columns, or values
+     * columns from the original DataFrame
+     *
+     * @param {Array<string>|Immutable.List|string|number} index
+     *  Name(s) of column(s) to use as the index for the pivoted DataFrame
+     * @param {Array<string>|Immutable.List|string|number} columns
+     *  Name(s) of column(s) to use as the columns for the pivoted DataFrame
+     * @param {Array<string>|Immutable.List|string|number} values
+     *  Name(s) of column(s) to use as the values for the pivoted DataFrame
+     */
+
+  }, {
+    key: 'pivot_table',
+    value: function pivot_table(index, columns, values) {
+      var _this16 = this;
+
+      var validateCols = function validateCols(cols) {
+        if (Array.isArray(cols)) {
+          cols.forEach(function (c) {
+            return _this16._assertColumnExists(c);
+          });
+          return _immutable2.default.List(cols);
+        } else if (cols instanceof _immutable2.default.List) {
+          cols.forEach(function (c) {
+            return _this16._assertColumnExists(c);
+          });
+          return cols;
+        } else if (typeof cols === 'string') {
+          _this16._assertColumnExists(cols);
+          return _immutable2.default.List.of(cols);
+        }
+
+        throw new TypeError('cols must be Array, Immutable.List, or string');
+      };
+
+      // Validate types and cast to Immutable.List of column names
+      var indexCols = validateCols(index);
+      var columnCols = validateCols(columns);
+      var valuesCols = validateCols(values);
+    }
   }, {
     key: '_cumulativeHelper',
     value: function _cumulativeHelper() {
-      var _this16 = this;
+      var _this17 = this;
 
       var operation = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _utils.OP_CUMSUM;
       var axis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
       if (axis === 0) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (c) {
-          return [c, _this16.get(c)._cumulativeHelper(operation)];
+          return [c, _this17.get(c)._cumulativeHelper(operation)];
         })), this.kwargs);
       } else if (axis === 1) {
         return new DataFrame(this.values.map(function (row) {
@@ -1567,15 +1614,15 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'values',
     get: function get() {
-      var _this17 = this;
+      var _this18 = this;
 
       if (this._values instanceof _immutable2.default.List) return (0, _get3.default)(DataFrame.prototype.__proto__ || Object.getPrototypeOf(DataFrame.prototype), 'values', this);
 
       var valuesList = _immutable2.default.List([]);
 
       var _loop = function _loop(idx) {
-        valuesList = valuesList.concat([_immutable2.default.List(_this17.columns.map(function (k) {
-          return _this17._data.get(k).iloc(idx);
+        valuesList = valuesList.concat([_immutable2.default.List(_this18.columns.map(function (k) {
+          return _this18._data.get(k).iloc(idx);
         }))]);
       };
 
@@ -1625,14 +1672,14 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(columns) {
-      var _this18 = this;
+      var _this19 = this;
 
       if (!Array.isArray(columns) || columns.length !== this.columns.size) throw new Error('Columns must be array of same dimension');
 
       var nextData = {};
       columns.forEach(function (k, idx) {
-        var prevColumn = _this18.columns.get(idx);
-        var prevSeries = _this18.get(prevColumn);
+        var prevColumn = _this19.columns.get(idx);
+        var prevSeries = _this19.get(prevColumn);
 
         prevSeries.name = k;
         nextData[k] = prevSeries;
@@ -1678,7 +1725,7 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(index) {
-      var _this19 = this;
+      var _this20 = this;
 
       this.set_axis(0, (0, _utils.parseIndex)(index, this._data.get(this.columns.get(0)).values));
 
@@ -1689,7 +1736,7 @@ var DataFrame = function (_NDFrame) {
             v = _ref10[1];
 
         // noinspection Eslint
-        v.index = _this19.index;
+        v.index = _this20.index;
       });
     }
 
@@ -1710,10 +1757,10 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'length',
     get: function get() {
-      var _this20 = this;
+      var _this21 = this;
 
       return Math.max.apply(Math, (0, _toConsumableArray3.default)(this._data.keySeq().map(function (k) {
-        return _this20.get(k).length;
+        return _this21.get(k).length;
       }).toArray()));
     }
   }]);

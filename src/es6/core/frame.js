@@ -19,6 +19,7 @@ declare type T_LIST = Immutable.List
 declare type T_MAP = Immutable.Map;
 declare type T_SK = string|number;
 declare type T_COTHER = Array<T_SK>|T_LIST|Series|DataFrame|T_SK;
+declare type T_PVINDEX = Array<T_SK>|T_LIST|T_SK;
 
 
 const parseArrayToSeriesMap = (array: Array<Object>, index: T_LIST): T_MAP => {
@@ -535,6 +536,11 @@ export default class DataFrame extends NDFrame {
    */
   tail(n: number = 10): DataFrame {
     return this.iloc([this.length - n, this.length]);
+  }
+
+  _assertColumnExists(col: T_SK) {
+    if (!this.columnExists(col))
+      throw new Error(`Column ${col} not in DataFrame`);
   }
 
   columnExists(col: T_SK): boolean {
@@ -1368,6 +1374,41 @@ export default class DataFrame extends NDFrame {
       }));
 
     return new DataFrame(data, {index: sortedIndex});
+  }
+
+  /**
+   * Reshape data (produce a 'pivot' table) based on a set of index, columns, or values
+   * columns from the original DataFrame
+   *
+   * @param {Array<string>|Immutable.List|string|number} index
+   *  Name(s) of column(s) to use as the index for the pivoted DataFrame
+   * @param {Array<string>|Immutable.List|string|number} columns
+   *  Name(s) of column(s) to use as the columns for the pivoted DataFrame
+   * @param {Array<string>|Immutable.List|string|number} values
+   *  Name(s) of column(s) to use as the values for the pivoted DataFrame
+   */
+  pivot_table(index: T_PVINDEX, columns: T_PVINDEX, values: T_PVINDEX): DataFrame {
+    const validateCols = (cols: T_PVINDEX): Immutable.List => {
+      if (Array.isArray(cols)) {
+        cols.forEach(c => this._assertColumnExists(c));
+        return Immutable.List(cols);
+      } else if (cols instanceof Immutable.List) {
+        cols.forEach(c => this._assertColumnExists(c));
+        return cols;
+      } else if (typeof cols === 'string') {
+        this._assertColumnExists(cols);
+        return Immutable.List.of(cols);
+      }
+
+      throw new TypeError('cols must be Array, Immutable.List, or string');
+    };
+
+    // Validate types and cast to Immutable.List of column names
+    const indexCols = validateCols(index);
+    const columnCols = validateCols(columns);
+    const valuesCols = validateCols(values);
+
+
   }
 
   _cumulativeHelper(operation: string = OP_CUMSUM, axis: number = 0): DataFrame {
