@@ -61,7 +61,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * DataFrame object
  */
 
-// $FlowIssue
 var parseArrayToSeriesMap = function parseArrayToSeriesMap(array, index) {
   var dataMap = _immutable2.default.Map({});
 
@@ -1639,6 +1638,29 @@ var DataFrame = function (_NDFrame) {
 
       return this._cumulativeHelper(_utils.OP_CUMMIN, axis);
     }
+
+    /**
+     * Rename the `DataFrame` and return a new DataFrame
+     *
+     * pandas equivalent: [DataFrame.rename](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.rename.html)
+     *
+     * @param {Immutable.Map} columns
+     * @returns {DataFrame}
+     */
+
+  }, {
+    key: 'rename',
+    value: function rename(_ref11) {
+      var _this18 = this;
+
+      var columns = _ref11.columns;
+
+      return new DataFrame(_immutable2.default.OrderedMap(this.columns.map(function (prevCol) {
+        var nextCol = columns.get(prevCol);
+        if (typeof nextCol === 'undefined') return [prevCol, _this18._data.get(prevCol)];
+        return [nextCol, _this18._data.get(prevCol).rename(nextCol)];
+      })), { index: this.index });
+    }
   }, {
     key: 'kwargs',
     get: function get() {
@@ -1662,15 +1684,15 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'values',
     get: function get() {
-      var _this18 = this;
+      var _this19 = this;
 
       if (this._values instanceof _immutable2.default.List) return (0, _get3.default)(DataFrame.prototype.__proto__ || Object.getPrototypeOf(DataFrame.prototype), 'values', this);
 
       var valuesList = _immutable2.default.List([]);
 
       var _loop = function _loop(idx) {
-        valuesList = valuesList.concat([_immutable2.default.List(_this18.columns.map(function (k) {
-          return _this18._data.get(k).iloc(idx);
+        valuesList = valuesList.concat([_immutable2.default.List(_this19.columns.map(function (k) {
+          return _this19._data.get(k).iloc(idx);
         }))]);
       };
 
@@ -1720,17 +1742,16 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(columns) {
-      var _this19 = this;
+      var _this20 = this;
 
       if (!Array.isArray(columns) || columns.length !== this.columns.size) throw new Error('Columns must be array of same dimension');
 
       var nextData = {};
       columns.forEach(function (k, idx) {
-        var prevColumn = _this19.columns.get(idx);
-        var prevSeries = _this19.get(prevColumn);
+        var prevColumn = _this20.columns.get(idx);
+        var prevSeries = _this20.get(prevColumn);
 
-        prevSeries.name = k;
-        nextData[k] = prevSeries;
+        nextData[k] = prevSeries.rename(k);
       });
 
       this._data = _immutable2.default.Map(nextData);
@@ -1773,18 +1794,18 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(index) {
-      var _this20 = this;
+      var _this21 = this;
 
       this.set_axis(0, (0, _utils.parseIndex)(index, this._data.get(this.columns.get(0)).values));
 
       // noinspection Eslint
-      this._data.mapEntries(function (_ref11) {
-        var _ref12 = (0, _slicedToArray3.default)(_ref11, 2),
-            k = _ref12[0],
-            v = _ref12[1];
+      this._data.mapEntries(function (_ref12) {
+        var _ref13 = (0, _slicedToArray3.default)(_ref12, 2),
+            k = _ref13[0],
+            v = _ref13[1];
 
         // noinspection Eslint
-        v.index = _this20.index;
+        v.index = _this21.index;
       });
     }
 
@@ -1805,11 +1826,11 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'length',
     get: function get() {
-      var _this21 = this;
+      var _this22 = this;
 
       if (this._data.keySeq().size === 0) return 0;
       return Math.max.apply(Math, (0, _toConsumableArray3.default)(this._data.keySeq().map(function (k) {
-        return _this21.get(k).length;
+        return _this22.get(k).length;
       }).toArray()));
     }
   }]);

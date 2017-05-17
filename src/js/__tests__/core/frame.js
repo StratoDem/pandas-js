@@ -999,6 +999,19 @@ describe('frame', function () {
       console.log(df.pivot_table(['a', 'b'], 'c', 'd'));
     });
   });
+
+  describe('rename', function () {
+    it('renames one Series in the DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
+      var df2 = df.rename({ columns: _immutable2.default.Map({ x: 'q' }) });
+
+      expect(df.columns.toArray()).toEqual(['x', 'y']);
+      expect(df2.columns.toArray()).toEqual(['q', 'y']);
+      expect(df2.get('q').values.toArray()).toEqual([1, 2, 3]);
+      expect(df2.get('q').index.toArray()).toEqual([1, 2, 3]);
+      expect(df2.get('q').name).toEqual('q');
+    });
+  });
 });
 
 //# sourceMappingURL=frame.js.map

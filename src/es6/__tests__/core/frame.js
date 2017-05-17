@@ -1000,4 +1000,18 @@ describe('frame', () => {
       console.log(df.pivot_table(['a', 'b'], 'c', 'd'));
     });
   });
+
+  describe('rename', () => {
+    it('renames one Series in the DataFrame', () => {
+      const df = new DataFrame(
+        [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [1, 2, 3]});
+      const df2 = df.rename({columns: Immutable.Map({x: 'q'})});
+
+      expect(df.columns.toArray()).toEqual(['x', 'y']);
+      expect(df2.columns.toArray()).toEqual(['q', 'y']);
+      expect(df2.get('q').values.toArray()).toEqual([1, 2, 3]);
+      expect(df2.get('q').index.toArray()).toEqual([1, 2, 3]);
+      expect(df2.get('q').name).toEqual('q');
+    });
+  });
 });

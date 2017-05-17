@@ -47,7 +47,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * numpy.ndarray as the values
  */
 
-// $FlowIssue
 var Series = function (_NDFrame) {
   (0, _inherits3.default)(Series, _NDFrame);
 
@@ -93,7 +92,7 @@ var Series = function (_NDFrame) {
       _this._dtype = (0, _dtype.arrayToDType)([data]);
     }
 
-    _this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
+    _this._name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
 
     _this.set_axis(0, (0, _utils.parseIndex)(kwargs.index, _this.values));
     _this._setup_axes(_immutable2.default.List.of(0));
@@ -518,10 +517,9 @@ var Series = function (_NDFrame) {
         });else if (val instanceof Series) // $FlowIssue TODO
         return this.map(function (v, idx) {
           return v + val.iloc(idx);
-        });else if (Array.isArray(val)) // $FlowIssue TODO
-        return this.map(function (v, idx) {
-          return v + val[idx];
-        });else if (val instanceof _immutable2.default.List) // $FlowIssue TODO
+        });else if (Array.isArray(val)) return this.map(function (v, idx) {
+        return v + val[idx];
+      });else if (val instanceof _immutable2.default.List) // $FlowIssue TODO
         return this.map(function (v, idx) {
           return v + val.get(idx);
         });
@@ -935,12 +933,11 @@ var Series = function (_NDFrame) {
 
       this.index.forEach(function (idx1) {
         if (!seriesAlignment.has(idx1)) {
-          seriesAlignment = seriesAlignment.set(idx1, _immutable2.default.Map({ // $FlowIssue TODO
+          seriesAlignment = seriesAlignment.set(idx1, _immutable2.default.Map({
             first: _immutable2.default.List.of(_this7.iloc(idx1)),
             second: _immutable2.default.List([])
           }));
         } else {
-          // $FlowIssue TODO
           seriesAlignment = seriesAlignment.updateIn([idx1, 'first'], function (l) {
             return l.concat(_this7.iloc(idx1));
           });
@@ -950,12 +947,11 @@ var Series = function (_NDFrame) {
       series.index.forEach(function (idx2) {
         if (!seriesAlignment.has(idx2)) {
           seriesAlignment = seriesAlignment.set(idx2, _immutable2.default.Map({
-            first: _immutable2.default.List([]), // $FlowIssue TODO
+            first: _immutable2.default.List([]),
             second: _immutable2.default.List.of(series.iloc(idx2))
           }));
         } else {
-          seriesAlignment = seriesAlignment.updateIn([idx2, 'second'], // $FlowIssue TODO
-          function (l) {
+          seriesAlignment = seriesAlignment.updateIn([idx2, 'second'], function (l) {
             return l.concat(series.iloc(idx2));
           });
         }
@@ -1463,6 +1459,26 @@ var Series = function (_NDFrame) {
           throw new TypeError('orient must be in ' + ALLOWED_ORIENT);
       }
     }
+
+    /**
+     * Rename the `Series` and return a new `Series`
+     *
+     * pandas equivalent: [Series.rename](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.rename.html)
+     *
+     * @param {string} name
+     *
+     * @example
+     * const ds = new Series([1, 2, 3], {name: 'Test name'});
+     * ds.rename('New test name');
+     * // returns 'New test name'
+     * ds.name;
+     */
+
+  }, {
+    key: 'rename',
+    value: function rename(name) {
+      return new Series(this._values, { name: name, index: this.index });
+    }
   }, {
     key: 'kwargs',
     get: function get() {
@@ -1564,6 +1580,18 @@ var Series = function (_NDFrame) {
     key: 'values',
     get: function get() {
       return (0, _get3.default)(Series.prototype.__proto__ || Object.getPrototypeOf(Series.prototype), 'values', this);
+    }
+
+    /**
+     * Return the name of the `Series`
+     *
+     * @returns {string}
+     */
+
+  }, {
+    key: 'name',
+    get: function get() {
+      return this._name;
     }
   }]);
   return Series;

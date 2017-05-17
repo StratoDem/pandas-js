@@ -3,7 +3,6 @@
  * DataFrame object
  */
 
-// $FlowIssue
 import Immutable from 'immutable';
 // import { saveAs } from 'file-saver'; TODO figure out if best way
 
@@ -267,8 +266,7 @@ export default class DataFrame extends NDFrame {
       const prevColumn = this.columns.get(idx);
       const prevSeries = this.get(prevColumn);
 
-      prevSeries.name = k;
-      nextData[k] = prevSeries;
+      nextData[k] = prevSeries.rename(k);
     });
 
     this._data = Immutable.Map(nextData);
@@ -1545,6 +1543,23 @@ export default class DataFrame extends NDFrame {
    */
   cummin(axis: number = 0): DataFrame {
     return this._cumulativeHelper(OP_CUMMIN, axis);
+  }
+
+  /**
+   * Rename the `DataFrame` and return a new DataFrame
+   *
+   * pandas equivalent: [DataFrame.rename](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.rename.html)
+   *
+   * @param {Immutable.Map} columns
+   * @returns {DataFrame}
+   */
+  rename({ columns }: {columns: Immutable.Map}): DataFrame {
+    return new DataFrame(Immutable.OrderedMap(this.columns.map((prevCol) => {
+      const nextCol = columns.get(prevCol);
+      if (typeof nextCol === 'undefined')
+        return [prevCol, this._data.get(prevCol)];
+      return [nextCol, this._data.get(prevCol).rename(nextCol)];
+    })), {index: this.index});
   }
 }
 
