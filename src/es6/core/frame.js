@@ -9,6 +9,7 @@ import Immutable from 'immutable';
 
 import { InvalidAxisError } from './exceptions';
 import NDFrame from './generic';
+import { MultiIndex } from './multiindex';
 import Series from './series';
 // import { Workbook, Sheet } from './structs'; TODO
 import { enumerate, nonMergeColumns, intersectingColumns, parseIndex,
@@ -328,6 +329,8 @@ export default class DataFrame extends NDFrame {
    * df.length;
    */
   get length(): number {
+    if (this._data.keySeq().size === 0)
+      return 0;
     return Math.max(...this._data.keySeq().map(k => this.get(k).length).toArray());
   }
 
@@ -1386,8 +1389,12 @@ export default class DataFrame extends NDFrame {
    *  Name(s) of column(s) to use as the columns for the pivoted DataFrame
    * @param {Array<string>|Immutable.List|string|number} values
    *  Name(s) of column(s) to use as the values for the pivoted DataFrame
+   * @param {string} aggfunc
+   *  Name of aggregation function
    */
-  pivot_table(index: T_PVINDEX, columns: T_PVINDEX, values: T_PVINDEX): DataFrame {
+  pivot_table(index: T_PVINDEX, columns: T_PVINDEX, values: T_PVINDEX,
+    aggfunc: string = 'sum'): any {
+    throw new Error('Not implemented');
     const validateCols = (cols: T_PVINDEX): Immutable.List => {
       if (Array.isArray(cols)) {
         cols.forEach(c => this._assertColumnExists(c));
@@ -1408,7 +1415,44 @@ export default class DataFrame extends NDFrame {
     const columnCols = validateCols(columns);
     const valuesCols = validateCols(values);
 
+    let pivotMap = Immutable.Map({});
 
+    this.index.map((indexVal, idx) => {
+      const key = indexCols.map(c => this.get(c).iloc(idx))
+        .concat(columnCols.map(c => this.get(c).iloc(idx)));
+      let val = this.get(valuesCols.get(0)).iloc(idx);
+      if (pivotMap.has(key)) {
+        switch (aggfunc) {
+          case 'sum':
+            val += pivotMap.get(key);
+            break;
+          default:
+            throw new Error('not implemented for aggs');
+        }
+      }
+
+      // This pivotMap has indexCols.size keys then columnCols.size keys which point to the value
+      pivotMap = pivotMap.set(key, val);
+    });
+
+    let indexMap = Immutable.OrderedMap({});
+    let columnsMap = Immutable.OrderedMap({});
+
+    pivotMap.entrySeq().forEach(([k, v]) => {
+      const indexKey = k.slice(0, indexCols.size - 1);
+      console.log(k);
+      console.log(indexKey);
+      if (indexMap.hasIn(indexKey))
+        indexMap = indexMap.setIn(
+          indexKey, indexMap.getIn(indexKey).concat([k[indexCols.size - 1]]));
+      else indexMap = indexMap.setIn(
+        indexKey, Immutable.List.of(k[indexCols.size - 1]));
+      columnsMap = columnsMap.setIn(k.slice(indexCols.size, k.length));
+    });
+
+    console.log(indexMap);
+    console.log(columnsMap);
+    return pivotMap;
   }
 
   _cumulativeHelper(operation: string = OP_CUMSUM, axis: number = 0): DataFrame {

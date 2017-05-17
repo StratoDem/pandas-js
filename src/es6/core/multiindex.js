@@ -24,7 +24,28 @@ export class Index {
   get values(): T_LIST {
     return this._values;
   }
+
+  /**
+   * Get the index value at the idx
+   *
+   * @param {number} idx
+   * @returns {string|number}
+   */
+  get(idx: number): T_SK {
+    return this._values.get(idx);
+  }
+
+  /**
+   * Get the index value at the idx
+   *
+   * @param {number} idx
+   * @returns {string|number}
+   */
+  iloc(idx: number): T_SK {
+    return this.get(idx);
+  }
 }
+
 
 export class MultiIndex {
   /**

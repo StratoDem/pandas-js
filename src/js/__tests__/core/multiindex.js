@@ -54,6 +54,9 @@ describe('multiindex', function () {
       var multiindex2 = multiindex1.get('2');
       expect(multiindex2).toBeInstanceOf(_multiindex.Index);
       expect(multiindex2.values.toArray()).toEqual([1, 2, 3]);
+
+      var index = multiindex2.get(1);
+      expect(index).toEqual(2);
     });
   });
 });

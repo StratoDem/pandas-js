@@ -981,4 +981,23 @@ describe('frame', () => {
       expect(df2.index.toArray()).toEqual([1, 2, 3]);
     });
   });
+
+  describe('pivot_table', () => {
+    it('pivots', () => {
+      const df = new DataFrame([
+        {a: 1, b: 1, c: 1, d: 3},
+        // {a: 1, b: 1, c: 1, d: 4},
+        {a: 1, b: 1, c: 2, d: 8},
+        {a: 1, b: 2, c: 1, d: 9},
+        {a: 1, b: 2, c: 2, d: 10},
+        {a: 2, b: 1, c: 1, d: 1},
+        {a: 2, b: 1, c: 2, d: 4},
+        {a: 2, b: 2, c: 1, d: 1},
+        {a: 2, b: 2, c: 2, d: 3},
+        {a: 2, b: 2, c: 2, d: 3},
+      ]);
+
+      console.log(df.pivot_table(['a', 'b'], 'c', 'd'));
+    });
+  });
 });

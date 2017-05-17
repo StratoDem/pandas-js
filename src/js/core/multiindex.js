@@ -31,6 +31,32 @@ var Index = exports.Index = function () {
   }
 
   (0, _createClass3.default)(Index, [{
+    key: 'get',
+
+
+    /**
+     * Get the index value at the idx
+     *
+     * @param {number} idx
+     * @returns {string|number}
+     */
+    value: function get(idx) {
+      return this._values.get(idx);
+    }
+
+    /**
+     * Get the index value at the idx
+     *
+     * @param {number} idx
+     * @returns {string|number}
+     */
+
+  }, {
+    key: 'iloc',
+    value: function iloc(idx) {
+      return this.get(idx);
+    }
+  }, {
     key: 'values',
     get: function get() {
       return this._values;

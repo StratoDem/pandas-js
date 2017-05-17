@@ -47,6 +47,8 @@ var _generic = require('./generic');
 
 var _generic2 = _interopRequireDefault(_generic);
 
+var _multiindex = require('./multiindex');
+
 var _series = require('./series');
 
 var _series2 = _interopRequireDefault(_series);
@@ -55,8 +57,11 @@ var _utils = require('./utils');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// import { saveAs } from 'file-saver'; TODO figure out if best way
+/**
+ * DataFrame object
+ */
 
+// $FlowIssue
 var parseArrayToSeriesMap = function parseArrayToSeriesMap(array, index) {
   var dataMap = _immutable2.default.Map({});
 
@@ -88,11 +93,7 @@ var parseArrayToSeriesMap = function parseArrayToSeriesMap(array, index) {
 };
 // import { Workbook, Sheet } from './structs'; TODO
 
-/**
- * DataFrame object
- */
-
-// $FlowIssue
+// import { saveAs } from 'file-saver'; TODO figure out if best way
 
 var DataFrame = function (_NDFrame) {
   (0, _inherits3.default)(DataFrame, _NDFrame);
@@ -1442,6 +1443,8 @@ var DataFrame = function (_NDFrame) {
      *  Name(s) of column(s) to use as the columns for the pivoted DataFrame
      * @param {Array<string>|Immutable.List|string|number} values
      *  Name(s) of column(s) to use as the values for the pivoted DataFrame
+     * @param {string} aggfunc
+     *  Name of aggregation function
      */
 
   }, {
@@ -1449,6 +1452,9 @@ var DataFrame = function (_NDFrame) {
     value: function pivot_table(index, columns, values) {
       var _this16 = this;
 
+      var aggfunc = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'sum';
+
+      throw new Error('Not implemented');
       var validateCols = function validateCols(cols) {
         if (Array.isArray(cols)) {
           cols.forEach(function (c) {
@@ -1472,6 +1478,48 @@ var DataFrame = function (_NDFrame) {
       var indexCols = validateCols(index);
       var columnCols = validateCols(columns);
       var valuesCols = validateCols(values);
+
+      var pivotMap = _immutable2.default.Map({});
+
+      this.index.map(function (indexVal, idx) {
+        var key = indexCols.map(function (c) {
+          return _this16.get(c).iloc(idx);
+        }).concat(columnCols.map(function (c) {
+          return _this16.get(c).iloc(idx);
+        }));
+        var val = _this16.get(valuesCols.get(0)).iloc(idx);
+        if (pivotMap.has(key)) {
+          switch (aggfunc) {
+            case 'sum':
+              val += pivotMap.get(key);
+              break;
+            default:
+              throw new Error('not implemented for aggs');
+          }
+        }
+
+        // This pivotMap has indexCols.size keys then columnCols.size keys which point to the value
+        pivotMap = pivotMap.set(key, val);
+      });
+
+      var indexMap = _immutable2.default.OrderedMap({});
+      var columnsMap = _immutable2.default.OrderedMap({});
+
+      pivotMap.entrySeq().forEach(function (_ref9) {
+        var _ref10 = (0, _slicedToArray3.default)(_ref9, 2),
+            k = _ref10[0],
+            v = _ref10[1];
+
+        var indexKey = k.slice(0, indexCols.size - 1);
+        console.log(k);
+        console.log(indexKey);
+        if (indexMap.hasIn(indexKey)) indexMap = indexMap.setIn(indexKey, indexMap.getIn(indexKey).concat([k[indexCols.size - 1]]));else indexMap = indexMap.setIn(indexKey, _immutable2.default.List.of(k[indexCols.size - 1]));
+        columnsMap = columnsMap.setIn(k.slice(indexCols.size, k.length));
+      });
+
+      console.log(indexMap);
+      console.log(columnsMap);
+      return pivotMap;
     }
   }, {
     key: '_cumulativeHelper',
@@ -1730,10 +1778,10 @@ var DataFrame = function (_NDFrame) {
       this.set_axis(0, (0, _utils.parseIndex)(index, this._data.get(this.columns.get(0)).values));
 
       // noinspection Eslint
-      this._data.mapEntries(function (_ref9) {
-        var _ref10 = (0, _slicedToArray3.default)(_ref9, 2),
-            k = _ref10[0],
-            v = _ref10[1];
+      this._data.mapEntries(function (_ref11) {
+        var _ref12 = (0, _slicedToArray3.default)(_ref11, 2),
+            k = _ref12[0],
+            v = _ref12[1];
 
         // noinspection Eslint
         v.index = _this20.index;
@@ -1759,6 +1807,7 @@ var DataFrame = function (_NDFrame) {
     get: function get() {
       var _this21 = this;
 
+      if (this._data.keySeq().size === 0) return 0;
       return Math.max.apply(Math, (0, _toConsumableArray3.default)(this._data.keySeq().map(function (k) {
         return _this21.get(k).length;
       }).toArray()));
