@@ -327,9 +327,7 @@ export default class DataFrame extends NDFrame {
    * df.length;
    */
   get length(): number {
-    if (this._data.keySeq().size === 0)
-      return 0;
-    return Math.max(...this._data.keySeq().map(k => this.get(k).length).toArray());
+    return Math.max(0, ...this.columns.map(k => this.get(k).length).toArray());
   }
 
   /**

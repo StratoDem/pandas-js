@@ -1828,10 +1828,9 @@ var DataFrame = function (_NDFrame) {
     get: function get() {
       var _this22 = this;
 
-      if (this._data.keySeq().size === 0) return 0;
-      return Math.max.apply(Math, (0, _toConsumableArray3.default)(this._data.keySeq().map(function (k) {
+      return Math.max.apply(Math, [0].concat((0, _toConsumableArray3.default)(this.columns.map(function (k) {
         return _this22.get(k).length;
-      }).toArray()));
+      }).toArray())));
     }
   }]);
   return DataFrame;

@@ -1014,4 +1014,19 @@ describe('frame', () => {
       expect(df2.get('q').name).toEqual('q');
     });
   });
+
+  describe('length', () => {
+    it('Has length zero when empty DataFrame', () => {
+      const df = new DataFrame();
+      expect(df.length).toEqual(0);
+
+      const df2 = new DataFrame([]);
+      expect(df2.length).toEqual(0);
+    });
+
+    it('Estimates non-zero length properly', () => {
+      const df = new DataFrame(Immutable.Map({x: new Series([1, 2, 5, 4, 3])}));
+      expect(df.length).toEqual(5);
+    });
+  });
 });

@@ -1012,6 +1012,21 @@ describe('frame', function () {
       expect(df2.get('q').name).toEqual('q');
     });
   });
+
+  describe('length', function () {
+    it('Has length zero when empty DataFrame', function () {
+      var df = new _frame2.default();
+      expect(df.length).toEqual(0);
+
+      var df2 = new _frame2.default([]);
+      expect(df2.length).toEqual(0);
+    });
+
+    it('Estimates non-zero length properly', function () {
+      var df = new _frame2.default(_immutable2.default.Map({ x: new _series2.default([1, 2, 5, 4, 3]) }));
+      expect(df.length).toEqual(5);
+    });
+  });
 });
 
 //# sourceMappingURL=frame.js.map
