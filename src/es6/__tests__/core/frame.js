@@ -981,4 +981,52 @@ describe('frame', () => {
       expect(df2.index.toArray()).toEqual([1, 2, 3]);
     });
   });
+
+  describe('pivot_table', () => {
+    it('pivots', () => {
+      const df = new DataFrame([
+        {a: 1, b: 1, c: 1, d: 3},
+        // {a: 1, b: 1, c: 1, d: 4},
+        {a: 1, b: 1, c: 2, d: 8},
+        {a: 1, b: 2, c: 1, d: 9},
+        {a: 1, b: 2, c: 2, d: 10},
+        {a: 2, b: 1, c: 1, d: 1},
+        {a: 2, b: 1, c: 2, d: 4},
+        {a: 2, b: 2, c: 1, d: 1},
+        {a: 2, b: 2, c: 2, d: 3},
+        {a: 2, b: 2, c: 2, d: 3},
+      ]);
+
+      console.log(df.pivot_table(['a', 'b'], 'c', 'd'));
+    });
+  });
+
+  describe('rename', () => {
+    it('renames one Series in the DataFrame', () => {
+      const df = new DataFrame(
+        [{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [1, 2, 3]});
+      const df2 = df.rename({columns: Immutable.Map({x: 'q'})});
+
+      expect(df.columns.toArray()).toEqual(['x', 'y']);
+      expect(df2.columns.toArray()).toEqual(['q', 'y']);
+      expect(df2.get('q').values.toArray()).toEqual([1, 2, 3]);
+      expect(df2.get('q').index.toArray()).toEqual([1, 2, 3]);
+      expect(df2.get('q').name).toEqual('q');
+    });
+  });
+
+  describe('length', () => {
+    it('Has length zero when empty DataFrame', () => {
+      const df = new DataFrame();
+      expect(df.length).toEqual(0);
+
+      const df2 = new DataFrame([]);
+      expect(df2.length).toEqual(0);
+    });
+
+    it('Estimates non-zero length properly', () => {
+      const df = new DataFrame(Immutable.Map({x: new Series([1, 2, 5, 4, 3])}));
+      expect(df.length).toEqual(5);
+    });
+  });
 });

@@ -1,5 +1,12 @@
 # Change Log
 
+0.1.28
+### Added
+- `rename` for `DataFrame` and `Series`
+
+### Bugfix
+- `length` previously returned -INFINITY for empty `DataFrame`
+
 0.1.27
 ### Added
 - `cumsum`, `cummul`, `cummax` and `cummin` for `DataFrame` and `Series`

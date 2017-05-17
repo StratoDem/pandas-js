@@ -4,7 +4,6 @@
  * numpy.ndarray as the values
  */
 
-// $FlowIssue
 import Immutable from 'immutable';
 
 import NDFrame from './generic';
@@ -59,7 +58,7 @@ export default class Series extends NDFrame {
       this._dtype = arrayToDType([data]);
     }
 
-    this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
+    this._name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
 
     this.set_axis(0, parseIndex(kwargs.index, this.values));
     this._setup_axes(Immutable.List.of(0));
@@ -288,6 +287,15 @@ export default class Series extends NDFrame {
   }
 
   /**
+   * Return the name of the `Series`
+   *
+   * @returns {string}
+   */
+  get name(): string {
+    return this._name;
+  }
+
+  /**
    * Convert the series to the desired type
    *
    * pandas equivalent: [Series.astype](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.astype.html)
@@ -488,7 +496,7 @@ export default class Series extends NDFrame {
       return this.map(v => v + val);
     else if (val instanceof Series) // $FlowIssue TODO
       return this.map((v, idx) => v + val.iloc(idx));
-    else if (Array.isArray(val)) // $FlowIssue TODO
+    else if (Array.isArray(val))
       return this.map((v, idx) => v + val[idx]);
     else if (val instanceof Immutable.List) // $FlowIssue TODO
       return this.map((v, idx) => v + val.get(idx));
@@ -845,11 +853,11 @@ export default class Series extends NDFrame {
     this.index.forEach((idx1) => {
       if (!(seriesAlignment.has(idx1))) {
         seriesAlignment = seriesAlignment
-          .set(idx1, Immutable.Map({ // $FlowIssue TODO
+          .set(idx1, Immutable.Map({
             first: Immutable.List.of(this.iloc(idx1)),
             second: Immutable.List([]),
           }));
-      } else { // $FlowIssue TODO
+      } else {
         seriesAlignment = seriesAlignment.updateIn([idx1, 'first'], l => l.concat(this.iloc(idx1)));
       }
     });
@@ -858,11 +866,11 @@ export default class Series extends NDFrame {
       if (!(seriesAlignment.has(idx2))) {
         seriesAlignment = seriesAlignment
           .set(idx2, Immutable.Map({
-            first: Immutable.List([]), // $FlowIssue TODO
+            first: Immutable.List([]),
             second: Immutable.List.of(series.iloc(idx2)),
           }));
       } else {
-        seriesAlignment = seriesAlignment.updateIn([idx2, 'second'], // $FlowIssue TODO
+        seriesAlignment = seriesAlignment.updateIn([idx2, 'second'],
           l => l.concat(series.iloc(idx2)));
       }
     });
@@ -1300,5 +1308,22 @@ export default class Series extends NDFrame {
         // $FlowIssue TODO
         throw new TypeError(`orient must be in ${ALLOWED_ORIENT}`);
     }
+  }
+
+  /**
+   * Rename the `Series` and return a new `Series`
+   *
+   * pandas equivalent: [Series.rename](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.rename.html)
+   *
+   * @param {string} name
+   *
+   * @example
+   * const ds = new Series([1, 2, 3], {name: 'Test name'});
+   * ds.rename('New test name');
+   * // returns 'New test name'
+   * ds.name;
+   */
+  rename(name: string): Series {
+    return new Series(this._values, {name, index: this.index});
   }
 }

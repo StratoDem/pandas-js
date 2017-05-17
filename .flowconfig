@@ -1,6 +1,13 @@
 [options]
 unsafe.enable_getters_and_setters=true
 suppress_comment=.*\\$FlowIssue
+module.system.node.resolve_dirname=src
+module.system.node.resolve_dirname=node_modules
 
 [ignore]
-.*\.json
+.*/.json
+.*/__tests__/.*
+.*/node_modules/fbjs/.*
+
+[libs]
+node_modules/immutable/dist/immutable.js.flow

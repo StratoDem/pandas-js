@@ -989,6 +989,44 @@ describe('frame', function () {
       expect(df2.index.toArray()).toEqual([1, 2, 3]);
     });
   });
+
+  describe('pivot_table', function () {
+    it('pivots', function () {
+      var df = new _frame2.default([{ a: 1, b: 1, c: 1, d: 3 },
+      // {a: 1, b: 1, c: 1, d: 4},
+      { a: 1, b: 1, c: 2, d: 8 }, { a: 1, b: 2, c: 1, d: 9 }, { a: 1, b: 2, c: 2, d: 10 }, { a: 2, b: 1, c: 1, d: 1 }, { a: 2, b: 1, c: 2, d: 4 }, { a: 2, b: 2, c: 1, d: 1 }, { a: 2, b: 2, c: 2, d: 3 }, { a: 2, b: 2, c: 2, d: 3 }]);
+
+      console.log(df.pivot_table(['a', 'b'], 'c', 'd'));
+    });
+  });
+
+  describe('rename', function () {
+    it('renames one Series in the DataFrame', function () {
+      var df = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
+      var df2 = df.rename({ columns: _immutable2.default.Map({ x: 'q' }) });
+
+      expect(df.columns.toArray()).toEqual(['x', 'y']);
+      expect(df2.columns.toArray()).toEqual(['q', 'y']);
+      expect(df2.get('q').values.toArray()).toEqual([1, 2, 3]);
+      expect(df2.get('q').index.toArray()).toEqual([1, 2, 3]);
+      expect(df2.get('q').name).toEqual('q');
+    });
+  });
+
+  describe('length', function () {
+    it('Has length zero when empty DataFrame', function () {
+      var df = new _frame2.default();
+      expect(df.length).toEqual(0);
+
+      var df2 = new _frame2.default([]);
+      expect(df2.length).toEqual(0);
+    });
+
+    it('Estimates non-zero length properly', function () {
+      var df = new _frame2.default(_immutable2.default.Map({ x: new _series2.default([1, 2, 5, 4, 3]) }));
+      expect(df.length).toEqual(5);
+    });
+  });
 });
 
 //# sourceMappingURL=frame.js.map

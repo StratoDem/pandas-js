@@ -37,9 +37,7 @@ describe('series', () => {
       expect(ds2).toBeInstanceOf(Series);
       expect(ds2.values.toArray()).toEqual([1, 2, 3, 4]);
 
-      ds2.name = 'test';
       expect(ds1.name).toEqual('Test name');
-      expect(ds2.name).toEqual('test');
 
       ds2.index = [1, 2, 3, 4];
       expect(ds1.index.toArray()).toEqual([2, 3, 4, 5]);
@@ -50,6 +48,14 @@ describe('series', () => {
       const ds = new Series([1, 2, 3, 4, 5]);
       expect(ds.shape).toBeInstanceOf(Immutable.Seq);
       expect(ds.shape.toArray()).toEqual([5]);
+    });
+
+    it('rename', () => {
+      const ds = new Series([1, 2, 3], {name: 'test name'});
+      expect(ds.name).toEqual('test name');
+      const ds2 = ds.rename('test name 2');
+      expect(ds.name).toEqual('test name');
+      expect(ds2.name).toEqual('test name 2');
     });
 
     describe('astype', () => {
