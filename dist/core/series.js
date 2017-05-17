@@ -62,7 +62,7 @@ var Series = function (_NDFrame) {
       _this._dtype = (0, _dtype.arrayToDType)([data]);
     }
 
-    _this.name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
+    _this._name = typeof kwargs.name !== 'undefined' ? kwargs.name : '';
 
     _this.set_axis(0, (0, _utils.parseIndex)(kwargs.index, _this.values));
     _this._setup_axes(_immutable2.default.List.of(0));
@@ -245,8 +245,8 @@ var Series = function (_NDFrame) {
         });else if (val instanceof Series) return this.map(function (v, idx) {
           return v + val.iloc(idx);
         });else if (Array.isArray(val)) return this.map(function (v, idx) {
-          return v + val[idx];
-        });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
+        return v + val[idx];
+      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
           return v + val.get(idx);
         });
 
@@ -628,6 +628,11 @@ var Series = function (_NDFrame) {
       }
     }
   }, {
+    key: 'rename',
+    value: function rename(name) {
+      return new Series(this._values, { name: name, index: this.index });
+    }
+  }, {
     key: 'kwargs',
     get: function get() {
       return {
@@ -657,6 +662,11 @@ var Series = function (_NDFrame) {
     key: 'values',
     get: function get() {
       return (0, _get3.default)(Series.prototype.__proto__ || Object.getPrototypeOf(Series.prototype), 'values', this);
+    }
+  }, {
+    key: 'name',
+    get: function get() {
+      return this._name;
     }
   }]);
   return Series;
