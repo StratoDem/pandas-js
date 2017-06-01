@@ -8,6 +8,10 @@ Python [pandas](http://pandas.pydata.org/) library. It relies on
 objects in pandas.js are the [`Series`](#series) and the
 [`DataFrame`](#dataframe)
 
+## Documentation
+
+See [the docs](https://stratodem.github.io/pandas.js-docs/)
+
 ## Installation and use
 ```
 $ npm install pandas-js
@@ -93,10 +97,6 @@ df.filter([false, true]);
 // Returns DataFrame(Immutable.Map({x: Series([2]), y: Series([3]));
 df.filter(Immutable.Map([false, true]));
 ```
-
-## Documentation
-
-See [the docs](https://stratodem.github.io/pandas.js-docs/)
 
 ## Development
 
