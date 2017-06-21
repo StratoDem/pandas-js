@@ -11,6 +11,7 @@ objects in pandas.js are the [`Series`](#series) and the
 ## Documentation
 
 See [the docs](https://stratodem.github.io/pandas.js-docs/)
+See also [this post](https://insights.stratodem.com/pandas-immutable-js-2d9bf010639b) on use for optimizing React logic.
 
 ## Installation and use
 ```
