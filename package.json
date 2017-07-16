@@ -17,32 +17,32 @@
     "src/"
   ],
   "dependencies": {
-    "babel-plugin-transform-runtime": "^6.15.0",
     "immutable": "^3.8.1"
   },
   "devDependencies": {
-    "babel-cli": "^6.18.0",
-    "babel-eslint": "^7.1.1",
-    "babel-jest": "^19.0.0",
-    "babel-loader": "^6.2.9",
+    "babel-cli": "^6.24.1",
+    "babel-eslint": "^7.2.3",
+    "babel-jest": "^20.0.3",
+    "babel-loader": "^7.1.1",
     "babel-plugin-transform-decorators-legacy": "^1.3.4",
     "babel-plugin-transform-flow-strip-types": "^6.22.0",
-    "babel-plugin-transform-react-jsx": "^6.8.0",
-    "babel-plugin-transform-runtime": "^6.15.0",
-    "babel-preset-es2015": "^6.18.0",
-    "babel-preset-react": "^6.16.0",
-    "babel-preset-stage-2": "^6.18.0",
-    "eslint": "^3.12.0",
-    "eslint-config-airbnb": "^14.1.0",
-    "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-jsx-a11y": "^4.0.0",
-    "eslint-plugin-react": "^6.8.0",
-    "flow-bin": "^0.41.0",
-    "flow-remove-types": "1.2.0",
-    "jest": "^19.0.2",
-    "jest-cli": "*",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb": "^15.0.2",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-jsx-a11y": "^5.1.0",
+    "eslint-plugin-react": "^7.1.0",
+    "flow-bin": "^0.50.0",
+    "flow-remove-types": "^1.2.1",
+    "jest": "^20.0.4",
+    "jest-cli": "^20.0.4",
     "jsdoc-parse": "^3.0.0",
-    "jsdoc-to-markdown": "^3.0.0"
+    "jsdoc-to-markdown": "^3.0.0",
+    "npm-check-updates": "^2.12.1"
   },
   "repository": {
     "type": "git",
@@ -60,7 +60,7 @@
       "bower_components",
       "shared"
     ],
-    "testPathDirs": [
+    "roots": [
       "src/js"
     ]
   },
@@ -75,6 +75,7 @@
   "homepage": "https://github.com/StratoDem/pandas-js",
   "scripts": {
     "build": "babel src/es6 --out-dir dist --no-comments",
+    "check_updates": "./node_modules/npm-check-updates/bin/npm-check-updates",
     "test": "jest --verbose --runInBand",
     "version_patch": "npm version patch",
     "_publish": "npm publish"

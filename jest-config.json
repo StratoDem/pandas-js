@@ -10,7 +10,7 @@
     "bower_components",
     "shared"
   ],
-  "testPathDirs": [
+  "roots": [
     "src/js"
   ]
 }
