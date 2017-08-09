@@ -1,5 +1,5 @@
-// @flow
 /**
+ * @flow
  * A pandas.Series one-dimensional array with axis labels, with an Immutable.List instead of
  * numpy.ndarray as the values
  */
@@ -12,10 +12,8 @@ import {enumerate, sum, parseIndex, round10,
 import {DType, arrayToDType} from './dtype';
 
 
-declare type T_MF = (string, number) => number|(number, number) => number
-  |(string, number) => string;
-declare type T_BF = (number, number) => boolean|(number, string) => boolean
-  |(string, string) => boolean|(string, number) => boolean
+declare type T_MF = (value: number, idx: number) => number | string;
+declare type T_BF = (value1: number, value2: number) => boolean;
 
 
 export default class Series extends NDFrame {
@@ -349,7 +347,7 @@ export default class Series extends NDFrame {
    * ds.iloc(1)      // 2
    * ds.iloc(1, 3)   // Series([2, 3], {name: 'New Series', index: [1, 2]})
    */
-  iloc(startVal: number, endVal: ?number): Series|number {
+  iloc(startVal: number, endVal: ?number): Series | number | string {
     if (typeof endVal === 'undefined')
       return this.values.get(startVal);
 
@@ -474,12 +472,25 @@ export default class Series extends NDFrame {
     return new Series(this.values.map(v => Math.abs(v)), {name: this.name, index: this.index});
   }
 
+  _combineOp(other: any, op: (a: number, b: number) => number, opName: string = ''): Series {
+    if (typeof other === 'number')
+      return this.map((val: number) => op(val, other));
+    else if (other instanceof Series)
+      return this.map((val: number, idx: number) => op(val, other.iloc(idx)));
+    else if (Array.isArray(other))
+      return this.map((val: number, idx: number) => op(val, other[idx]));
+    else if (other instanceof Immutable.List)
+      return this.map((val: number, idx: number) => op(val, other.get(idx)));
+
+    throw new Error(`${opName} only supports numbers, Arrays, Immutable List and pandas.Series`);
+  }
+
   /**
    * Add another Iterable, `Series`, or number to the `Series`
    *
    * pandas equivalent: [Series.add](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.add.html)
    *
-   * @param {Iterable|Series|number} val
+   * @param {Iterable|Series|number} other
    *  Value to add to the `Series`
    *
    * @returns {Series}
@@ -491,17 +502,8 @@ export default class Series extends NDFrame {
    * ds.add([2, 3, 4])                   // Series([3, 5, 7], {name: 'New Series'})
    * ds.add(Immutable.List([2, 3, 4]))   // Series([3, 5, 7], {name: 'New Series'})
    */
-  add(val: any): Series {
-    if (typeof val === 'number') // $FlowIssue TODO
-      return this.map(v => v + val);
-    else if (val instanceof Series) // $FlowIssue TODO
-      return this.map((v, idx) => v + val.iloc(idx));
-    else if (Array.isArray(val))
-      return this.map((v, idx) => v + val[idx]);
-    else if (val instanceof Immutable.List) // $FlowIssue TODO
-      return this.map((v, idx) => v + val.get(idx));
-
-    throw new Error('add only supports numbers, Arrays, Immutable List and pandas.Series');
+  add(other: any): Series {
+    return this._combineOp(other, (a: number, b: number) => a + b, 'add');
   }
 
   /**
@@ -509,7 +511,7 @@ export default class Series extends NDFrame {
    *
    * pandas equivalent: [Series.sub](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.sub.html)
    *
-   * @param {Iterable|Series|number} val
+   * @param {Iterable|Series|number} other
    *  Value to subtract from the `Series`
    *
    * @returns {Series}
@@ -522,17 +524,8 @@ export default class Series extends NDFrame {
    * ds.sub([2, 3, 4])                   // Series([-1, -1, -1], {name: 'New Series'})
    * ds.sub(Immutable.List([2, 3, 4]))   // Series([-1, -1, -1], {name: 'New Series'})
    */
-  sub(val: any): Series {
-    if (typeof val === 'number') // $FlowIssue TODO
-      return this.map(v => v - val);
-    else if (val instanceof Series) // $FlowIssue TODO
-      return this.map((v, idx) => v - val.iloc(idx));
-    else if (Array.isArray(val)) // $FlowIssue TODO
-      return this.map((v, idx) => v - val[idx]);
-    else if (val instanceof Immutable.List) // $FlowIssue TODO
-      return this.map((v, idx) => v - val.get(idx));
-
-    throw new Error('sub only supports numbers, Arrays, Immutable List and pandas.Series');
+  sub(other: any): Series {
+    return this._combineOp(other, (a: number, b: number) => a - b, 'sub');
   }
 
   /**
@@ -540,7 +533,7 @@ export default class Series extends NDFrame {
    *
    * pandas equivalent: [Series.mul](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.mul.html)
    *
-   * @param {Iterable|Series|number} val
+   * @param {Iterable|Series|number} other
    *  Value to multiply by the `Series`
    *
    * @returns {Series}
@@ -553,17 +546,8 @@ export default class Series extends NDFrame {
    * ds.mul([2, 3, 4])                   // Series([2, 6, 12], {name: 'New Series'})
    * ds.mul(Immutable.List([2, 3, 4]))   // Series([2, 6, 12], {name: 'New Series'})
    */
-  mul(val: any): Series {
-    if (typeof val === 'number') // $FlowIssue TODO
-      return this.map(v => v * val);
-    else if (val instanceof Series) // $FlowIssue TODO
-      return this.map((v, idx) => v * val.iloc(idx));
-    else if (Array.isArray(val)) // $FlowIssue TODO
-      return this.map((v, idx) => v * val[idx]);
-    else if (val instanceof Immutable.List) // $FlowIssue TODO
-      return this.map((v, idx) => v * val.get(idx));
-
-    throw new Error('mul only supports numbers, Arrays, Immutable List and pandas.Series');
+  mul(other: any): Series {
+    return this._combineOp(other, (a: number, b: number) => a * b);
   }
 
   /**
@@ -571,7 +555,7 @@ export default class Series extends NDFrame {
    *
    * pandas equivalent: [Series.multiply](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.multiply.html)
    *
-   * @param {Iterable|Series|number} val
+   * @param {Iterable|Series|number} other
    *  Value to multiply by the `Series`
    *
    * @returns {Series}
@@ -584,8 +568,8 @@ export default class Series extends NDFrame {
    * ds.multiply([2, 3, 4])                   // Series([2, 6, 12], {name: 'New Series'})
    * ds.multiply(Immutable.List([2, 3, 4]))   // Series([2, 6, 12], {name: 'New Series'})
    */
-  multiply(val: any): Series {
-    return this.mul(val);
+  multiply(other: any): Series {
+    return this.mul(other);
   }
 
   /**
@@ -593,7 +577,7 @@ export default class Series extends NDFrame {
    *
    * pandas equivalent: [Series.div](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.div.html)
    *
-   * @param {Iterable|Series|number} val
+   * @param {Iterable|Series|number} other
    *  Value by which to divide the `Series`
    *
    * @returns {Series}
@@ -606,18 +590,8 @@ export default class Series extends NDFrame {
    * ds.div([4, 2, 1])                   // Series([0.25, 1, 3], {name: 'New Series'})
    * ds.div(Immutable.List([4, 2, 1]))   // Series([0.25, 1, 3], {name: 'New Series'})
    */
-  div(val: any): Series {
-    // TODO roll this up into one method above (div, mul, add, etc.)
-    if (typeof val === 'number') // $FlowIssue TODO
-      return this.map(v => v / val);
-    else if (val instanceof Series) // $FlowIssue TODO
-      return this.map((v, idx) => v / val.iloc(idx));
-    else if (Array.isArray(val)) // $FlowIssue TODO
-      return this.map((v, idx) => v / val[idx]);
-    else if (val instanceof Immutable.List) // $FlowIssue TODO
-      return this.map((v, idx) => v / val.get(idx));
-
-    throw new Error('div only supports numbers, Arrays, Immutable List and pandas.Series');
+  div(other: any): Series {
+    return this._combineOp(other, (a: number, b: number) => a / b, 'div');
   }
 
   /**
@@ -625,7 +599,7 @@ export default class Series extends NDFrame {
    *
    * pandas equivalent: [Series.divide](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.divide.html)
    *
-   * @param {Iterable|Series|number} val
+   * @param {Iterable|Series|number} other
    *  Value by which to divide the `Series`
    *
    * @returns {Series}
@@ -638,8 +612,8 @@ export default class Series extends NDFrame {
    * ds.divide([4, 2, 1])                   // Series([0.25, 1, 3], {name: 'New Series'})
    * ds.divide(Immutable.List([4, 2, 1]))   // Series([0.25, 1, 3], {name: 'New Series'})
    */
-  divide(val: any): Series {
-    return this.div(val);
+  divide(other: any): Series {
+    return this.div(other);
   }
 
   /**
@@ -779,23 +753,23 @@ export default class Series extends NDFrame {
   }
 
   _sort_ascending(valueA: number, valueB: number) {
-    const valA: number|string = this.iloc(valueA);
-    const valB: number|string = this.iloc(valueB);
+    const valA = this.iloc(valueA);
+    const valB = this.iloc(valueB);
 
-    // $FlowIssue TODO
+    // $FlowIssue
     if (valA < valB) return -1;
-    // $FlowIssue TODO
+    // $FlowIssue
     else if (valA > valB) return 1;
     return 0;
   }
 
   _sort_descending(valueA: number, valueB: number) {
-    const valA: number|string = this.iloc(valueA);
-    const valB: number|string = this.iloc(valueB);
+    const valA = this.iloc(valueA);
+    const valB = this.iloc(valueB);
 
-    // $FlowIssue TODO
+    // $FlowIssue
     if (valA > valB) return -1;
-    // $FlowIssue TODO
+    // $FlowIssue
     else if (valA < valB) return 1;
     return 0;
   }
@@ -1323,7 +1297,7 @@ export default class Series extends NDFrame {
    * // returns 'New test name'
    * ds.name;
    */
-  rename(name: string): Series {
+  rename(name: string | number): Series {
     return new Series(this._values, {name, index: this.index});
   }
 }

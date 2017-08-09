@@ -17,9 +17,10 @@ import { enumerate, nonMergeColumns, intersectingColumns, parseIndex,
 
 declare type T_LIST = Immutable.List
 declare type T_MAP = Immutable.Map;
-declare type T_SK = string|number;
-declare type T_COTHER = Array<T_SK>|T_LIST|Series|DataFrame|T_SK;
-declare type T_PVINDEX = Array<T_SK>|T_LIST|T_SK;
+declare type T_SK = string | number;
+// eslint-disable-next-line
+declare type T_COTHER = Array<T_SK> | T_LIST | Series | DataFrame | T_SK;
+declare type T_PVINDEX = Array<T_SK> | T_LIST | T_SK;
 
 
 const parseArrayToSeriesMap = (array: Array<Object>, index: T_LIST): T_MAP => {
@@ -75,7 +76,7 @@ export default class DataFrame extends NDFrame {
    * // 2  3  |  4
    * df.toString();
    */
-  constructor(data: Array<Object>|Object, kwargs: Object = {}) {
+  constructor(data: Array<Object> | Object, kwargs: Object = {}) {
     super(data, kwargs);
 
     if (Array.isArray(data)) {
@@ -86,13 +87,15 @@ export default class DataFrame extends NDFrame {
       this._data = Immutable.OrderedMap(data.keySeq().map((k) => {
         if (data instanceof Immutable.Map && !(data.get(k) instanceof Series))
           throw new Error('Map must have [column, series] key-value pairs');
-        
-        if (data instanceof Immutable.Map) return [k, data.get(k).copy()];
+
+        if (data instanceof Immutable.Map)
+          return [k, data.get(k).copy()];
+
         throw new Error('Data is not Map');
       }));
       this.set_axis(1, this._data.keySeq());
       this.set_axis(0, this._data.get(this.columns.get(0)).index);
-    } else if (data instanceof Immutable.List) {  // List of List of row values
+    } else if (data instanceof Immutable.List) { // List of List of row values
       let columns;
       if (Array.isArray(kwargs.columns) || kwargs.columns instanceof Immutable.Seq)
         columns = Immutable.List(kwargs.columns);
@@ -103,7 +106,7 @@ export default class DataFrame extends NDFrame {
       else
         throw new Error('Invalid columns');
 
-      this._values = data;  // Cache the values since we're in List of List or row data already
+      this._values = data; // Cache the values since we're in List of List or row data already
       this._data = Immutable.OrderedMap(columns.map((c, colIdx) =>
         ([c, new Series(data.map(row => row.get(colIdx)), {index: kwargs.index})])));
 
@@ -257,14 +260,14 @@ export default class DataFrame extends NDFrame {
    * // Returns Seq ['a', 'b']
    * df.columns;
    */
-  set columns(columns: Immutable.Seq|Array<T_SK>) {
+  set columns(columns: Immutable.Seq<T_SK> | Array<T_SK>) {
     if (!Array.isArray(columns) || columns.length !== this.columns.size)
       throw new Error('Columns must be array of same dimension');
 
     const nextData = {};
-    columns.forEach((k, idx) => {
-      const prevColumn = this.columns.get(idx);
-      const prevSeries = this.get(prevColumn);
+    columns.forEach((k, idx: number) => {
+      const prevColumn: T_SK = this.columns.get(idx);
+      const prevSeries: Series = this.get(prevColumn);
 
       nextData[k] = prevSeries.rename(k);
     });
@@ -304,7 +307,7 @@ export default class DataFrame extends NDFrame {
    * // Returns List [2, 3, 4, 5]
    * df.index;
    */
-  set index(index: T_LIST|Array<T_SK>) {
+  set index(index: Immutable.List<T_SK> | Array<T_SK>) {
     this.set_axis(0, parseIndex(index, this._data.get(this.columns.get(0)).values));
 
     // noinspection Eslint
@@ -343,7 +346,7 @@ export default class DataFrame extends NDFrame {
    * // Returns DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}]);
    * df.set('y', new Series([2, 3, 4]));
    */
-  set(column: T_SK, series: Series|T_LIST|Array<T_SK>): DataFrame {
+  set(column: T_SK, series: Series | Immutable.List<T_SK> | Array<T_SK>): DataFrame {
     if (series instanceof Series)
       return new DataFrame(this._data.set(column, series), this.kwargs);
     else if (series instanceof Immutable.List || Array.isArray(series))
@@ -425,7 +428,7 @@ export default class DataFrame extends NDFrame {
    * // Returns DataFrame([{y: 2}, {y: 3}, {y: 4}], {index: [0, 1, 2]})
    * df.iloc(1);
    */
-  iloc(rowIdx: number|[number, number], colIdx?: number|[number, number]): any {
+  iloc(rowIdx: number | [number, number], colIdx?: number | [number, number]): any {
     if (typeof rowIdx === 'number') {
       if (typeof colIdx === 'number') {
         if (colIdx < 0 || colIdx >= this.shape[1])
@@ -565,13 +568,14 @@ export default class DataFrame extends NDFrame {
    * // Returns DataFrame([{y: 2}, {y: 3}, {y: 4}])
    * df.get(['y']);
    */
-  get(columns: T_SK|Array<T_SK>): Series|DataFrame {
+  get(columns: T_SK | Array<T_SK>): Series | DataFrame {
     if ((typeof columns === 'string' || typeof columns === 'number') && this.columnExists(columns))
       return this._data.get(columns);
     else if (Array.isArray(columns) || columns instanceof Immutable.List
       || columns instanceof Immutable.Seq) {
       columns.forEach((c) => {
-        if (!this.columnExists(c)) throw new Error(`KeyError: ${c} not found`);});
+        if (!this.columnExists(c)) throw new Error(`KeyError: ${c} not found`);
+      });
       return new DataFrame(
         Immutable.Map(columns.map(c => ([c, this.get(c)]))), this.kwargs);
     }
@@ -784,7 +788,8 @@ export default class DataFrame extends NDFrame {
    * // 2  3  |  4  |  5
    * df.merge(df2, ['x'], 'inner');
    */
-  merge(df: DataFrame, on: Array<string|number>, how: string = 'inner'): DataFrame {
+  merge(df: DataFrame, on: Array<string | number>, how: string = 'inner'): DataFrame {
+    // eslint-disable-next-line
     return mergeDataFrame(this, df, on, how);
   }
 
@@ -835,9 +840,9 @@ export default class DataFrame extends NDFrame {
    *
    * @return {Workbook}
    *
-   */
-  to_excel(excel_writer: string, sheetName: string = 'Sheet1',
-           download:bool = false, kwargs: Object = {index: true}) {
+   */ // eslint-disable-next-line
+  to_excel(excel_writer: string, sheetName: string = 'Sheet1', // eslint-disable-next-line
+           download: boolean = false, kwargs: Object = {index: true}) {
     throw new Error('to_excel not yet implemented');
     // let wb;
     //
@@ -846,7 +851,8 @@ export default class DataFrame extends NDFrame {
     //     const colRow = Immutable.List.of('').concat(this.columns.toList());
     //     return new Sheet(
     //       Immutable.List.of(colRow)
-    //         .concat(this.values.map((v, idx) => Immutable.List.of(this.index.get(idx)).concat(v))));
+    //         .concat(this.values.map((v, idx) =>
+    //  Immutable.List.of(this.index.get(idx)).concat(v))));
     //   }
     //
     //   return new Sheet(Immutable.List.of(this.columns.toList()).concat(this.values));
@@ -1034,7 +1040,7 @@ export default class DataFrame extends NDFrame {
         Immutable.Range(0, this.length).map(idx =>
           this.values.get(idx).reduce((s, k) =>
             s + (k / this.columns.size), 0)).toList(),
-          {index: this.index});
+        {index: this.index});
     }
 
     throw new InvalidAxisError();
@@ -1147,7 +1153,7 @@ export default class DataFrame extends NDFrame {
 
     // Take upper triangle and fill in lower triangle
     for (let idx1 = 0; idx1 < this.columns.size; idx1 += 1) {
-        const col1 = this.columns.get(idx1);
+      const col1 = this.columns.get(idx1);
       for (let idx2 = idx1 + 1; idx2 < this.columns.size; idx2 += 1) {
         const col2 = this.columns.get(idx2);
         valArray[idx2][col1] = valArray[idx1][col2];
@@ -1310,7 +1316,7 @@ export default class DataFrame extends NDFrame {
    * // Returns DataFrame(Immutable.Map({x: Series([2]), y: Series([3]));
    * df.filter(Immutable.Map([false, true]));
    */
-  filter(iterBool: Array<boolean>|Series|T_LIST): DataFrame {
+  filter(iterBool: Array<boolean> | Series | Immutable.List<boolean>): DataFrame {
     if (!Array.isArray(iterBool)
       && !(iterBool instanceof Immutable.List)
       && !(iterBool instanceof Series))
@@ -1365,12 +1371,16 @@ export default class DataFrame extends NDFrame {
     const sortedColumns = uniqueCols.sort();
 
     const data = Immutable.OrderedMap(
-      sortedColumns.map((col: T_SK) => {
-        return [col, new Series(sortedIndex.map((idx) => {
-          const val = uniqueVals.getIn([idx, col]);
-          return typeof val === 'undefined' ? null : val;
-        }), {name: col, index: sortedIndex})]
-      }));
+      sortedColumns.map((col: T_SK) =>
+        ([
+          col,
+          new Series(
+            sortedIndex.map((idx) => {
+              const val = uniqueVals.getIn([idx, col]);
+              return typeof val === 'undefined' ? null : val;
+            }),
+            {name: col, index: sortedIndex}),
+        ])));
 
     return new DataFrame(data, {index: sortedIndex});
   }
@@ -1388,79 +1398,81 @@ export default class DataFrame extends NDFrame {
    * @param {string} aggfunc
    *  Name of aggregation function
    */
-  pivot_table(index: T_PVINDEX, columns: T_PVINDEX, values: T_PVINDEX,
-    aggfunc: string = 'sum'): any {
+  // eslint-disable-next-line
+  pivot_table(index: T_PVINDEX, columns: T_PVINDEX, values: T_PVINDEX, // eslint-disable-next-line
+              aggfunc: string = 'sum'): any {
     throw new Error('Not implemented');
-    const validateCols = (cols: T_PVINDEX): Immutable.List => {
-      if (Array.isArray(cols)) {
-        cols.forEach(c => this._assertColumnExists(c));
-        return Immutable.List(cols);
-      } else if (cols instanceof Immutable.List) {
-        cols.forEach(c => this._assertColumnExists(c));
-        return cols;
-      } else if (typeof cols === 'string') {
-        this._assertColumnExists(cols);
-        return Immutable.List.of(cols);
-      }
-
-      throw new TypeError('cols must be Array, Immutable.List, or string');
-    };
-
-    // Validate types and cast to Immutable.List of column names
-    const indexCols = validateCols(index);
-    const columnCols = validateCols(columns);
-    const valuesCols = validateCols(values);
-
-    let pivotMap = Immutable.Map({});
-
-    this.index.map((indexVal, idx) => {
-      const key = indexCols.map(c => this.get(c).iloc(idx))
-        .concat(columnCols.map(c => this.get(c).iloc(idx)));
-      let val = this.get(valuesCols.get(0)).iloc(idx);
-      if (pivotMap.has(key)) {
-        switch (aggfunc) {
-          case 'sum':
-            val += pivotMap.get(key);
-            break;
-          default:
-            throw new Error('not implemented for aggs');
-        }
-      }
-
-      // This pivotMap has indexCols.size keys then columnCols.size keys which point to the value
-      pivotMap = pivotMap.set(key, val);
-    });
-
-    let indexMap = Immutable.OrderedMap({});
-    let columnsMap = Immutable.OrderedMap({});
-
-    pivotMap.entrySeq().forEach(([k, v]) => {
-      const indexKey = k.slice(0, indexCols.size - 1);
-      console.log(k);
-      console.log(indexKey);
-      if (indexMap.hasIn(indexKey))
-        indexMap = indexMap.setIn(
-          indexKey, indexMap.getIn(indexKey).concat([k[indexCols.size - 1]]));
-      else indexMap = indexMap.setIn(
-        indexKey, Immutable.List.of(k[indexCols.size - 1]));
-      columnsMap = columnsMap.setIn(k.slice(indexCols.size, k.length));
-    });
-
-    console.log(indexMap);
-    console.log(columnsMap);
-    return pivotMap;
+    // const validateCols = (cols: T_PVINDEX): Immutable.List => {
+    //   if (Array.isArray(cols)) {
+    //     cols.forEach(c => this._assertColumnExists(c));
+    //     return Immutable.List(cols);
+    //   } else if (cols instanceof Immutable.List) {
+    //     cols.forEach(c => this._assertColumnExists(c));
+    //     return cols;
+    //   } else if (typeof cols === 'string') {
+    //     this._assertColumnExists(cols);
+    //     return Immutable.List.of(cols);
+    //   }
+    //
+    //   throw new TypeError('cols must be Array, Immutable.List, or string');
+    // };
+    //
+    // // Validate types and cast to Immutable.List of column names
+    // const indexCols = validateCols(index);
+    // const columnCols = validateCols(columns);
+    // const valuesCols = validateCols(values);
+    //
+    // let pivotMap = Immutable.Map({});
+    //
+    // this.index.map((indexVal, idx) => {
+    //   const key = indexCols.map(c => this.get(c).iloc(idx))
+    //     .concat(columnCols.map(c => this.get(c).iloc(idx)));
+    //   let val = this.get(valuesCols.get(0)).iloc(idx);
+    //   if (pivotMap.has(key)) {
+    //     switch (aggfunc) {
+    //       case 'sum':
+    //         val += pivotMap.get(key);
+    //         break;
+    //       default:
+    //         throw new Error('not implemented for aggs');
+    //     }
+    //   }
+    //
+    //   // This pivotMap has indexCols.size keys then columnCols.size keys which point to the value
+    //   pivotMap = pivotMap.set(key, val);
+    // });
+    //
+    // let indexMap = Immutable.OrderedMap({});
+    // let columnsMap = Immutable.OrderedMap({});
+    //
+    // pivotMap.entrySeq().forEach(([k, v]) => {
+    //   const indexKey = k.slice(0, indexCols.size - 1);
+    //   console.log(k);
+    //   console.log(indexKey);
+    //   if (indexMap.hasIn(indexKey))
+    //     indexMap = indexMap.setIn(
+    //       indexKey, indexMap.getIn(indexKey).concat([k[indexCols.size - 1]]));
+    //   else indexMap = indexMap.setIn(
+    //     indexKey, Immutable.List.of(k[indexCols.size - 1]));
+    //   columnsMap = columnsMap.setIn(k.slice(indexCols.size, k.length));
+    // });
+    //
+    // console.log(indexMap);
+    // console.log(columnsMap);
+    // return pivotMap;
   }
 
   _cumulativeHelper(operation: string = OP_CUMSUM, axis: number = 0): DataFrame {
     if (axis === 0) {
       return new DataFrame(
         Immutable.Map(this.columns.map(
-          c => ([c, this.get(c)._cumulativeHelper(operation)]))), this.kwargs)
+          c => ([c, this.get(c)._cumulativeHelper(operation)]))), this.kwargs);
     } else if (axis === 1) {
       return new DataFrame(
         this.values.map(row => generateCumulativeFunc(operation)(row)),
         this.kwargs);
-    } else throw new Error('invalid axis');
+    }
+    throw new Error('invalid axis');
   }
 
   /**
@@ -1561,28 +1573,29 @@ export default class DataFrame extends NDFrame {
   }
 }
 
-const innerMerge = (df1: DataFrame, df2: DataFrame, on: Array<string|number>): DataFrame => {
+const innerMerge = (df1: DataFrame, df2: DataFrame, on: Array<string | number>): DataFrame => {
   const data = [];
 
   const cols1 = nonMergeColumns(df1.columns, on);
   const cols2 = nonMergeColumns(df2.columns, on);
 
   const intersectCols = intersectingColumns(cols1, cols2);
-  intersectCols.count();  // Cache intersectCols size
+  intersectCols.count(); // Cache intersectCols size
 
   const cols1Rename = cols1.map(k => (
     intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
-    ? `${k}_x`
-    : k));
+      ? `${k}_x`
+      : k));
 
   const cols2Rename = cols2.map(k => (
     intersectCols.size > 0 && intersectCols.indexOf(k) >= 0
-    ? `${k}_y`
-    : k));
+      ? `${k}_y`
+      : k));
 
-  for (const [row1, _1] of df1.iterrows()) {
+  // eslint-disable-next-line
+  for (const [row1, _1] of df1.iterrows()) { // eslint-disable-next-line
     for (const [row2, _2] of df2.iterrows()) {
-      let match = true;
+      let match = true; // eslint-disable-next-line
       for (const c of on) {
         if (row1.get(c) !== row2.get(c)) {
           match = false;
@@ -1613,21 +1626,22 @@ const innerMerge = (df1: DataFrame, df2: DataFrame, on: Array<string|number>): D
   return new DataFrame(data);
 };
 
-const outerMerge = (df1: DataFrame, df2: DataFrame, on: Array<string|number>): DataFrame => {
+const outerMerge = (df1: DataFrame, df2: DataFrame, on: Array<string | number>): DataFrame => {
   const data = [];
 
   const cols1 = nonMergeColumns(df1.columns, on);
   const cols2 = nonMergeColumns(df2.columns, on);
 
   const intersectCols = intersectingColumns(cols1, cols2);
-  intersectCols.count();  // Cache intersectCols size
+  intersectCols.count(); // Cache intersectCols size
 
   const matched1 = new Array(df1.length).fill(false);
   const matched2 = new Array(df2.length).fill(false);
 
-  for (const [row1, idx_1] of df1.iterrows()) {
+  // eslint-disable-next-line
+  for (const [row1, idx_1] of df1.iterrows()) { // eslint-disable-next-line
     for (const [row2, idx_2] of df2.iterrows()) {
-      let match = true;
+      let match = true; // eslint-disable-next-line
       for (const c of on) {
         if (row1.get(c) !== row2.get(c)) {
           match = false;
@@ -1712,8 +1726,8 @@ const outerMerge = (df1: DataFrame, df2: DataFrame, on: Array<string|number>): D
   return new DataFrame(data);
 };
 
-export const mergeDataFrame
-  = (df1: DataFrame, df2: DataFrame, on: Array<string|number>, how: string = 'inner'): DataFrame => {
+export const mergeDataFrame = (df1: DataFrame, df2: DataFrame, on: Array<string | number>,
+                               how: string = 'inner'): DataFrame => {
   let mergeOn;
   if (typeof on === 'undefined') {
     mergeOn = df1.columns.filter(c1 => df2.columns.filter(c2 => c1 === c2).size > 0);

@@ -43,6 +43,7 @@ var _dtype = require('./dtype');
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
+ * 
  * A pandas.Series one-dimensional array with axis labels, with an Immutable.List instead of
  * numpy.ndarray as the values
  */
@@ -150,10 +151,10 @@ var Series = function (_NDFrame) {
         for (var _iterator = (0, _utils.enumerate)(this)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
           var _step$value = (0, _slicedToArray3.default)(_step.value, 2),
               val = _step$value[0],
-              idx = _step$value[1];
+              _idx = _step$value[1];
 
           // $FlowIssue TODO
-          array.push(func(val, idx));
+          array.push(func(val, _idx));
         }
       } catch (err) {
         _didIteratorError = true;
@@ -489,13 +490,30 @@ var Series = function (_NDFrame) {
         return Math.abs(v);
       }), { name: this.name, index: this.index });
     }
+  }, {
+    key: '_combineOp',
+    value: function _combineOp(other, op) {
+      var opName = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
+
+      if (typeof other === 'number') return this.map(function (val) {
+        return op(val, other);
+      });else if (other instanceof Series) return this.map(function (val, idx) {
+        return op(val, other.iloc(idx));
+      });else if (Array.isArray(other)) return this.map(function (val, idx) {
+        return op(val, other[idx]);
+      });else if (other instanceof _immutable2.default.List) return this.map(function (val, idx) {
+        return op(val, other.get(idx));
+      });
+
+      throw new Error(opName + ' only supports numbers, Arrays, Immutable List and pandas.Series');
+    }
 
     /**
      * Add another Iterable, `Series`, or number to the `Series`
      *
      * pandas equivalent: [Series.add](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.add.html)
      *
-     * @param {Iterable|Series|number} val
+     * @param {Iterable|Series|number} other
      *  Value to add to the `Series`
      *
      * @returns {Series}
@@ -510,21 +528,10 @@ var Series = function (_NDFrame) {
 
   }, {
     key: 'add',
-    value: function add(val) {
-      if (typeof val === 'number') // $FlowIssue TODO
-        return this.map(function (v) {
-          return v + val;
-        });else if (val instanceof Series) // $FlowIssue TODO
-        return this.map(function (v, idx) {
-          return v + val.iloc(idx);
-        });else if (Array.isArray(val)) return this.map(function (v, idx) {
-        return v + val[idx];
-      });else if (val instanceof _immutable2.default.List) // $FlowIssue TODO
-        return this.map(function (v, idx) {
-          return v + val.get(idx);
-        });
-
-      throw new Error('add only supports numbers, Arrays, Immutable List and pandas.Series');
+    value: function add(other) {
+      return this._combineOp(other, function (a, b) {
+        return a + b;
+      }, 'add');
     }
 
     /**
@@ -532,7 +539,7 @@ var Series = function (_NDFrame) {
      *
      * pandas equivalent: [Series.sub](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.sub.html)
      *
-     * @param {Iterable|Series|number} val
+     * @param {Iterable|Series|number} other
      *  Value to subtract from the `Series`
      *
      * @returns {Series}
@@ -548,22 +555,10 @@ var Series = function (_NDFrame) {
 
   }, {
     key: 'sub',
-    value: function sub(val) {
-      if (typeof val === 'number') // $FlowIssue TODO
-        return this.map(function (v) {
-          return v - val;
-        });else if (val instanceof Series) // $FlowIssue TODO
-        return this.map(function (v, idx) {
-          return v - val.iloc(idx);
-        });else if (Array.isArray(val)) // $FlowIssue TODO
-        return this.map(function (v, idx) {
-          return v - val[idx];
-        });else if (val instanceof _immutable2.default.List) // $FlowIssue TODO
-        return this.map(function (v, idx) {
-          return v - val.get(idx);
-        });
-
-      throw new Error('sub only supports numbers, Arrays, Immutable List and pandas.Series');
+    value: function sub(other) {
+      return this._combineOp(other, function (a, b) {
+        return a - b;
+      }, 'sub');
     }
 
     /**
@@ -571,7 +566,7 @@ var Series = function (_NDFrame) {
      *
      * pandas equivalent: [Series.mul](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.mul.html)
      *
-     * @param {Iterable|Series|number} val
+     * @param {Iterable|Series|number} other
      *  Value to multiply by the `Series`
      *
      * @returns {Series}
@@ -587,22 +582,10 @@ var Series = function (_NDFrame) {
 
   }, {
     key: 'mul',
-    value: function mul(val) {
-      if (typeof val === 'number') // $FlowIssue TODO
-        return this.map(function (v) {
-          return v * val;
-        });else if (val instanceof Series) // $FlowIssue TODO
-        return this.map(function (v, idx) {
-          return v * val.iloc(idx);
-        });else if (Array.isArray(val)) // $FlowIssue TODO
-        return this.map(function (v, idx) {
-          return v * val[idx];
-        });else if (val instanceof _immutable2.default.List) // $FlowIssue TODO
-        return this.map(function (v, idx) {
-          return v * val.get(idx);
-        });
-
-      throw new Error('mul only supports numbers, Arrays, Immutable List and pandas.Series');
+    value: function mul(other) {
+      return this._combineOp(other, function (a, b) {
+        return a * b;
+      });
     }
 
     /**
@@ -610,7 +593,7 @@ var Series = function (_NDFrame) {
      *
      * pandas equivalent: [Series.multiply](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.multiply.html)
      *
-     * @param {Iterable|Series|number} val
+     * @param {Iterable|Series|number} other
      *  Value to multiply by the `Series`
      *
      * @returns {Series}
@@ -626,8 +609,8 @@ var Series = function (_NDFrame) {
 
   }, {
     key: 'multiply',
-    value: function multiply(val) {
-      return this.mul(val);
+    value: function multiply(other) {
+      return this.mul(other);
     }
 
     /**
@@ -635,7 +618,7 @@ var Series = function (_NDFrame) {
      *
      * pandas equivalent: [Series.div](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.div.html)
      *
-     * @param {Iterable|Series|number} val
+     * @param {Iterable|Series|number} other
      *  Value by which to divide the `Series`
      *
      * @returns {Series}
@@ -651,23 +634,10 @@ var Series = function (_NDFrame) {
 
   }, {
     key: 'div',
-    value: function div(val) {
-      // TODO roll this up into one method above (div, mul, add, etc.)
-      if (typeof val === 'number') // $FlowIssue TODO
-        return this.map(function (v) {
-          return v / val;
-        });else if (val instanceof Series) // $FlowIssue TODO
-        return this.map(function (v, idx) {
-          return v / val.iloc(idx);
-        });else if (Array.isArray(val)) // $FlowIssue TODO
-        return this.map(function (v, idx) {
-          return v / val[idx];
-        });else if (val instanceof _immutable2.default.List) // $FlowIssue TODO
-        return this.map(function (v, idx) {
-          return v / val.get(idx);
-        });
-
-      throw new Error('div only supports numbers, Arrays, Immutable List and pandas.Series');
+    value: function div(other) {
+      return this._combineOp(other, function (a, b) {
+        return a / b;
+      }, 'div');
     }
 
     /**
@@ -675,7 +645,7 @@ var Series = function (_NDFrame) {
      *
      * pandas equivalent: [Series.divide](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.divide.html)
      *
-     * @param {Iterable|Series|number} val
+     * @param {Iterable|Series|number} other
      *  Value by which to divide the `Series`
      *
      * @returns {Series}
@@ -691,8 +661,8 @@ var Series = function (_NDFrame) {
 
   }, {
     key: 'divide',
-    value: function divide(val) {
-      return this.div(val);
+    value: function divide(other) {
+      return this.div(other);
     }
 
     /**
@@ -844,9 +814,9 @@ var Series = function (_NDFrame) {
       var valA = this.iloc(valueA);
       var valB = this.iloc(valueB);
 
-      // $FlowIssue TODO
+      // $FlowIssue
       if (valA < valB) return -1;
-      // $FlowIssue TODO
+      // $FlowIssue
       else if (valA > valB) return 1;
       return 0;
     }
@@ -856,9 +826,9 @@ var Series = function (_NDFrame) {
       var valA = this.iloc(valueA);
       var valB = this.iloc(valueB);
 
-      // $FlowIssue TODO
+      // $FlowIssue
       if (valA > valB) return -1;
-      // $FlowIssue TODO
+      // $FlowIssue
       else if (valA < valB) return 1;
       return 0;
     }

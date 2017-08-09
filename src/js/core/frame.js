@@ -57,6 +57,8 @@ var _utils = require('./utils');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// eslint-disable-next-line
+
 /**
  * DataFrame object
  */
@@ -134,6 +136,7 @@ var DataFrame = function (_NDFrame) {
         if (data instanceof _immutable2.default.Map && !(data.get(k) instanceof _series2.default)) throw new Error('Map must have [column, series] key-value pairs');
 
         if (data instanceof _immutable2.default.Map) return [k, data.get(k).copy()];
+
         throw new Error('Data is not Map');
       }));
       _this.set_axis(1, _this._data.keySeq());
@@ -761,6 +764,7 @@ var DataFrame = function (_NDFrame) {
     value: function merge(df, on) {
       var how = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'inner';
 
+      // eslint-disable-next-line
       return mergeDataFrame(this, df, on, how);
     }
 
@@ -818,7 +822,7 @@ var DataFrame = function (_NDFrame) {
      *
      * @return {Workbook}
      *
-     */
+     */ // eslint-disable-next-line
 
   }, {
     key: 'to_excel',
@@ -835,7 +839,8 @@ var DataFrame = function (_NDFrame) {
       //     const colRow = Immutable.List.of('').concat(this.columns.toList());
       //     return new Sheet(
       //       Immutable.List.of(colRow)
-      //         .concat(this.values.map((v, idx) => Immutable.List.of(this.index.get(idx)).concat(v))));
+      //         .concat(this.values.map((v, idx) =>
+      //  Immutable.List.of(this.index.get(idx)).concat(v))));
       //   }
       //
       //   return new Sheet(Immutable.List.of(this.columns.toList()).concat(this.values));
@@ -1146,19 +1151,13 @@ var DataFrame = function (_NDFrame) {
           return _this12.get(k).variance();
         }), { index: this.columns.toArray() });
       } else if (axis === 1) {
-        var _ret = function () {
-          var means = _this12.mean(axis).values;
-          return {
-            v: new _series2.default(_immutable2.default.Range(0, _this12.length).map(function (idx) {
-              return _this12.values.get(idx).reduce(function (s, k) {
-                var diff = k - means.get(idx);
-                return s + diff * diff / (_this12.columns.size - 1);
-              }, 0);
-            }).toArray(), { index: _this12.index })
-          };
-        }();
-
-        if ((typeof _ret === 'undefined' ? 'undefined' : (0, _typeof3.default)(_ret)) === "object") return _ret.v;
+        var means = this.mean(axis).values;
+        return new _series2.default(_immutable2.default.Range(0, this.length).map(function (idx) {
+          return _this12.values.get(idx).reduce(function (s, k) {
+            var diff = k - means.get(idx);
+            return s + diff * diff / (_this12.columns.size - 1);
+          }, 0);
+        }).toArray(), { index: this.index });
       }
 
       throw new _exceptions.InvalidAxisError();
@@ -1445,98 +1444,91 @@ var DataFrame = function (_NDFrame) {
      * @param {string} aggfunc
      *  Name of aggregation function
      */
+    // eslint-disable-next-line
 
   }, {
     key: 'pivot_table',
     value: function pivot_table(index, columns, values) {
-      var _this16 = this;
-
       var aggfunc = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'sum';
 
       throw new Error('Not implemented');
-      var validateCols = function validateCols(cols) {
-        if (Array.isArray(cols)) {
-          cols.forEach(function (c) {
-            return _this16._assertColumnExists(c);
-          });
-          return _immutable2.default.List(cols);
-        } else if (cols instanceof _immutable2.default.List) {
-          cols.forEach(function (c) {
-            return _this16._assertColumnExists(c);
-          });
-          return cols;
-        } else if (typeof cols === 'string') {
-          _this16._assertColumnExists(cols);
-          return _immutable2.default.List.of(cols);
-        }
-
-        throw new TypeError('cols must be Array, Immutable.List, or string');
-      };
-
-      // Validate types and cast to Immutable.List of column names
-      var indexCols = validateCols(index);
-      var columnCols = validateCols(columns);
-      var valuesCols = validateCols(values);
-
-      var pivotMap = _immutable2.default.Map({});
-
-      this.index.map(function (indexVal, idx) {
-        var key = indexCols.map(function (c) {
-          return _this16.get(c).iloc(idx);
-        }).concat(columnCols.map(function (c) {
-          return _this16.get(c).iloc(idx);
-        }));
-        var val = _this16.get(valuesCols.get(0)).iloc(idx);
-        if (pivotMap.has(key)) {
-          switch (aggfunc) {
-            case 'sum':
-              val += pivotMap.get(key);
-              break;
-            default:
-              throw new Error('not implemented for aggs');
-          }
-        }
-
-        // This pivotMap has indexCols.size keys then columnCols.size keys which point to the value
-        pivotMap = pivotMap.set(key, val);
-      });
-
-      var indexMap = _immutable2.default.OrderedMap({});
-      var columnsMap = _immutable2.default.OrderedMap({});
-
-      pivotMap.entrySeq().forEach(function (_ref9) {
-        var _ref10 = (0, _slicedToArray3.default)(_ref9, 2),
-            k = _ref10[0],
-            v = _ref10[1];
-
-        var indexKey = k.slice(0, indexCols.size - 1);
-        console.log(k);
-        console.log(indexKey);
-        if (indexMap.hasIn(indexKey)) indexMap = indexMap.setIn(indexKey, indexMap.getIn(indexKey).concat([k[indexCols.size - 1]]));else indexMap = indexMap.setIn(indexKey, _immutable2.default.List.of(k[indexCols.size - 1]));
-        columnsMap = columnsMap.setIn(k.slice(indexCols.size, k.length));
-      });
-
-      console.log(indexMap);
-      console.log(columnsMap);
-      return pivotMap;
+      // const validateCols = (cols: T_PVINDEX): Immutable.List => {
+      //   if (Array.isArray(cols)) {
+      //     cols.forEach(c => this._assertColumnExists(c));
+      //     return Immutable.List(cols);
+      //   } else if (cols instanceof Immutable.List) {
+      //     cols.forEach(c => this._assertColumnExists(c));
+      //     return cols;
+      //   } else if (typeof cols === 'string') {
+      //     this._assertColumnExists(cols);
+      //     return Immutable.List.of(cols);
+      //   }
+      //
+      //   throw new TypeError('cols must be Array, Immutable.List, or string');
+      // };
+      //
+      // // Validate types and cast to Immutable.List of column names
+      // const indexCols = validateCols(index);
+      // const columnCols = validateCols(columns);
+      // const valuesCols = validateCols(values);
+      //
+      // let pivotMap = Immutable.Map({});
+      //
+      // this.index.map((indexVal, idx) => {
+      //   const key = indexCols.map(c => this.get(c).iloc(idx))
+      //     .concat(columnCols.map(c => this.get(c).iloc(idx)));
+      //   let val = this.get(valuesCols.get(0)).iloc(idx);
+      //   if (pivotMap.has(key)) {
+      //     switch (aggfunc) {
+      //       case 'sum':
+      //         val += pivotMap.get(key);
+      //         break;
+      //       default:
+      //         throw new Error('not implemented for aggs');
+      //     }
+      //   }
+      //
+      //   // This pivotMap has indexCols.size keys then columnCols.size keys which point to the value
+      //   pivotMap = pivotMap.set(key, val);
+      // });
+      //
+      // let indexMap = Immutable.OrderedMap({});
+      // let columnsMap = Immutable.OrderedMap({});
+      //
+      // pivotMap.entrySeq().forEach(([k, v]) => {
+      //   const indexKey = k.slice(0, indexCols.size - 1);
+      //   console.log(k);
+      //   console.log(indexKey);
+      //   if (indexMap.hasIn(indexKey))
+      //     indexMap = indexMap.setIn(
+      //       indexKey, indexMap.getIn(indexKey).concat([k[indexCols.size - 1]]));
+      //   else indexMap = indexMap.setIn(
+      //     indexKey, Immutable.List.of(k[indexCols.size - 1]));
+      //   columnsMap = columnsMap.setIn(k.slice(indexCols.size, k.length));
+      // });
+      //
+      // console.log(indexMap);
+      // console.log(columnsMap);
+      // return pivotMap;
     }
   }, {
     key: '_cumulativeHelper',
     value: function _cumulativeHelper() {
-      var _this17 = this;
+      var _this16 = this;
 
       var operation = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _utils.OP_CUMSUM;
       var axis = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
       if (axis === 0) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (c) {
-          return [c, _this17.get(c)._cumulativeHelper(operation)];
+          return [c, _this16.get(c)._cumulativeHelper(operation)];
         })), this.kwargs);
       } else if (axis === 1) {
         return new DataFrame(this.values.map(function (row) {
           return (0, _utils.generateCumulativeFunc)(operation)(row);
         }), this.kwargs);
-      } else throw new Error('invalid axis');
+      }
+      throw new Error('invalid axis');
     }
 
     /**
@@ -1650,15 +1642,15 @@ var DataFrame = function (_NDFrame) {
 
   }, {
     key: 'rename',
-    value: function rename(_ref11) {
-      var _this18 = this;
+    value: function rename(_ref9) {
+      var _this17 = this;
 
-      var columns = _ref11.columns;
+      var columns = _ref9.columns;
 
       return new DataFrame(_immutable2.default.OrderedMap(this.columns.map(function (prevCol) {
         var nextCol = columns.get(prevCol);
-        if (typeof nextCol === 'undefined') return [prevCol, _this18._data.get(prevCol)];
-        return [nextCol, _this18._data.get(prevCol).rename(nextCol)];
+        if (typeof nextCol === 'undefined') return [prevCol, _this17._data.get(prevCol)];
+        return [nextCol, _this17._data.get(prevCol).rename(nextCol)];
       })), { index: this.index });
     }
   }, {
@@ -1684,15 +1676,15 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'values',
     get: function get() {
-      var _this19 = this;
+      var _this18 = this;
 
       if (this._values instanceof _immutable2.default.List) return (0, _get3.default)(DataFrame.prototype.__proto__ || Object.getPrototypeOf(DataFrame.prototype), 'values', this);
 
       var valuesList = _immutable2.default.List([]);
 
       var _loop = function _loop(idx) {
-        valuesList = valuesList.concat([_immutable2.default.List(_this19.columns.map(function (k) {
-          return _this19._data.get(k).iloc(idx);
+        valuesList = valuesList.concat([_immutable2.default.List(_this18.columns.map(function (k) {
+          return _this18._data.get(k).iloc(idx);
         }))]);
       };
 
@@ -1742,14 +1734,14 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(columns) {
-      var _this20 = this;
+      var _this19 = this;
 
       if (!Array.isArray(columns) || columns.length !== this.columns.size) throw new Error('Columns must be array of same dimension');
 
       var nextData = {};
       columns.forEach(function (k, idx) {
-        var prevColumn = _this20.columns.get(idx);
-        var prevSeries = _this20.get(prevColumn);
+        var prevColumn = _this19.columns.get(idx);
+        var prevSeries = _this19.get(prevColumn);
 
         nextData[k] = prevSeries.rename(k);
       });
@@ -1794,18 +1786,18 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(index) {
-      var _this21 = this;
+      var _this20 = this;
 
       this.set_axis(0, (0, _utils.parseIndex)(index, this._data.get(this.columns.get(0)).values));
 
       // noinspection Eslint
-      this._data.mapEntries(function (_ref12) {
-        var _ref13 = (0, _slicedToArray3.default)(_ref12, 2),
-            k = _ref13[0],
-            v = _ref13[1];
+      this._data.mapEntries(function (_ref10) {
+        var _ref11 = (0, _slicedToArray3.default)(_ref10, 2),
+            k = _ref11[0],
+            v = _ref11[1];
 
         // noinspection Eslint
-        v.index = _this21.index;
+        v.index = _this20.index;
       });
     }
 
@@ -1826,10 +1818,10 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'length',
     get: function get() {
-      var _this22 = this;
+      var _this21 = this;
 
       return Math.max.apply(Math, [0].concat((0, _toConsumableArray3.default)(this.columns.map(function (k) {
-        return _this22.get(k).length;
+        return _this21.get(k).length;
       }).toArray())));
     }
   }]);
@@ -1856,6 +1848,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
     return intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_y' : k;
   });
 
+  // eslint-disable-next-line
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
   var _iteratorError = undefined;
@@ -1866,6 +1859,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
           row1 = _step$value[0],
           _1 = _step$value[1];
 
+      // eslint-disable-next-line
       var _iteratorNormalCompletion2 = true;
       var _didIteratorError2 = false;
       var _iteratorError2 = undefined;
@@ -1876,7 +1870,7 @@ var innerMerge = function innerMerge(df1, df2, on) {
               row2 = _step2$value[0],
               _2 = _step2$value[1];
 
-          var match = true;
+          var match = true; // eslint-disable-next-line
           var _iteratorNormalCompletion3 = true;
           var _didIteratorError3 = false;
           var _iteratorError3 = undefined;
@@ -1906,23 +1900,21 @@ var innerMerge = function innerMerge(df1, df2, on) {
           }
 
           if (match) {
-            (function () {
-              var rowData = {};
+            var rowData = {};
 
-              on.forEach(function (k) {
-                rowData[k] = row1.get(k);
-              });
+            on.forEach(function (k) {
+              rowData[k] = row1.get(k);
+            });
 
-              cols1.forEach(function (k, idx) {
-                rowData[cols1Rename.get(idx)] = row1.get(k);
-              });
+            cols1.forEach(function (k, idx) {
+              rowData[cols1Rename.get(idx)] = row1.get(k);
+            });
 
-              cols2.forEach(function (k, idx) {
-                rowData[cols2Rename.get(idx)] = row2.get(k);
-              });
+            cols2.forEach(function (k, idx) {
+              rowData[cols2Rename.get(idx)] = row2.get(k);
+            });
 
-              data.push(rowData);
-            })();
+            data.push(rowData);
           }
         };
 
@@ -1978,6 +1970,7 @@ var outerMerge = function outerMerge(df1, df2, on) {
   var matched1 = new Array(df1.length).fill(false);
   var matched2 = new Array(df2.length).fill(false);
 
+  // eslint-disable-next-line
   var _iteratorNormalCompletion4 = true;
   var _didIteratorError4 = false;
   var _iteratorError4 = undefined;
@@ -1988,6 +1981,7 @@ var outerMerge = function outerMerge(df1, df2, on) {
           row1 = _step4$value[0],
           idx_1 = _step4$value[1];
 
+      // eslint-disable-next-line
       var _iteratorNormalCompletion5 = true;
       var _didIteratorError5 = false;
       var _iteratorError5 = undefined;
@@ -1998,7 +1992,7 @@ var outerMerge = function outerMerge(df1, df2, on) {
               row2 = _step5$value[0],
               idx_2 = _step5$value[1];
 
-          var match = true;
+          var match = true; // eslint-disable-next-line
           var _iteratorNormalCompletion6 = true;
           var _didIteratorError6 = false;
           var _iteratorError6 = undefined;
@@ -2088,45 +2082,41 @@ var outerMerge = function outerMerge(df1, df2, on) {
 
   matched1.forEach(function (m, idx) {
     if (!m) {
-      (function () {
-        var rowData = {};
-        on.forEach(function (k) {
-          rowData[k] = df1.get(k).iloc(idx);
-        });
+      var rowData = {};
+      on.forEach(function (k) {
+        rowData[k] = df1.get(k).iloc(idx);
+      });
 
-        cols1.forEach(function (k) {
-          var nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_x' : k;
-          rowData[nextColName] = df1.get(k).iloc(idx);
-        });
+      cols1.forEach(function (k) {
+        var nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_x' : k;
+        rowData[nextColName] = df1.get(k).iloc(idx);
+      });
 
-        cols2.forEach(function (k) {
-          var nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_y' : k;
-          rowData[nextColName] = null;
-        });
-        data.push(rowData);
-      })();
+      cols2.forEach(function (k) {
+        var nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_y' : k;
+        rowData[nextColName] = null;
+      });
+      data.push(rowData);
     }
   });
 
   matched2.forEach(function (m, idx) {
     if (!m) {
-      (function () {
-        var rowData = {};
-        on.forEach(function (k) {
-          rowData[k] = df2.get(k).iloc(idx);
-        });
+      var rowData = {};
+      on.forEach(function (k) {
+        rowData[k] = df2.get(k).iloc(idx);
+      });
 
-        cols1.forEach(function (k) {
-          var nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_x' : k;
-          rowData[nextColName] = null;
-        });
+      cols1.forEach(function (k) {
+        var nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_x' : k;
+        rowData[nextColName] = null;
+      });
 
-        cols2.forEach(function (k) {
-          var nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_y' : k;
-          rowData[nextColName] = df2.get(k).iloc(idx);
-        });
-        data.push(rowData);
-      })();
+      cols2.forEach(function (k) {
+        var nextColName = intersectCols.size > 0 && intersectCols.indexOf(k) >= 0 ? k + '_y' : k;
+        rowData[nextColName] = df2.get(k).iloc(idx);
+      });
+      data.push(rowData);
     }
   });
 
