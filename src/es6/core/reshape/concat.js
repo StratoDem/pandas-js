@@ -19,6 +19,7 @@ type T_ITER_SERIES = Array<Series> | Immutable.List<Series>;
 
 type T_KWARGS = {
   ignore_index: boolean,
+  axis?: 0 | 1,
 }
 
 const _concatSeriesValues = (objs: T_ITER_SERIES) =>
@@ -64,34 +65,45 @@ const _concatDataFrame = (objs: Array<DataFrame> | Immutable.List<DataFrame>,
     return objs.get(0);
 
   let seriesOrderedMap = Immutable.OrderedMap({});
-  objs.forEach((df: DataFrame) => {
-    const lenSeriesInMap = seriesOrderedMap.keySeq().size === 0
-      ? 0
-      : seriesOrderedMap.first().length;
-    const nextLength = df.length + lenSeriesInMap;
+  if (kwargs.axis === 1) {
+    objs.forEach((df: DataFrame) => {
+      df.columns.forEach((column: string) => {
+        const columnExists = seriesOrderedMap.has(column);
+        seriesOrderedMap = seriesOrderedMap.set(
+          columnExists ? `${column}.x` : column, // $FlowIssue
+          columnExists ? df.get(column).rename(`${column}.x`) : df.get(column));
+      });
+    });
+  } else {
+    objs.forEach((df: DataFrame) => {
+      const lenSeriesInMap = seriesOrderedMap.keySeq().size === 0
+        ? 0
+        : seriesOrderedMap.first().length;
+      const nextLength = df.length + lenSeriesInMap;
 
-    seriesOrderedMap = Immutable.OrderedMap(
-      // Get entries already concated (already in seriesOrderedMap)
-      seriesOrderedMap.entrySeq().map(([column, series]) => {
-        if (df.columnExists(column))
+      seriesOrderedMap = Immutable.OrderedMap(
+        // Get entries already concated (already in seriesOrderedMap)
+        seriesOrderedMap.entrySeq().map(([column, series]) => {
+          if (df.columnExists(column))
+            return [
+              column, // $FlowIssue
+              _concatSeries([series, df.get(column)], kwargs)];
           return [
             column, // $FlowIssue
-            _concatSeries([series, df.get(column)], kwargs)];
-        return [
-          column, // $FlowIssue
-          _concatSeries([
-            series,
-            new Series(Immutable.Repeat(NaN, df.length).toList(), {index: df.index})],
-          kwargs)]; // Now merge with columns only in the "right" DataFrame
-      })).merge(Immutable.OrderedMap(
-      df.columns
-        .filter(column => !seriesOrderedMap.has(column))
-        .map(column => // $FlowIssue
-          ([column, lenSeriesInMap === 0 ? df.get(column) : _concatSeries([
-            new Series(Immutable.Repeat(NaN, nextLength)),
-            df.get(column)],
-          kwargs)]))));
-  });
+            _concatSeries([
+                series,
+                new Series(Immutable.Repeat(NaN, df.length).toList(), {index: df.index})],
+              kwargs)]; // Now merge with columns only in the "right" DataFrame
+        })).merge(Immutable.OrderedMap(
+        df.columns
+          .filter(column => !seriesOrderedMap.has(column))
+          .map(column => // $FlowIssue
+            ([column, lenSeriesInMap === 0 ? df.get(column) : _concatSeries([
+                new Series(Immutable.Repeat(NaN, nextLength)),
+                df.get(column)],
+              kwargs)]))));
+    });
+  }
 
   return new DataFrame(seriesOrderedMap);
 };
@@ -113,13 +125,13 @@ const _concatDataFrame = (objs: Array<DataFrame> | Immutable.List<DataFrame>,
  * // Returns Series([1, 2, 3, 4, 2, 3, 4, 5], {index: [0, 1, 2, 3, 4, 5, 6, 7]})
  * concat([series1, series2], {ignore_index: true});
  */
-const concat = (objs: T_OBJS, kwargs: T_KWARGS = {ignore_index: false}): T_CONCAT => {
+const concat = (objs: T_OBJS, kwargs: T_KWARGS = {ignore_index: false, axis: 0}): T_CONCAT => {
   if ((Array.isArray(objs) && objs[0] instanceof Series)
       || (objs instanceof Immutable.List && objs.get(0) instanceof Series))
     return _concatSeries(objs, {ignore_index: kwargs.ignore_index});
   else if ((Array.isArray(objs) && objs[0] instanceof DataFrame)
     || (objs instanceof Immutable.List && objs.get(0) instanceof DataFrame))
-    return _concatDataFrame(objs, {ignore_index: kwargs.ignore_index});
+    return _concatDataFrame(objs, {ignore_index: kwargs.ignore_index, axis: kwargs.axis});
   throw new Error('Not supported');
 };
 

@@ -78,29 +78,39 @@ var _concatDataFrame = function _concatDataFrame(objs, kwargs) {
   if (Array.isArray(objs) && objs.length === 1) return objs[0];else if (objs instanceof _immutable2.default.List && objs.size === 1) return objs.get(0);
 
   var seriesOrderedMap = _immutable2.default.OrderedMap({});
-  objs.forEach(function (df) {
-    var lenSeriesInMap = seriesOrderedMap.keySeq().size === 0 ? 0 : seriesOrderedMap.first().length;
-    var nextLength = df.length + lenSeriesInMap;
+  if (kwargs.axis === 1) {
+    objs.forEach(function (df) {
+      df.columns.forEach(function (column) {
+        var columnExists = seriesOrderedMap.has(column);
+        seriesOrderedMap = seriesOrderedMap.set(columnExists ? column + '.x' : column, // $FlowIssue
+        columnExists ? df.get(column).rename(column + '.x') : df.get(column));
+      });
+    });
+  } else {
+    objs.forEach(function (df) {
+      var lenSeriesInMap = seriesOrderedMap.keySeq().size === 0 ? 0 : seriesOrderedMap.first().length;
+      var nextLength = df.length + lenSeriesInMap;
 
-    seriesOrderedMap = _immutable2.default.OrderedMap(
-    // Get entries already concated (already in seriesOrderedMap)
-    seriesOrderedMap.entrySeq().map(function (_ref) {
-      var _ref2 = (0, _slicedToArray3.default)(_ref, 2),
-          column = _ref2[0],
-          series = _ref2[1];
+      seriesOrderedMap = _immutable2.default.OrderedMap(
+      // Get entries already concated (already in seriesOrderedMap)
+      seriesOrderedMap.entrySeq().map(function (_ref) {
+        var _ref2 = (0, _slicedToArray3.default)(_ref, 2),
+            column = _ref2[0],
+            series = _ref2[1];
 
-      if (df.columnExists(column)) return [column, // $FlowIssue
-      _concatSeries([series, df.get(column)], kwargs)];
-      return [column, // $FlowIssue
-      _concatSeries([series, new _series2.default(_immutable2.default.Repeat(NaN, df.length).toList(), { index: df.index })], kwargs)]; // Now merge with columns only in the "right" DataFrame
-    })).merge(_immutable2.default.OrderedMap(df.columns.filter(function (column) {
-      return !seriesOrderedMap.has(column);
-    }).map(function (column) {
-      return (// $FlowIssue
-        [column, lenSeriesInMap === 0 ? df.get(column) : _concatSeries([new _series2.default(_immutable2.default.Repeat(NaN, nextLength)), df.get(column)], kwargs)]
-      );
-    })));
-  });
+        if (df.columnExists(column)) return [column, // $FlowIssue
+        _concatSeries([series, df.get(column)], kwargs)];
+        return [column, // $FlowIssue
+        _concatSeries([series, new _series2.default(_immutable2.default.Repeat(NaN, df.length).toList(), { index: df.index })], kwargs)]; // Now merge with columns only in the "right" DataFrame
+      })).merge(_immutable2.default.OrderedMap(df.columns.filter(function (column) {
+        return !seriesOrderedMap.has(column);
+      }).map(function (column) {
+        return (// $FlowIssue
+          [column, lenSeriesInMap === 0 ? df.get(column) : _concatSeries([new _series2.default(_immutable2.default.Repeat(NaN, nextLength)), df.get(column)], kwargs)]
+        );
+      })));
+    });
+  }
 
   return new _frame2.default(seriesOrderedMap);
 };
@@ -123,9 +133,9 @@ var _concatDataFrame = function _concatDataFrame(objs, kwargs) {
  * concat([series1, series2], {ignore_index: true});
  */
 var concat = function concat(objs) {
-  var kwargs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { ignore_index: false };
+  var kwargs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { ignore_index: false, axis: 0 };
 
-  if (Array.isArray(objs) && objs[0] instanceof _series2.default || objs instanceof _immutable2.default.List && objs.get(0) instanceof _series2.default) return _concatSeries(objs, { ignore_index: kwargs.ignore_index });else if (Array.isArray(objs) && objs[0] instanceof _frame2.default || objs instanceof _immutable2.default.List && objs.get(0) instanceof _frame2.default) return _concatDataFrame(objs, { ignore_index: kwargs.ignore_index });
+  if (Array.isArray(objs) && objs[0] instanceof _series2.default || objs instanceof _immutable2.default.List && objs.get(0) instanceof _series2.default) return _concatSeries(objs, { ignore_index: kwargs.ignore_index });else if (Array.isArray(objs) && objs[0] instanceof _frame2.default || objs instanceof _immutable2.default.List && objs.get(0) instanceof _frame2.default) return _concatDataFrame(objs, { ignore_index: kwargs.ignore_index, axis: kwargs.axis });
   throw new Error('Not supported');
 };
 

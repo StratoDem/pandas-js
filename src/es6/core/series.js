@@ -246,7 +246,7 @@ export default class Series extends NDFrame {
    * // Returns List [1, 2, 3]
    * ds.index;
    */
-  set index(index: Immutable.List|Array<number|string>) {
+  set index(index: Immutable.List | Array<number | string>) {
     this.set_axis(0, parseIndex(index, this.values));
   }
 

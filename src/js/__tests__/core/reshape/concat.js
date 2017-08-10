@@ -79,6 +79,19 @@ describe('concat', function () {
       expect(frame3.get('x').values.toArray()).toEqual([1, 2, 3, 2, 3, 4]);
       expect(frame3.get('x').index.toArray()).toEqual([0, 1, 2, 3, 4, 5]);
     });
+
+    it('Concatenates two DataFrames along axis = 1 without ignoring index', function () {
+      var frame1 = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }]);
+      var frame2 = new _frame2.default([{ x: 2, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 5 }]);
+
+      var frame3 = (0, _concat2.default)([frame1, frame2], { axis: 1 });
+      expect(frame3.get('x').values.toArray()).toEqual([1, 2, 3]);
+      expect(frame3.get('y').values.toArray()).toEqual([2, 3, 4]);
+      expect(frame3.get('x.x').values.toArray()).toEqual([2, 3, 4]);
+      expect(frame3.get('x.x').name).toEqual('x.x');
+      expect(frame3.get('y.x').values.toArray()).toEqual([3, 4, 5]);
+      expect(frame3.get('y.x').name).toEqual('y.x');
+    });
   });
 });
 
