@@ -10,103 +10,16 @@
 
 import Immutable from 'immutable';
 
-import DataFrame from '../frame';
-import Series from '../series';
+import DataFrame, { _concatDataFrame } from '../frame';
+import Series, { _concatSeries } from '../series';
 
 type T_CONCAT = DataFrame | Series;
 type T_OBJS = Array<T_CONCAT> | Immutable.List<T_CONCAT>;
-type T_ITER_SERIES = Array<Series> | Immutable.List<Series>;
 
 type T_KWARGS = {
   ignore_index: boolean,
   axis?: 0 | 1,
 }
-
-const _concatSeriesValues = (objs: T_ITER_SERIES) =>
-  Immutable.List([]).concat(...objs.map(series => series.values));
-const _concatSeriesIndices = (objs: T_ITER_SERIES) =>
-  Immutable.List([]).concat(...objs.map(series => series.index));
-
-const _concatSeries = (objs: Array<Series> | Immutable.List<Series>, kwargs: T_KWARGS): Series => {
-  if (objs instanceof Immutable.List
-    && objs.filter(series => series instanceof Series).size !== objs.size)
-    throw new Error('Objects must all be Series');
-  else if (Array.isArray(objs)
-    && objs.filter(series => series instanceof Series).length !== objs.length)
-    throw new Error('Objects must all be Series');
-
-  if (!kwargs.ignore_index)
-    return new Series(_concatSeriesValues(objs), {index: _concatSeriesIndices(objs)});
-  else if (kwargs.ignore_index) {
-    return new Series(
-      _concatSeriesValues(objs),
-      {index: Immutable.Range(0, objs.reduce((a, b: Series) => a + b.length, 0)).toList()});
-  }
-
-  throw new Error('Not supported');
-};
-
-
-const _concatDataFrame = (objs: Array<DataFrame> | Immutable.List<DataFrame>,
-                          kwargs: T_KWARGS): DataFrame => {
-  if (!(objs instanceof Immutable.List || Array.isArray(objs)))
-    throw new Error('objs must be List or Array');
-
-  if (objs instanceof Immutable.List
-    && objs.filter(frame => frame instanceof DataFrame).size !== objs.size)
-    throw new Error('Objects must all be DataFrame');
-  else if (Array.isArray(objs)
-    && objs.filter(frame => frame instanceof DataFrame).length !== objs.length)
-    throw new Error('Objects must all be DataFrame');
-
-  if (Array.isArray(objs) && objs.length === 1)
-    return objs[0];
-  else if (objs instanceof Immutable.List && objs.size === 1)
-    return objs.get(0);
-
-  let seriesOrderedMap = Immutable.OrderedMap({});
-  if (kwargs.axis === 1) {
-    objs.forEach((df: DataFrame) => {
-      df.columns.forEach((column: string) => {
-        const columnExists = seriesOrderedMap.has(column);
-        seriesOrderedMap = seriesOrderedMap.set(
-          columnExists ? `${column}.x` : column, // $FlowIssue
-          columnExists ? df.get(column).rename(`${column}.x`) : df.get(column));
-      });
-    });
-  } else {
-    objs.forEach((df: DataFrame) => {
-      const lenSeriesInMap = seriesOrderedMap.keySeq().size === 0
-        ? 0
-        : seriesOrderedMap.first().length;
-      const nextLength = df.length + lenSeriesInMap;
-
-      seriesOrderedMap = Immutable.OrderedMap(
-        // Get entries already concated (already in seriesOrderedMap)
-        seriesOrderedMap.entrySeq().map(([column, series]) => {
-          if (df.columnExists(column))
-            return [
-              column, // $FlowIssue
-              _concatSeries([series, df.get(column)], kwargs)];
-          return [
-            column, // $FlowIssue
-            _concatSeries([
-                series,
-                new Series(Immutable.Repeat(NaN, df.length).toList(), {index: df.index})],
-              kwargs)]; // Now merge with columns only in the "right" DataFrame
-        })).merge(Immutable.OrderedMap(
-        df.columns
-          .filter(column => !seriesOrderedMap.has(column))
-          .map(column => // $FlowIssue
-            ([column, lenSeriesInMap === 0 ? df.get(column) : _concatSeries([
-                new Series(Immutable.Repeat(NaN, nextLength)),
-                df.get(column)],
-              kwargs)]))));
-    });
-  }
-
-  return new DataFrame(seriesOrderedMap);
-};
 
 /**
  * Concatenate pandas objects along a particular axis.

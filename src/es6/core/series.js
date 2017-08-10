@@ -11,7 +11,6 @@ import {enumerate, sum, parseIndex, round10,
   OP_CUMSUM, OP_CUMMUL, OP_CUMMAX, OP_CUMMIN, generateCumulativeFunc} from './utils';
 import {DType, arrayToDType} from './dtype';
 
-
 declare type T_MF = (value: number, idx: number) => number | string;
 declare type T_BF = (value1: number, value2: number) => boolean;
 
@@ -42,7 +41,7 @@ export default class Series extends NDFrame {
    * // 5  4
    * // Name: My test name, dtype: dtype(int)
    */
-  constructor(data: Array<Object>|Object, kwargs: Object = {}) {
+  constructor(data: Array<Object> | Object, kwargs: Object = {}) {
     super(data, kwargs);
 
     if (Array.isArray(data)) {
@@ -98,6 +97,7 @@ export default class Series extends NDFrame {
    */
   map(func: T_MF): Series {
     const array = [];
+    // eslint-disable-next-line
     for (const [val, idx] of enumerate(this)) {
       // $FlowIssue TODO
       array.push(func(val, idx));
@@ -719,7 +719,7 @@ export default class Series extends NDFrame {
     return new Series(
       Immutable.Repeat(null, periods).toList().concat(
         Immutable.Range(periods, this.length).map(idx =>
-        (this.values.get(idx) - this.values.get(idx - periods))).toList()),
+          (this.values.get(idx) - this.values.get(idx - periods))).toList()),
       {index: this.index, name: this.name});
   }
 
@@ -748,7 +748,7 @@ export default class Series extends NDFrame {
     return new Series(
       Immutable.Repeat(null, periods).toList().concat(
         Immutable.Range(periods, this.length).map(idx =>
-        (this.values.get(idx) / this.values.get(idx - periods)) - 1).toList()),
+          (this.values.get(idx) / this.values.get(idx - periods)) - 1).toList()),
       {index: this.index, name: this.name});
   }
 
@@ -1136,7 +1136,7 @@ export default class Series extends NDFrame {
    * // Returns Series([2, 3]);
    * ds.filter(ds.gte(2));
    */
-  filter(iterBool: Series|Array<boolean>|Immutable.List): Series {
+  filter(iterBool: Series | Array<boolean> | Immutable.List): Series {
     if (!Array.isArray(iterBool)
       && !(iterBool instanceof Immutable.List)
       && !(iterBool instanceof Series))
@@ -1233,7 +1233,7 @@ export default class Series extends NDFrame {
   cummin(): Series {
     return this._cumulativeHelper(OP_CUMMIN);
   }
-  
+
   /**
    * Convert the Series to a json object
    *
@@ -1300,4 +1300,58 @@ export default class Series extends NDFrame {
   rename(name: string | number): Series {
     return new Series(this._values, {name, index: this.index});
   }
+
+  /**
+   * Append another Series to this and return a new Series
+   *
+   * pandas equivalent: [Series.append](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.append.html)
+   *
+   * @param {Series} other
+   * @param {boolean} ignore_index
+   * @returns {Series}
+   *
+   * @example
+   * const ds1 = new Series([1, 2, 3], {index: [1, 2, 3]});
+   * const ds2 = new Series([2, 3, 4], {index: [3, 4, 5]});
+   *
+   * // Returns Series([1, 2, 3, 2, 3, 4], {index: [1, 2, 3, 3, 4, 5]});
+   * ds1.append(ds2);
+   *
+   * // Returns Series([1, 2, 3, 2, 3, 4], {index: [0, 1, 2, 3, 4, 5]});
+   * ds1.append(ds2, true);
+   */
+  append(other: Series, ignore_index: boolean = false): Series {
+    // eslint-disable-next-line
+    return _concatSeries( // $FlowIssue
+      [this, other],
+      {ignore_index});
+  }
 }
+
+
+type T_ITER_SERIES = Array<Series> | Immutable.List<Series>;
+type T_KWARGS = {ignore_index: boolean, axis?: 0 | 1};
+const _concatSeriesValues = (objs: T_ITER_SERIES) =>
+  Immutable.List([]).concat(...objs.map(series => series.values));
+const _concatSeriesIndices = (objs: T_ITER_SERIES) =>
+  Immutable.List([]).concat(...objs.map(series => series.index));
+
+export const _concatSeries = (objs: Array<Series> | Immutable.List<Series>,
+                              kwargs: T_KWARGS): Series => {
+  if (objs instanceof Immutable.List
+    && objs.filter(series => series instanceof Series).size !== objs.size)
+    throw new Error('Objects must all be Series');
+  else if (Array.isArray(objs)
+    && objs.filter(series => series instanceof Series).length !== objs.length)
+    throw new Error('Objects must all be Series');
+
+  if (!kwargs.ignore_index)
+    return new Series(_concatSeriesValues(objs), {index: _concatSeriesIndices(objs)});
+  else if (kwargs.ignore_index) {
+    return new Series(
+      _concatSeriesValues(objs),
+      {index: Immutable.Range(0, objs.reduce((a, b: Series) => a + b.length, 0)).toList()});
+  }
+
+  throw new Error('Not supported');
+};

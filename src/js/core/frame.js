@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.mergeDataFrame = undefined;
+exports._concatDataFrame = exports.mergeDataFrame = undefined;
 
 var _toConsumableArray2 = require('babel-runtime/helpers/toConsumableArray');
 
@@ -55,13 +55,17 @@ var _series2 = _interopRequireDefault(_series);
 
 var _utils = require('./utils');
 
+var _concat = require('./reshape/concat');
+
+var _concat2 = _interopRequireDefault(_concat);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // eslint-disable-next-line
 
-/**
- * DataFrame object
- */
+// import { Workbook, Sheet } from './structs'; TODO
+
+// import { saveAs } from 'file-saver'; TODO figure out if best way
 
 var parseArrayToSeriesMap = function parseArrayToSeriesMap(array, index) {
   var dataMap = _immutable2.default.Map({});
@@ -92,9 +96,9 @@ var parseArrayToSeriesMap = function parseArrayToSeriesMap(array, index) {
 
   return _immutable2.default.Map(dataMap);
 };
-// import { Workbook, Sheet } from './structs'; TODO
-
-// import { saveAs } from 'file-saver'; TODO figure out if best way
+/**
+ * DataFrame object
+ */
 
 var DataFrame = function (_NDFrame) {
   (0, _inherits3.default)(DataFrame, _NDFrame);
@@ -1653,6 +1657,65 @@ var DataFrame = function (_NDFrame) {
         return [nextCol, _this17._data.get(prevCol).rename(nextCol)];
       })), { index: this.index });
     }
+
+    /**
+     * Append another DataFrame to this and return a new DataFrame
+     *
+     * pandas equivalent: [DataFrame.append](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.append.html)
+     *
+     * @param {DataFrame} other
+     * @param {boolean} ignore_index
+     * @returns {DataFrame}
+     *
+     * @example
+     * const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}], {index: [1, 2]});
+     * const df2 = new DataFrame([{x: 2, y: 2}, {x: 3, y: 3}], {index: [2, 3]});
+     *
+     * // Returns DataFrame(
+     *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 2, y: 2}, {x: 3, y: 3}],
+     *   {index: [1, 2, 2, 3]});
+     * df1.append(df2);
+     *
+     * // Returns DataFrame(
+     *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 2, y: 2}, {x: 3, y: 3}],
+     *   {index: [0, 1, 2, 3]});
+     * df1.append(df2, true);
+     */
+
+  }, {
+    key: 'append',
+    value: function append(other) {
+      var ignore_index = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+      // eslint-disable-next-line
+      return _concatDataFrame( // $FlowIssue
+      [this, other], { ignore_index: ignore_index });
+    }
+
+    /**
+     * Transpose the DataFrame by switching the index and columns
+     *
+     * pandas equivalent: [DataFrame.transpose](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.transpose.html)
+     *
+     * @returns {DataFrame}
+     *
+     * @example
+     * const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [1, 2, 3]});
+     *
+     * // Returns DataFrame(
+     *   [{1: 1, 2: 2, 3: 3}, {1: 2, 2: 3, 3: 4}], {index: ['x', 'y']});
+     * df1.transpose();
+     */
+
+  }, {
+    key: 'transpose',
+    value: function transpose() {
+      var _this18 = this;
+
+      return new DataFrame(_immutable2.default.OrderedMap(this.index.map(function (index, idx) {
+        return [index, new _series2.default(_this18.values.get(idx), { index: _this18.columns.toList() })];
+      })));
+    }
   }, {
     key: 'kwargs',
     get: function get() {
@@ -1676,15 +1739,15 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'values',
     get: function get() {
-      var _this18 = this;
+      var _this19 = this;
 
       if (this._values instanceof _immutable2.default.List) return (0, _get3.default)(DataFrame.prototype.__proto__ || Object.getPrototypeOf(DataFrame.prototype), 'values', this);
 
       var valuesList = _immutable2.default.List([]);
 
       var _loop = function _loop(idx) {
-        valuesList = valuesList.concat([_immutable2.default.List(_this18.columns.map(function (k) {
-          return _this18._data.get(k).iloc(idx);
+        valuesList = valuesList.concat([_immutable2.default.List(_this19.columns.map(function (k) {
+          return _this19._data.get(k).iloc(idx);
         }))]);
       };
 
@@ -1734,14 +1797,14 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(columns) {
-      var _this19 = this;
+      var _this20 = this;
 
       if (!Array.isArray(columns) || columns.length !== this.columns.size) throw new Error('Columns must be array of same dimension');
 
       var nextData = {};
       columns.forEach(function (k, idx) {
-        var prevColumn = _this19.columns.get(idx);
-        var prevSeries = _this19.get(prevColumn);
+        var prevColumn = _this20.columns.get(idx);
+        var prevSeries = _this20.get(prevColumn);
 
         nextData[k] = prevSeries.rename(k);
       });
@@ -1786,7 +1849,7 @@ var DataFrame = function (_NDFrame) {
      */
     ,
     set: function set(index) {
-      var _this20 = this;
+      var _this21 = this;
 
       this.set_axis(0, (0, _utils.parseIndex)(index, this._data.get(this.columns.get(0)).values));
 
@@ -1797,7 +1860,7 @@ var DataFrame = function (_NDFrame) {
             v = _ref11[1];
 
         // noinspection Eslint
-        v.index = _this20.index;
+        v.index = _this21.index;
       });
     }
 
@@ -1818,10 +1881,10 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'length',
     get: function get() {
-      var _this21 = this;
+      var _this22 = this;
 
       return Math.max.apply(Math, [0].concat((0, _toConsumableArray3.default)(this.columns.map(function (k) {
-        return _this21.get(k).length;
+        return _this22.get(k).length;
       }).toArray())));
     }
   }]);
@@ -2149,6 +2212,56 @@ var mergeDataFrame = exports.mergeDataFrame = function mergeDataFrame(df1, df2, 
     default:
       throw new Error('MergeError: ' + how + ' not a supported merge type');
   }
+};
+
+// Concat
+var _concatDataFrame = exports._concatDataFrame = function _concatDataFrame(objs, kwargs) {
+  if (!(objs instanceof _immutable2.default.List || Array.isArray(objs))) throw new Error('objs must be List or Array');
+
+  if (objs instanceof _immutable2.default.List && objs.filter(function (frame) {
+    return frame instanceof DataFrame;
+  }).size !== objs.size) throw new Error('Objects must all be DataFrame');else if (Array.isArray(objs) && objs.filter(function (frame) {
+    return frame instanceof DataFrame;
+  }).length !== objs.length) throw new Error('Objects must all be DataFrame');
+
+  if (Array.isArray(objs) && objs.length === 1) return objs[0];else if (objs instanceof _immutable2.default.List && objs.size === 1) return objs.get(0);
+
+  var seriesOrderedMap = _immutable2.default.OrderedMap({});
+  if (kwargs.axis === 1) {
+    objs.forEach(function (df) {
+      df.columns.forEach(function (column) {
+        var columnExists = seriesOrderedMap.has(column);
+        seriesOrderedMap = seriesOrderedMap.set(columnExists ? column + '.x' : column, // $FlowIssue
+        columnExists ? df.get(column).rename(column + '.x') : df.get(column));
+      });
+    });
+  } else {
+    objs.forEach(function (df) {
+      var lenSeriesInMap = seriesOrderedMap.keySeq().size === 0 ? 0 : seriesOrderedMap.first().length;
+      var nextLength = df.length + lenSeriesInMap;
+
+      seriesOrderedMap = _immutable2.default.OrderedMap(
+      // Get entries already concated (already in seriesOrderedMap)
+      seriesOrderedMap.entrySeq().map(function (_ref12) {
+        var _ref13 = (0, _slicedToArray3.default)(_ref12, 2),
+            column = _ref13[0],
+            series = _ref13[1];
+
+        if (df.columnExists(column)) return [column, // $FlowIssue
+        (0, _series._concatSeries)([series, df.get(column)], kwargs)];
+        return [column, // $FlowIssue
+        (0, _series._concatSeries)([series, new _series2.default(_immutable2.default.Repeat(NaN, df.length).toList(), { index: df.index })], kwargs)]; // Now merge with columns only in the "right" DataFrame
+      })).merge(_immutable2.default.OrderedMap(df.columns.filter(function (column) {
+        return !seriesOrderedMap.has(column);
+      }).map(function (column) {
+        return (// $FlowIssue
+          [column, lenSeriesInMap === 0 ? df.get(column) : (0, _series._concatSeries)([new _series2.default(_immutable2.default.Repeat(NaN, nextLength)), df.get(column)], kwargs)]
+        );
+      })));
+    });
+  }
+
+  return new DataFrame(seriesOrderedMap);
 };
 
 //# sourceMappingURL=frame.js.map

@@ -3,6 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports._concatSeries = undefined;
+
+var _toConsumableArray2 = require('babel-runtime/helpers/toConsumableArray');
+
+var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
 
 var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
 
@@ -143,6 +148,7 @@ var Series = function (_NDFrame) {
     key: 'map',
     value: function map(func) {
       var array = [];
+      // eslint-disable-next-line
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
@@ -1449,6 +1455,36 @@ var Series = function (_NDFrame) {
     value: function rename(name) {
       return new Series(this._values, { name: name, index: this.index });
     }
+
+    /**
+     * Append another Series to this and return a new Series
+     *
+     * pandas equivalent: [Series.append](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.append.html)
+     *
+     * @param {Series} other
+     * @param {boolean} ignore_index
+     * @returns {Series}
+     *
+     * @example
+     * const ds1 = new Series([1, 2, 3], {index: [1, 2, 3]});
+     * const ds2 = new Series([2, 3, 4], {index: [3, 4, 5]});
+     *
+     * // Returns Series([1, 2, 3, 2, 3, 4], {index: [1, 2, 3, 3, 4, 5]});
+     * ds1.append(ds2);
+     *
+     * // Returns Series([1, 2, 3, 2, 3, 4], {index: [0, 1, 2, 3, 4, 5]});
+     * ds1.append(ds2, true);
+     */
+
+  }, {
+    key: 'append',
+    value: function append(other) {
+      var ignore_index = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+      // eslint-disable-next-line
+      return _concatSeries( // $FlowIssue
+      [this, other], { ignore_index: ignore_index });
+    }
   }, {
     key: 'kwargs',
     get: function get() {
@@ -1568,5 +1604,36 @@ var Series = function (_NDFrame) {
 }(_generic2.default);
 
 exports.default = Series;
+
+var _concatSeriesValues = function _concatSeriesValues(objs) {
+  var _Immutable$List;
+
+  return (_Immutable$List = _immutable2.default.List([])).concat.apply(_Immutable$List, (0, _toConsumableArray3.default)(objs.map(function (series) {
+    return series.values;
+  })));
+};
+var _concatSeriesIndices = function _concatSeriesIndices(objs) {
+  var _Immutable$List2;
+
+  return (_Immutable$List2 = _immutable2.default.List([])).concat.apply(_Immutable$List2, (0, _toConsumableArray3.default)(objs.map(function (series) {
+    return series.index;
+  })));
+};
+
+var _concatSeries = exports._concatSeries = function _concatSeries(objs, kwargs) {
+  if (objs instanceof _immutable2.default.List && objs.filter(function (series) {
+    return series instanceof Series;
+  }).size !== objs.size) throw new Error('Objects must all be Series');else if (Array.isArray(objs) && objs.filter(function (series) {
+    return series instanceof Series;
+  }).length !== objs.length) throw new Error('Objects must all be Series');
+
+  if (!kwargs.ignore_index) return new Series(_concatSeriesValues(objs), { index: _concatSeriesIndices(objs) });else if (kwargs.ignore_index) {
+    return new Series(_concatSeriesValues(objs), { index: _immutable2.default.Range(0, objs.reduce(function (a, b) {
+        return a + b.length;
+      }, 0)).toList() });
+  }
+
+  throw new Error('Not supported');
+};
 
 //# sourceMappingURL=series.js.map

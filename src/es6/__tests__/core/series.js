@@ -629,4 +629,22 @@ describe('series', () => {
       });
     });
   });
+
+  describe('append', () => {
+    it('Appends a Series to another when ignore_index is false', () => {
+      const ds1 = new Series([1, 2, 3], {index: [1, 2, 3]});
+      const ds2 = new Series([2, 3, 4], {index: [2, 3, 4]});
+      const ds3 = ds1.append(ds2);
+      expect(ds3.values.toArray()).toEqual([1, 2, 3, 2, 3, 4]);
+      expect(ds3.index.toArray()).toEqual([1, 2, 3, 2, 3, 4]);
+    });
+
+    it('Appends a Series to another when ignore_index is true', () => {
+      const ds1 = new Series([1, 2, 3], {index: [1, 2, 3]});
+      const ds2 = new Series([2, 3, 4], {index: [2, 3, 4]});
+      const ds3 = ds1.append(ds2, true);
+      expect(ds3.values.toArray()).toEqual([1, 2, 3, 2, 3, 4]);
+      expect(ds3.index.toArray()).toEqual([0, 1, 2, 3, 4, 5]);
+    });
+  });
 });
