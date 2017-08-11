@@ -18,6 +18,12 @@ Object.defineProperty(exports, 'DataFrame', {
     return _index.DataFrame;
   }
 });
+Object.defineProperty(exports, 'concat', {
+  enumerable: true,
+  get: function get() {
+    return _index.concat;
+  }
+});
 
 var _tools = require('./tseries/tools');
 

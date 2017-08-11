@@ -978,13 +978,6 @@ describe('frame', function () {
     });
   });
 
-  describe('pivot_table', function () {
-    it('pivots', function () {
-      var df = new _frame2.default([{ a: 1, b: 1, c: 1, d: 3 }, { a: 1, b: 1, c: 2, d: 8 }, { a: 1, b: 2, c: 1, d: 9 }, { a: 1, b: 2, c: 2, d: 10 }, { a: 2, b: 1, c: 1, d: 1 }, { a: 2, b: 1, c: 2, d: 4 }, { a: 2, b: 2, c: 1, d: 1 }, { a: 2, b: 2, c: 2, d: 3 }, { a: 2, b: 2, c: 2, d: 3 }]);
-
-      console.log(df.pivot_table(['a', 'b'], 'c', 'd'));
-    });
-  });
 
   describe('rename', function () {
     it('renames one Series in the DataFrame', function () {
@@ -1011,6 +1004,54 @@ describe('frame', function () {
     it('Estimates non-zero length properly', function () {
       var df = new _frame2.default(_immutable2.default.Map({ x: new _series2.default([1, 2, 5, 4, 3]) }));
       expect(df.length).toEqual(5);
+    });
+  });
+
+  describe('append', function () {
+    it('Appends a DataFrame to another when ignore_index is false', function () {
+      var df1 = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
+      var df2 = new _frame2.default([{ x: 2, y: 2 }, { x: 3, y: 3 }, { x: 4, y: 4 }], { index: [2, 3, 4] });
+
+      var df3 = df1.append(df2);
+      expect(df3.get('x').values.toArray()).toEqual([1, 2, 3, 2, 3, 4]);
+      expect(df3.get('y').values.toArray()).toEqual([2, 3, 4, 2, 3, 4]);
+      expect(df3.index.toArray()).toEqual([1, 2, 3, 2, 3, 4]);
+    });
+
+    it('Appends a DataFrame to another when ignore_index is true', function () {
+      var df1 = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
+      var df2 = new _frame2.default([{ x: 2, y: 2 }, { x: 3, y: 3 }, { x: 4, y: 4 }], { index: [2, 3, 4] });
+
+      var df3 = df1.append(df2, true);
+      expect(df3.get('x').values.toArray()).toEqual([1, 2, 3, 2, 3, 4]);
+      expect(df3.get('y').values.toArray()).toEqual([2, 3, 4, 2, 3, 4]);
+      expect(df3.index.toArray()).toEqual([0, 1, 2, 3, 4, 5]);
+    });
+
+    it('Appends an empty DataFrame to another', function () {
+      var df1 = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
+      var df2 = new _frame2.default([]);
+
+      var df3 = df1.append(df2);
+      expect(df3.get('x').values.toArray()).toEqual([1, 2, 3]);
+      expect(df3.get('y').values.toArray()).toEqual([2, 3, 4]);
+      expect(df3.index.toArray()).toEqual([1, 2, 3]);
+    });
+  });
+
+  describe('transpose', function () {
+    it('Tranposes a DataFrame by flipping indexes and columns', function () {
+      var df1 = new _frame2.default([{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 4 }], { index: [1, 2, 3] });
+      var df2 = df1.transpose();
+
+      expect(df2.columns.toArray()).toEqual([1, 2, 3]);
+      expect(df2.index.toArray()).toEqual(['x', 'y']);
+      expect(df2.get(1).index.toArray()).toEqual(['x', 'y']);
+
+      var df3 = df2.transpose();
+      expect(df3.columns.toArray()).toEqual(['x', 'y']);
+      expect(df3.index.toArray()).toEqual([1, 2, 3]);
+      expect(df3.get('x').index.toArray()).toEqual([1, 2, 3]);
     });
   });
 });

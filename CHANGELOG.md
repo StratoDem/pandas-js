@@ -1,5 +1,11 @@
 # Change Log
 
+0.2.0
+### Added
+- `concat` to concatenate multiple `DataFrame`s or `Series`
+- `append` for `DataFrame`
+- `transpose` for DataFrame`
+
 0.1.28
 ### Added
 - `rename` for `DataFrame` and `Series`

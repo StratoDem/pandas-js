@@ -9,10 +9,11 @@ import Immutable from 'immutable';
 import { InvalidAxisError } from './exceptions';
 import NDFrame from './generic';
 import { MultiIndex } from './multiindex';
-import Series from './series';
+import Series, { _concatSeries } from './series';
 // import { Workbook, Sheet } from './structs'; TODO
 import { enumerate, nonMergeColumns, intersectingColumns, parseIndex,
   OP_CUMSUM, OP_CUMMUL, OP_CUMMIN, OP_CUMMAX, generateCumulativeFunc } from './utils';
+import concat from './reshape/concat';
 
 
 declare type T_LIST = Immutable.List
@@ -1571,6 +1572,57 @@ export default class DataFrame extends NDFrame {
       return [nextCol, this._data.get(prevCol).rename(nextCol)];
     })), {index: this.index});
   }
+
+  /**
+   * Append another DataFrame to this and return a new DataFrame
+   *
+   * pandas equivalent: [DataFrame.append](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.append.html)
+   *
+   * @param {DataFrame} other
+   * @param {boolean} ignore_index
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}], {index: [1, 2]});
+   * const df2 = new DataFrame([{x: 2, y: 2}, {x: 3, y: 3}], {index: [2, 3]});
+   *
+   * // Returns DataFrame(
+   *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 2, y: 2}, {x: 3, y: 3}],
+   *   {index: [1, 2, 2, 3]});
+   * df1.append(df2);
+   *
+   * // Returns DataFrame(
+   *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 2, y: 2}, {x: 3, y: 3}],
+   *   {index: [0, 1, 2, 3]});
+   * df1.append(df2, true);
+   */
+  append(other: DataFrame, ignore_index: boolean = false): DataFrame {
+    // eslint-disable-next-line
+    return _concatDataFrame(// $FlowIssue
+      [this, other],
+      {ignore_index});
+  }
+
+  /**
+   * Transpose the DataFrame by switching the index and columns
+   *
+   * pandas equivalent: [DataFrame.transpose](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.transpose.html)
+   *
+   * @returns {DataFrame}
+   *
+   * @example
+   * const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [1, 2, 3]});
+   *
+   * // Returns DataFrame(
+   *   [{1: 1, 2: 2, 3: 3}, {1: 2, 2: 3, 3: 4}], {index: ['x', 'y']});
+   * df1.transpose();
+   */
+  transpose(): DataFrame {
+    return new DataFrame(
+      Immutable.OrderedMap(
+        this.index.map((index, idx) =>
+          ([index, new Series(this.values.get(idx), {index: this.columns.toList()})]))));
+  }
 }
 
 const innerMerge = (df1: DataFrame, df2: DataFrame, on: Array<string | number>): DataFrame => {
@@ -1749,4 +1801,67 @@ export const mergeDataFrame = (df1: DataFrame, df2: DataFrame, on: Array<string 
     default:
       throw new Error(`MergeError: ${how} not a supported merge type`);
   }
+};
+
+// Concat
+type T_KWARGS = {ignore_index: boolean, axis?: 0 | 1};
+export const _concatDataFrame = (objs: Array<DataFrame> | Immutable.List<DataFrame>,
+                                 kwargs: T_KWARGS): DataFrame => {
+  if (!(objs instanceof Immutable.List || Array.isArray(objs)))
+    throw new Error('objs must be List or Array');
+
+  if (objs instanceof Immutable.List
+    && objs.filter(frame => frame instanceof DataFrame).size !== objs.size)
+    throw new Error('Objects must all be DataFrame');
+  else if (Array.isArray(objs)
+    && objs.filter(frame => frame instanceof DataFrame).length !== objs.length)
+    throw new Error('Objects must all be DataFrame');
+
+  if (Array.isArray(objs) && objs.length === 1)
+    return objs[0];
+  else if (objs instanceof Immutable.List && objs.size === 1)
+    return objs.get(0);
+
+  let seriesOrderedMap = Immutable.OrderedMap({});
+  if (kwargs.axis === 1) {
+    objs.forEach((df: DataFrame) => {
+      df.columns.forEach((column: string) => {
+        const columnExists = seriesOrderedMap.has(column);
+        seriesOrderedMap = seriesOrderedMap.set(
+          columnExists ? `${column}.x` : column, // $FlowIssue
+          columnExists ? df.get(column).rename(`${column}.x`) : df.get(column));
+      });
+    });
+  } else {
+    objs.forEach((df: DataFrame) => {
+      const lenSeriesInMap = seriesOrderedMap.keySeq().size === 0
+        ? 0
+        : seriesOrderedMap.first().length;
+      const nextLength = df.length + lenSeriesInMap;
+
+      seriesOrderedMap = Immutable.OrderedMap(
+        // Get entries already concated (already in seriesOrderedMap)
+        seriesOrderedMap.entrySeq().map(([column, series]) => {
+          if (df.columnExists(column))
+            return [
+              column, // $FlowIssue
+              _concatSeries([series, df.get(column)], kwargs)];
+          return [
+            column, // $FlowIssue
+            _concatSeries([
+              series,
+              new Series(Immutable.Repeat(NaN, df.length).toList(), {index: df.index})],
+            kwargs)]; // Now merge with columns only in the "right" DataFrame
+        })).merge(Immutable.OrderedMap(
+        df.columns
+          .filter(column => !seriesOrderedMap.has(column))
+          .map(column => // $FlowIssue
+            ([column, lenSeriesInMap === 0 ? df.get(column) : _concatSeries([
+              new Series(Immutable.Repeat(NaN, nextLength)),
+              df.get(column)],
+            kwargs)]))));
+    });
+  }
+
+  return new DataFrame(seriesOrderedMap);
 };

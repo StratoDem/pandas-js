@@ -658,6 +658,24 @@ describe('series', function () {
       });
     });
   });
+
+  describe('append', function () {
+    it('Appends a Series to another when ignore_index is false', function () {
+      var ds1 = new _series2.default([1, 2, 3], { index: [1, 2, 3] });
+      var ds2 = new _series2.default([2, 3, 4], { index: [2, 3, 4] });
+      var ds3 = ds1.append(ds2);
+      expect(ds3.values.toArray()).toEqual([1, 2, 3, 2, 3, 4]);
+      expect(ds3.index.toArray()).toEqual([1, 2, 3, 2, 3, 4]);
+    });
+
+    it('Appends a Series to another when ignore_index is true', function () {
+      var ds1 = new _series2.default([1, 2, 3], { index: [1, 2, 3] });
+      var ds2 = new _series2.default([2, 3, 4], { index: [2, 3, 4] });
+      var ds3 = ds1.append(ds2, true);
+      expect(ds3.values.toArray()).toEqual([1, 2, 3, 2, 3, 4]);
+      expect(ds3.index.toArray()).toEqual([0, 1, 2, 3, 4, 5]);
+    });
+  });
 });
 
 //# sourceMappingURL=series.js.map
