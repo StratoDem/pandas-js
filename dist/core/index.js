@@ -22,4 +22,13 @@ Object.defineProperty(exports, 'DataFrame', {
   }
 });
 
+var _concat = require('./reshape/concat');
+
+Object.defineProperty(exports, 'concat', {
+  enumerable: true,
+  get: function get() {
+    return _interopRequireDefault(_concat).default;
+  }
+});
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }

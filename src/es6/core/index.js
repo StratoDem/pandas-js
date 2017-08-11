@@ -13,3 +13,4 @@
 
 export { default as Series } from './series';
 export { default as DataFrame } from './frame';
+export { default as concat } from './reshape/concat';

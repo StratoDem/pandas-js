@@ -3,6 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports._concatSeries = undefined;
+
+var _toConsumableArray2 = require('babel-runtime/helpers/toConsumableArray');
+
+var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
 
 var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
 
@@ -98,9 +103,9 @@ var Series = function (_NDFrame) {
         for (var _iterator = (0, _utils.enumerate)(this)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
           var _step$value = (0, _slicedToArray3.default)(_step.value, 2),
               val = _step$value[0],
-              idx = _step$value[1];
+              _idx = _step$value[1];
 
-          array.push(func(val, idx));
+          array.push(func(val, _idx));
         }
       } catch (err) {
         _didIteratorError = true;
@@ -238,74 +243,59 @@ var Series = function (_NDFrame) {
       }), { name: this.name, index: this.index });
     }
   }, {
-    key: 'add',
-    value: function add(val) {
-      if (typeof val === 'number') return this.map(function (v) {
-          return v + val;
-        });else if (val instanceof Series) return this.map(function (v, idx) {
-          return v + val.iloc(idx);
-        });else if (Array.isArray(val)) return this.map(function (v, idx) {
-        return v + val[idx];
-      });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
-          return v + val.get(idx);
-        });
+    key: '_combineOp',
+    value: function _combineOp(other, op) {
+      var opName = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
 
-      throw new Error('add only supports numbers, Arrays, Immutable List and pandas.Series');
+      if (typeof other === 'number') return this.map(function (val) {
+        return op(val, other);
+      });else if (other instanceof Series) return this.map(function (val, idx) {
+        return op(val, other.iloc(idx));
+      });else if (Array.isArray(other)) return this.map(function (val, idx) {
+        return op(val, other[idx]);
+      });else if (other instanceof _immutable2.default.List) return this.map(function (val, idx) {
+        return op(val, other.get(idx));
+      });
+
+      throw new Error(opName + ' only supports numbers, Arrays, Immutable List and pandas.Series');
+    }
+  }, {
+    key: 'add',
+    value: function add(other) {
+      return this._combineOp(other, function (a, b) {
+        return a + b;
+      }, 'add');
     }
   }, {
     key: 'sub',
-    value: function sub(val) {
-      if (typeof val === 'number') return this.map(function (v) {
-          return v - val;
-        });else if (val instanceof Series) return this.map(function (v, idx) {
-          return v - val.iloc(idx);
-        });else if (Array.isArray(val)) return this.map(function (v, idx) {
-          return v - val[idx];
-        });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
-          return v - val.get(idx);
-        });
-
-      throw new Error('sub only supports numbers, Arrays, Immutable List and pandas.Series');
+    value: function sub(other) {
+      return this._combineOp(other, function (a, b) {
+        return a - b;
+      }, 'sub');
     }
   }, {
     key: 'mul',
-    value: function mul(val) {
-      if (typeof val === 'number') return this.map(function (v) {
-          return v * val;
-        });else if (val instanceof Series) return this.map(function (v, idx) {
-          return v * val.iloc(idx);
-        });else if (Array.isArray(val)) return this.map(function (v, idx) {
-          return v * val[idx];
-        });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
-          return v * val.get(idx);
-        });
-
-      throw new Error('mul only supports numbers, Arrays, Immutable List and pandas.Series');
+    value: function mul(other) {
+      return this._combineOp(other, function (a, b) {
+        return a * b;
+      });
     }
   }, {
     key: 'multiply',
-    value: function multiply(val) {
-      return this.mul(val);
+    value: function multiply(other) {
+      return this.mul(other);
     }
   }, {
     key: 'div',
-    value: function div(val) {
-      if (typeof val === 'number') return this.map(function (v) {
-          return v / val;
-        });else if (val instanceof Series) return this.map(function (v, idx) {
-          return v / val.iloc(idx);
-        });else if (Array.isArray(val)) return this.map(function (v, idx) {
-          return v / val[idx];
-        });else if (val instanceof _immutable2.default.List) return this.map(function (v, idx) {
-          return v / val.get(idx);
-        });
-
-      throw new Error('div only supports numbers, Arrays, Immutable List and pandas.Series');
+    value: function div(other) {
+      return this._combineOp(other, function (a, b) {
+        return a / b;
+      }, 'div');
     }
   }, {
     key: 'divide',
-    value: function divide(val) {
-      return this.div(val);
+    value: function divide(other) {
+      return this.div(other);
     }
   }, {
     key: 'cov',
@@ -633,6 +623,13 @@ var Series = function (_NDFrame) {
       return new Series(this._values, { name: name, index: this.index });
     }
   }, {
+    key: 'append',
+    value: function append(other) {
+      var ignore_index = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+      return _concatSeries([this, other], { ignore_index: ignore_index });
+    }
+  }, {
     key: 'kwargs',
     get: function get() {
       return {
@@ -673,3 +670,34 @@ var Series = function (_NDFrame) {
 }(_generic2.default);
 
 exports.default = Series;
+
+var _concatSeriesValues = function _concatSeriesValues(objs) {
+  var _Immutable$List;
+
+  return (_Immutable$List = _immutable2.default.List([])).concat.apply(_Immutable$List, (0, _toConsumableArray3.default)(objs.map(function (series) {
+    return series.values;
+  })));
+};
+var _concatSeriesIndices = function _concatSeriesIndices(objs) {
+  var _Immutable$List2;
+
+  return (_Immutable$List2 = _immutable2.default.List([])).concat.apply(_Immutable$List2, (0, _toConsumableArray3.default)(objs.map(function (series) {
+    return series.index;
+  })));
+};
+
+var _concatSeries = exports._concatSeries = function _concatSeries(objs, kwargs) {
+  if (objs instanceof _immutable2.default.List && objs.filter(function (series) {
+    return series instanceof Series;
+  }).size !== objs.size) throw new Error('Objects must all be Series');else if (Array.isArray(objs) && objs.filter(function (series) {
+    return series instanceof Series;
+  }).length !== objs.length) throw new Error('Objects must all be Series');
+
+  if (!kwargs.ignore_index) return new Series(_concatSeriesValues(objs), { index: _concatSeriesIndices(objs) });else if (kwargs.ignore_index) {
+    return new Series(_concatSeriesValues(objs), { index: _immutable2.default.Range(0, objs.reduce(function (a, b) {
+        return a + b.length;
+      }, 0)).toList() });
+  }
+
+  throw new Error('Not supported');
+};
