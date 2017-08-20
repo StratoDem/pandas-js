@@ -1,5 +1,9 @@
 # Change Log
 
+0.2.1
+### Changed
+- Updated dev requirements
+
 0.2.0
 ### Added
 - `concat` to concatenate multiple `DataFrame`s or `Series`

@@ -8,12 +8,11 @@ import Immutable from 'immutable';
 
 import { InvalidAxisError } from './exceptions';
 import NDFrame from './generic';
-import { MultiIndex } from './multiindex';
+// import { MultiIndex } from './multiindex';
 import Series, { _concatSeries } from './series';
 // import { Workbook, Sheet } from './structs'; TODO
 import { enumerate, nonMergeColumns, intersectingColumns, parseIndex,
   OP_CUMSUM, OP_CUMMUL, OP_CUMMIN, OP_CUMMAX, generateCumulativeFunc } from './utils';
-import concat from './reshape/concat';
 
 
 declare type T_LIST = Immutable.List
@@ -1587,13 +1586,13 @@ export default class DataFrame extends NDFrame {
    * const df2 = new DataFrame([{x: 2, y: 2}, {x: 3, y: 3}], {index: [2, 3]});
    *
    * // Returns DataFrame(
-   *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 2, y: 2}, {x: 3, y: 3}],
-   *   {index: [1, 2, 2, 3]});
+   * //  [{x: 1, y: 2}, {x: 2, y: 3}, {x: 2, y: 2}, {x: 3, y: 3}],
+   * //  {index: [1, 2, 2, 3]});
    * df1.append(df2);
    *
    * // Returns DataFrame(
-   *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 2, y: 2}, {x: 3, y: 3}],
-   *   {index: [0, 1, 2, 3]});
+   * //  [{x: 1, y: 2}, {x: 2, y: 3}, {x: 2, y: 2}, {x: 3, y: 3}],
+   * //  {index: [0, 1, 2, 3]});
    * df1.append(df2, true);
    */
   append(other: DataFrame, ignore_index: boolean = false): DataFrame {
@@ -1614,7 +1613,7 @@ export default class DataFrame extends NDFrame {
    * const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [1, 2, 3]});
    *
    * // Returns DataFrame(
-   *   [{1: 1, 2: 2, 3: 3}, {1: 2, 2: 3, 3: 4}], {index: ['x', 'y']});
+   * //  [{1: 1, 2: 2, 3: 3}, {1: 2, 2: 3, 3: 4}], {index: ['x', 'y']});
    * df1.transpose();
    */
   transpose(): DataFrame {

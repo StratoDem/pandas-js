@@ -6,7 +6,7 @@ mkdir docs
 CORE_DIR=core
 
 # Iterate over the directories
-for rel_dir in ${CORE_DIR}
+for rel_dir in ${CORE_DIR} core/reshape
     do
     ES6_DIR=src/es6/${rel_dir%*/}
     DOC_DIR=docs/${rel_dir%*/}/

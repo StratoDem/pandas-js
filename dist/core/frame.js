@@ -47,17 +47,11 @@ var _generic = require('./generic');
 
 var _generic2 = _interopRequireDefault(_generic);
 
-var _multiindex = require('./multiindex');
-
 var _series = require('./series');
 
 var _series2 = _interopRequireDefault(_series);
 
 var _utils = require('./utils');
-
-var _concat = require('./reshape/concat');
-
-var _concat2 = _interopRequireDefault(_concat);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 

@@ -47,23 +47,17 @@ var _generic = require('./generic');
 
 var _generic2 = _interopRequireDefault(_generic);
 
-var _multiindex = require('./multiindex');
-
 var _series = require('./series');
 
 var _series2 = _interopRequireDefault(_series);
 
 var _utils = require('./utils');
 
-var _concat = require('./reshape/concat');
-
-var _concat2 = _interopRequireDefault(_concat);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // eslint-disable-next-line
 
-// import { Workbook, Sheet } from './structs'; TODO
+// import { MultiIndex } from './multiindex';
 
 // import { saveAs } from 'file-saver'; TODO figure out if best way
 
@@ -96,6 +90,8 @@ var parseArrayToSeriesMap = function parseArrayToSeriesMap(array, index) {
 
   return _immutable2.default.Map(dataMap);
 };
+// import { Workbook, Sheet } from './structs'; TODO
+
 /**
  * DataFrame object
  */
@@ -1672,13 +1668,13 @@ var DataFrame = function (_NDFrame) {
      * const df2 = new DataFrame([{x: 2, y: 2}, {x: 3, y: 3}], {index: [2, 3]});
      *
      * // Returns DataFrame(
-     *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 2, y: 2}, {x: 3, y: 3}],
-     *   {index: [1, 2, 2, 3]});
+     * //  [{x: 1, y: 2}, {x: 2, y: 3}, {x: 2, y: 2}, {x: 3, y: 3}],
+     * //  {index: [1, 2, 2, 3]});
      * df1.append(df2);
      *
      * // Returns DataFrame(
-     *   [{x: 1, y: 2}, {x: 2, y: 3}, {x: 2, y: 2}, {x: 3, y: 3}],
-     *   {index: [0, 1, 2, 3]});
+     * //  [{x: 1, y: 2}, {x: 2, y: 3}, {x: 2, y: 2}, {x: 3, y: 3}],
+     * //  {index: [0, 1, 2, 3]});
      * df1.append(df2, true);
      */
 
@@ -1703,7 +1699,7 @@ var DataFrame = function (_NDFrame) {
      * const df1 = new DataFrame([{x: 1, y: 2}, {x: 2, y: 3}, {x: 3, y: 4}], {index: [1, 2, 3]});
      *
      * // Returns DataFrame(
-     *   [{1: 1, 2: 2, 3: 3}, {1: 2, 2: 3, 3: 4}], {index: ['x', 'y']});
+     * //  [{1: 1, 2: 2, 3: 3}, {1: 2, 2: 3, 3: 4}], {index: ['x', 'y']});
      * df1.transpose();
      */
 
