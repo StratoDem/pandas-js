@@ -160,7 +160,7 @@ export default class DataFrame extends NDFrame {
     return new DataFrame(this._data, {index: this.index});
   }
 
-  // $FlowIssue
+  // $FlowFixMe
   [Symbol.iterator]() {
     let index = -1;
 
@@ -350,7 +350,7 @@ export default class DataFrame extends NDFrame {
       return new DataFrame(this._data.set(column, series), this.kwargs);
     else if (series instanceof Immutable.List || Array.isArray(series))
       return new DataFrame(this._data.set(
-        column, // $FlowIssue TODO
+        column, // $FlowFixMe TODO
         new Series(series, {index: this.index, name: column})), this.kwargs);
     throw new TypeError('series must be a Series!');
   }
@@ -449,14 +449,14 @@ export default class DataFrame extends NDFrame {
           Immutable.Map(
             Immutable.Range(colIdx[0], colIdx[1]).map((idx) => {
               const getCol = this.columns.get(idx);
-              // $FlowIssue TODO
+              // $FlowFixMe TODO
               return [getCol, this.get(getCol).iloc(rowIdx, rowIdx + 1)];
             }).toArray()),
           {index: this.index.slice(rowIdx, rowIdx + 1)});
       } else if (typeof colIdx === 'undefined') {
         return new DataFrame(
           Immutable.Map(this.columns.map(c =>
-            // $FlowIssue TODO
+            // $FlowFixMe TODO
             ([c, this.get(c).iloc(rowIdx, rowIdx + 1)])).toArray()),
           {index: this.index.slice(rowIdx, rowIdx + 1)});
       }
@@ -483,14 +483,14 @@ export default class DataFrame extends NDFrame {
           Immutable.Map(
             Immutable.Range(colIdx[0], colIdx[1]).map((idx) => {
               const getCol = this.columns.get(idx);
-              // $FlowIssue TODO
+              // $FlowFixMe TODO
               return [getCol, this.get(getCol).iloc(rowIdx[0], rowIdx[1])];
             }).toArray()),
           {index: this.index.slice(rowIdx[0], rowIdx[1])});
       } else if (typeof colIdx === 'undefined') {
         return new DataFrame(
           Immutable.Map(this.columns.map(c =>
-            // $FlowIssue TODO
+            // $FlowFixMe TODO
             ([c, this.get(c).iloc(rowIdx[0], rowIdx[1])])).toArray()),
           {index: this.index.slice(rowIdx[0], rowIdx[1])});
       }
@@ -629,7 +629,7 @@ export default class DataFrame extends NDFrame {
         throw new Error('DataFrame must have the same shape');
       // noinspection Eslint
       return new DataFrame(Immutable.Map(this._data.mapEntries(([k, v], idx) => {
-        // $FlowIssue TODO
+        // $FlowFixMe TODO
         return [k, v.where(other.get(other.columns.get(idx)), op)];
       })));
     }
@@ -813,7 +813,7 @@ export default class DataFrame extends NDFrame {
     csvString += '\r\n';
 
     const updateString = (idx) => {
-      let s = ''; // $FlowIssue TODO
+      let s = ''; // $FlowFixMe TODO
       this.columns.forEach((k) => { s += `${this.get(k).iloc(idx)},`; });
       return s;
     };
@@ -1175,7 +1175,7 @@ export default class DataFrame extends NDFrame {
    * // Returns DataFrame([{x: 1, y: -1, z: 2}, {x: -1, y: 1, z: -2}, {x: 2, y: -2, z: 4}])
    * df.cov();
    */
-  cov(): DataFrame { // $FlowIssue TODO
+  cov(): DataFrame { // $FlowFixMe TODO
     return this._pairwiseDataFrame((ds1, ds2) => ds1.cov(ds2));
   }
 
@@ -1194,7 +1194,7 @@ export default class DataFrame extends NDFrame {
    */
   corr(): DataFrame {
     // noinspection Eslint
-    const corrFunc = (ds1, ds2) => { // $FlowIssue TODO
+    const corrFunc = (ds1, ds2) => { // $FlowFixMe TODO
       return ds1.values === ds2.values ? 1 : ds1.corr(ds2);
     };
     return this._pairwiseDataFrame(corrFunc);
@@ -1238,7 +1238,7 @@ export default class DataFrame extends NDFrame {
           if (idx < periods)
             return [k, new Series(Immutable.Repeat(null, this.length).toList(),
               {name: k, index: this.index})];
-          const compareCol = this.get(this.columns.get(idx - periods)); // $FlowIssue TODO
+          const compareCol = this.get(this.columns.get(idx - periods)); // $FlowFixMe TODO
           return [k, this.get(k).map((v, vIdx) => v - compareCol.iloc(vIdx))];
         })), {index: this.index});
     }
@@ -1285,7 +1285,7 @@ export default class DataFrame extends NDFrame {
             return [k, new Series(Immutable.Repeat(null, this.length).toList(),
               {name: k, index: this.index})];
           const compareCol = this.get(this.columns.get(idx - periods));
-          // $FlowIssue TODO
+          // $FlowFixMe TODO
           return [k, this.get(k).map((v, vIdx) => (v / compareCol.iloc(vIdx)) - 1)];
         })), {index: this.index});
     }
@@ -1596,7 +1596,7 @@ export default class DataFrame extends NDFrame {
    */
   append(other: DataFrame, ignore_index: boolean = false): DataFrame {
     // eslint-disable-next-line
-    return _concatDataFrame(// $FlowIssue
+    return _concatDataFrame(// $FlowFixMe
       [this, other],
       {ignore_index});
   }
@@ -1826,7 +1826,7 @@ export const _concatDataFrame = (objs: Array<DataFrame> | Immutable.List<DataFra
       df.columns.forEach((column: string) => {
         const columnExists = seriesOrderedMap.has(column);
         seriesOrderedMap = seriesOrderedMap.set(
-          columnExists ? `${column}.x` : column, // $FlowIssue
+          columnExists ? `${column}.x` : column, // $FlowFixMe
           columnExists ? df.get(column).rename(`${column}.x`) : df.get(column));
       });
     });
@@ -1842,10 +1842,10 @@ export const _concatDataFrame = (objs: Array<DataFrame> | Immutable.List<DataFra
         seriesOrderedMap.entrySeq().map(([column, series]) => {
           if (df.columnExists(column))
             return [
-              column, // $FlowIssue
+              column, // $FlowFixMe
               _concatSeries([series, df.get(column)], kwargs)];
           return [
-            column, // $FlowIssue
+            column, // $FlowFixMe
             _concatSeries([
               series,
               new Series(Immutable.Repeat(NaN, df.length).toList(), {index: df.index})],
@@ -1853,7 +1853,7 @@ export const _concatDataFrame = (objs: Array<DataFrame> | Immutable.List<DataFra
         })).merge(Immutable.OrderedMap(
         df.columns
           .filter(column => !seriesOrderedMap.has(column))
-          .map(column => // $FlowIssue
+          .map(column => // $FlowFixMe
             ([column, lenSeriesInMap === 0 ? df.get(column) : _concatSeries([
               new Series(Immutable.Repeat(NaN, nextLength)),
               df.get(column)],

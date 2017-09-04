@@ -60,13 +60,13 @@ export default class Series extends NDFrame {
     this.set_axis(0, parseIndex(kwargs.index, this.values));
     this._setup_axes(Immutable.List.of(0));
 
-    // $FlowIssue TODO
+    // $FlowFixMe TODO
     this._sort_ascending = this._sort_ascending.bind(this);
-    // $FlowIssue TODO
+    // $FlowFixMe TODO
     this._sort_descending = this._sort_descending.bind(this);
   }
 
-  // $FlowIssue
+  // $FlowFixMe
   [Symbol.iterator]() {
     const values = this.values;
     let index = -1;
@@ -135,7 +135,7 @@ export default class Series extends NDFrame {
    * // Name: My test name, dtype: dtype(int)
    */
   toString(): string {
-    // $FlowIssue TODO
+    // $FlowFixMe TODO
     const vals = this.iloc(0, 10).values;
 
     let valString = '';
@@ -164,7 +164,7 @@ export default class Series extends NDFrame {
    * ds.head(3);
    */
   head(n: number = 5): Series {
-    // $FlowIssue TODO
+    // $FlowFixMe TODO
     return this.iloc(0, n);
   }
 
@@ -186,7 +186,7 @@ export default class Series extends NDFrame {
    * ds.tail(3);
    */
   tail(n: number = 5): Series {
-    // $FlowIssue TODO
+    // $FlowFixMe TODO
     return this.iloc(this.length - n, this.length);
   }
 
@@ -769,9 +769,9 @@ export default class Series extends NDFrame {
     const valA = this.iloc(valueA);
     const valB = this.iloc(valueB);
 
-    // $FlowIssue
+    // $FlowFixMe
     if (valA < valB) return -1;
-    // $FlowIssue
+    // $FlowFixMe
     else if (valA > valB) return 1;
     return 0;
   }
@@ -780,9 +780,9 @@ export default class Series extends NDFrame {
     const valA = this.iloc(valueA);
     const valB = this.iloc(valueB);
 
-    // $FlowIssue
+    // $FlowFixMe
     if (valA > valB) return -1;
-    // $FlowIssue
+    // $FlowFixMe
     else if (valA < valB) return 1;
     return 0;
   }
@@ -1274,7 +1274,7 @@ export default class Series extends NDFrame {
     let orient = 'index';
 
     if (typeof kwargs.orient !== 'undefined') {
-      if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0) // $FlowIssue TODO
+      if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0) // $FlowFixMe TODO
         throw new TypeError(`orient must be in ${ALLOWED_ORIENT}`);
       orient = kwargs.orient;
     }
@@ -1292,7 +1292,7 @@ export default class Series extends NDFrame {
         });
         return json;
       default:
-        // $FlowIssue TODO
+        // $FlowFixMe TODO
         throw new TypeError(`orient must be in ${ALLOWED_ORIENT}`);
     }
   }
@@ -1335,7 +1335,7 @@ export default class Series extends NDFrame {
    */
   append(other: Series, ignore_index: boolean = false): Series {
     // eslint-disable-next-line
-    return _concatSeries( // $FlowIssue
+    return _concatSeries( // $FlowFixMe
       [this, other],
       {ignore_index});
   }

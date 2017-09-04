@@ -1,6 +1,7 @@
 [options]
 unsafe.enable_getters_and_setters=true
-suppress_comment=.*\\$FlowIssue
+suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
+esproposal.decorators=ignore
 module.system.node.resolve_dirname=es6
 module.system.node.resolve_dirname=node_modules
 

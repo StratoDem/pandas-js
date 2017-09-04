@@ -99,14 +99,14 @@ var Series = function (_NDFrame) {
     _this.set_axis(0, (0, _utils.parseIndex)(kwargs.index, _this.values));
     _this._setup_axes(_immutable2.default.List.of(0));
 
-    // $FlowIssue TODO
+    // $FlowFixMe TODO
     _this._sort_ascending = _this._sort_ascending.bind(_this);
-    // $FlowIssue TODO
+    // $FlowFixMe TODO
     _this._sort_descending = _this._sort_descending.bind(_this);
     return _this;
   }
 
-  // $FlowIssue
+  // $FlowFixMe
 
 
   (0, _createClass3.default)(Series, [{
@@ -192,7 +192,7 @@ var Series = function (_NDFrame) {
     value: function toString() {
       var _this2 = this;
 
-      // $FlowIssue TODO
+      // $FlowFixMe TODO
       var vals = this.iloc(0, 10).values;
 
       var valString = '';
@@ -226,7 +226,7 @@ var Series = function (_NDFrame) {
     value: function head() {
       var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 5;
 
-      // $FlowIssue TODO
+      // $FlowFixMe TODO
       return this.iloc(0, n);
     }
 
@@ -253,7 +253,7 @@ var Series = function (_NDFrame) {
     value: function tail() {
       var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 5;
 
-      // $FlowIssue TODO
+      // $FlowFixMe TODO
       return this.iloc(this.length - n, this.length);
     }
 
@@ -811,9 +811,9 @@ var Series = function (_NDFrame) {
       var valA = this.iloc(valueA);
       var valB = this.iloc(valueB);
 
-      // $FlowIssue
+      // $FlowFixMe
       if (valA < valB) return -1;
-      // $FlowIssue
+      // $FlowFixMe
       else if (valA > valB) return 1;
       return 0;
     }
@@ -823,9 +823,9 @@ var Series = function (_NDFrame) {
       var valA = this.iloc(valueA);
       var valB = this.iloc(valueB);
 
-      // $FlowIssue
+      // $FlowFixMe
       if (valA > valB) return -1;
-      // $FlowIssue
+      // $FlowFixMe
       else if (valA < valB) return 1;
       return 0;
     }
@@ -1404,7 +1404,7 @@ var Series = function (_NDFrame) {
       var orient = 'index';
 
       if (typeof kwargs.orient !== 'undefined') {
-        if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0) // $FlowIssue TODO
+        if (ALLOWED_ORIENT.indexOf(kwargs.orient) < 0) // $FlowFixMe TODO
           throw new TypeError('orient must be in ' + ALLOWED_ORIENT);
         orient = kwargs.orient;
       }
@@ -1422,7 +1422,7 @@ var Series = function (_NDFrame) {
           });
           return json;
         default:
-          // $FlowIssue TODO
+          // $FlowFixMe TODO
           throw new TypeError('orient must be in ' + ALLOWED_ORIENT);
       }
     }
@@ -1473,7 +1473,7 @@ var Series = function (_NDFrame) {
       var ignore_index = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
       // eslint-disable-next-line
-      return _concatSeries( // $FlowIssue
+      return _concatSeries( // $FlowFixMe
       [this, other], { ignore_index: ignore_index });
     }
   }, {

@@ -215,7 +215,7 @@ var DataFrame = function (_NDFrame) {
       return new DataFrame(this._data, { index: this.index });
     }
 
-    // $FlowIssue
+    // $FlowFixMe
 
   }, {
     key: Symbol.iterator,
@@ -275,7 +275,7 @@ var DataFrame = function (_NDFrame) {
      * df.set('y', new Series([2, 3, 4]));
      */
     value: function set(column, series) {
-      if (series instanceof _series2.default) return new DataFrame(this._data.set(column, series), this.kwargs);else if (series instanceof _immutable2.default.List || Array.isArray(series)) return new DataFrame(this._data.set(column, // $FlowIssue TODO
+      if (series instanceof _series2.default) return new DataFrame(this._data.set(column, series), this.kwargs);else if (series instanceof _immutable2.default.List || Array.isArray(series)) return new DataFrame(this._data.set(column, // $FlowFixMe TODO
       new _series2.default(series, { index: this.index, name: column })), this.kwargs);
       throw new TypeError('series must be a Series!');
     }
@@ -379,13 +379,13 @@ var DataFrame = function (_NDFrame) {
 
           return new DataFrame(_immutable2.default.Map(_immutable2.default.Range(colIdx[0], colIdx[1]).map(function (idx) {
             var getCol = _this5.columns.get(idx);
-            // $FlowIssue TODO
+            // $FlowFixMe TODO
             return [getCol, _this5.get(getCol).iloc(rowIdx, rowIdx + 1)];
           }).toArray()), { index: this.index.slice(rowIdx, rowIdx + 1) });
         } else if (typeof colIdx === 'undefined') {
           return new DataFrame(_immutable2.default.Map(this.columns.map(function (c) {
             return (
-              // $FlowIssue TODO
+              // $FlowFixMe TODO
               [c, _this5.get(c).iloc(rowIdx, rowIdx + 1)]
             );
           }).toArray()), { index: this.index.slice(rowIdx, rowIdx + 1) });
@@ -405,13 +405,13 @@ var DataFrame = function (_NDFrame) {
 
           return new DataFrame(_immutable2.default.Map(_immutable2.default.Range(colIdx[0], colIdx[1]).map(function (idx) {
             var getCol = _this5.columns.get(idx);
-            // $FlowIssue TODO
+            // $FlowFixMe TODO
             return [getCol, _this5.get(getCol).iloc(rowIdx[0], rowIdx[1])];
           }).toArray()), { index: this.index.slice(rowIdx[0], rowIdx[1]) });
         } else if (typeof colIdx === 'undefined') {
           return new DataFrame(_immutable2.default.Map(this.columns.map(function (c) {
             return (
-              // $FlowIssue TODO
+              // $FlowFixMe TODO
               [c, _this5.get(c).iloc(rowIdx[0], rowIdx[1])]
             );
           }).toArray()), { index: this.index.slice(rowIdx[0], rowIdx[1]) });
@@ -574,7 +574,7 @@ var DataFrame = function (_NDFrame) {
               k = _ref6[0],
               v = _ref6[1];
 
-          // $FlowIssue TODO
+          // $FlowFixMe TODO
           return [k, v.where(other.get(other.columns.get(idx)), op)];
         })));
       }
@@ -793,7 +793,7 @@ var DataFrame = function (_NDFrame) {
       csvString += '\r\n';
 
       var updateString = function updateString(idx) {
-        var s = ''; // $FlowIssue TODO
+        var s = ''; // $FlowFixMe TODO
         _this7.columns.forEach(function (k) {
           s += _this7.get(k).iloc(idx) + ',';
         });
@@ -1208,7 +1208,7 @@ var DataFrame = function (_NDFrame) {
   }, {
     key: 'cov',
     value: function cov() {
-      // $FlowIssue TODO
+      // $FlowFixMe TODO
       return this._pairwiseDataFrame(function (ds1, ds2) {
         return ds1.cov(ds2);
       });
@@ -1233,7 +1233,7 @@ var DataFrame = function (_NDFrame) {
     value: function corr() {
       // noinspection Eslint
       var corrFunc = function corrFunc(ds1, ds2) {
-        // $FlowIssue TODO
+        // $FlowFixMe TODO
         return ds1.values === ds2.values ? 1 : ds1.corr(ds2);
       };
       return this._pairwiseDataFrame(corrFunc);
@@ -1280,7 +1280,7 @@ var DataFrame = function (_NDFrame) {
       } else if (axis === 1) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k, idx) {
           if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this13.length).toList(), { name: k, index: _this13.index })];
-          var compareCol = _this13.get(_this13.columns.get(idx - periods)); // $FlowIssue TODO
+          var compareCol = _this13.get(_this13.columns.get(idx - periods)); // $FlowFixMe TODO
           return [k, _this13.get(k).map(function (v, vIdx) {
             return v - compareCol.iloc(vIdx);
           })];
@@ -1332,7 +1332,7 @@ var DataFrame = function (_NDFrame) {
         return new DataFrame(_immutable2.default.Map(this.columns.map(function (k, idx) {
           if (idx < periods) return [k, new _series2.default(_immutable2.default.Repeat(null, _this14.length).toList(), { name: k, index: _this14.index })];
           var compareCol = _this14.get(_this14.columns.get(idx - periods));
-          // $FlowIssue TODO
+          // $FlowFixMe TODO
           return [k, _this14.get(k).map(function (v, vIdx) {
             return v / compareCol.iloc(vIdx) - 1;
           })];
@@ -1683,7 +1683,7 @@ var DataFrame = function (_NDFrame) {
       var ignore_index = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
       // eslint-disable-next-line
-      return _concatDataFrame( // $FlowIssue
+      return _concatDataFrame( // $FlowFixMe
       [this, other], { ignore_index: ignore_index });
     }
 
@@ -2226,7 +2226,7 @@ var _concatDataFrame = exports._concatDataFrame = function _concatDataFrame(objs
     objs.forEach(function (df) {
       df.columns.forEach(function (column) {
         var columnExists = seriesOrderedMap.has(column);
-        seriesOrderedMap = seriesOrderedMap.set(columnExists ? column + '.x' : column, // $FlowIssue
+        seriesOrderedMap = seriesOrderedMap.set(columnExists ? column + '.x' : column, // $FlowFixMe
         columnExists ? df.get(column).rename(column + '.x') : df.get(column));
       });
     });
@@ -2242,14 +2242,14 @@ var _concatDataFrame = exports._concatDataFrame = function _concatDataFrame(objs
             column = _ref13[0],
             series = _ref13[1];
 
-        if (df.columnExists(column)) return [column, // $FlowIssue
+        if (df.columnExists(column)) return [column, // $FlowFixMe
         (0, _series._concatSeries)([series, df.get(column)], kwargs)];
-        return [column, // $FlowIssue
+        return [column, // $FlowFixMe
         (0, _series._concatSeries)([series, new _series2.default(_immutable2.default.Repeat(NaN, df.length).toList(), { index: df.index })], kwargs)]; // Now merge with columns only in the "right" DataFrame
       })).merge(_immutable2.default.OrderedMap(df.columns.filter(function (column) {
         return !seriesOrderedMap.has(column);
       }).map(function (column) {
-        return (// $FlowIssue
+        return (// $FlowFixMe
           [column, lenSeriesInMap === 0 ? df.get(column) : (0, _series._concatSeries)([new _series2.default(_immutable2.default.Repeat(NaN, nextLength)), df.get(column)], kwargs)]
         );
       })));
