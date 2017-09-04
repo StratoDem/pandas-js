@@ -9,10 +9,6 @@ var _toConsumableArray2 = require('babel-runtime/helpers/toConsumableArray');
 
 var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
 
-var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
-
-var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
-
 var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
 
 var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
@@ -94,35 +90,16 @@ var Series = function (_NDFrame) {
   }, {
     key: 'map',
     value: function map(func) {
-      var array = [];
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
-      try {
-        for (var _iterator = (0, _utils.enumerate)(this)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var _step$value = (0, _slicedToArray3.default)(_step.value, 2),
-              val = _step$value[0],
-              _idx = _step$value[1];
-
-          array.push(func(val, _idx));
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
-      }
-
-      return new Series(array, { name: this.name, index: this.index });
+      return new Series(this.values.map(function (val, idx) {
+        return func(val, idx);
+      }), { name: this.name, index: this.index });
+    }
+  }, {
+    key: 'forEach',
+    value: function forEach(func) {
+      this.values.forEach(function (val, idx) {
+        return func(val, idx);
+      });
     }
   }, {
     key: 'toString',

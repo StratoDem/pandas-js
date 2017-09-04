@@ -63,11 +63,12 @@ var Index = exports.Index = function () {
     }
   }]);
   return Index;
-}(); /**
+}(); /** 
       * Created by michael on 3/22/17.
       */
 
 var MultiIndex = exports.MultiIndex = function () {
+
   /**
    * A MultiIndex is an Immutable.OrderedMap of MultiIndexes nested until pointing to an Index
    *
@@ -113,7 +114,7 @@ var MultiIndex = exports.MultiIndex = function () {
 
       var idx = this._multiindex;
       keys.forEach(function (k) {
-        return idx = idx.get(k);
+        idx = idx.get(k);
       });
       return idx;
     }
@@ -140,6 +141,8 @@ var MultiIndex = exports.MultiIndex = function () {
             v = _ref2[1];
 
         if (v instanceof Index || v instanceof MultiIndex) return [k, v];else if (Array.isArray(v) || v instanceof _immutable2.default.List) return [k, new Index(v)];else if (v instanceof _immutable2.default.OrderedMap) return [k, new MultiIndex(v)];
+
+        throw new Error('Invalid value');
       }));
     }
   }, {
@@ -152,7 +155,9 @@ var MultiIndex = exports.MultiIndex = function () {
             k = _ref4[0],
             v = _ref4[1];
 
-        if (v instanceof Index) return [k, v.values];else if (v instanceof _immutable2.default.OrderedMap) return [k, MultiIndex._parseMultiIndex(v)];else throw new TypeError('invalid value');
+        if (v instanceof Index) return [k, v.values];else if (v instanceof _immutable2.default.OrderedMap) return [k, MultiIndex._parseMultiIndex(v)];
+
+        throw new TypeError('invalid value');
       }));
     }
   }]);

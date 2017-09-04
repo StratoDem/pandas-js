@@ -151,6 +151,16 @@ describe('series', function () {
       });
     });
 
+    describe('forEach()', function () {
+      var ds = new _series2.default([1, 2, 3, 4]);
+
+      var a = 0;
+      ds.forEach(function (val) {
+        a += val;
+      });
+      expect(a).toEqual(10);
+    });
+
     describe('sum()', function () {
       it('returns the sum of the Series', function () {
         expect(new _series2.default([1, 2, 3]).sum()).toEqual(6);

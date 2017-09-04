@@ -46,6 +46,9 @@ function enumerate(iterable) {
       switch (_context.prev = _context.next) {
         case 0:
           i = 0;
+
+          // eslint-disable-next-line
+
           _iteratorNormalCompletion = true;
           _didIteratorError = false;
           _iteratorError = undefined;

@@ -84,6 +84,7 @@ var elementToDType = exports.elementToDType = function elementToDType(el) {
 var arrayToDType = exports.arrayToDType = function arrayToDType(array) {
   var arrayDType = void 0;
 
+  // eslint-disable-next-line
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
   var _iteratorError = undefined;
@@ -113,3 +114,5 @@ var arrayToDType = exports.arrayToDType = function arrayToDType(array) {
 
   return arrayDType;
 };
+
+//# sourceMappingURL=dtype.js.map
