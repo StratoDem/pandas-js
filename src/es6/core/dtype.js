@@ -64,6 +64,7 @@ export const elementToDType = (el) => {
 export const arrayToDType = (array) => {
   let arrayDType;
 
+  // eslint-disable-next-line
   for (const el of array) {
     arrayDType = elementToDType(el);
 

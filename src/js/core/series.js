@@ -9,10 +9,6 @@ var _toConsumableArray2 = require('babel-runtime/helpers/toConsumableArray');
 
 var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
 
-var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
-
-var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
-
 var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
 
 var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
@@ -141,43 +137,38 @@ var Series = function (_NDFrame) {
      * const ds = new Series([1, 2, 3, 4], {name: 'New Series'})
      *
      * // Returns Series([1, 4, 9, 16], {name: 'New Series', index: [1, 2]})
-     * ds.map((val, idx) => val ** 2;
+     * ds.map((val, idx) => val ** 2);
      */
 
   }, {
     key: 'map',
     value: function map(func) {
-      var array = [];
-      // eslint-disable-next-line
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+      return new Series(this.values.map(function (val, idx) {
+        return func(val, idx);
+      }), { name: this.name, index: this.index });
+    }
 
-      try {
-        for (var _iterator = (0, _utils.enumerate)(this)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var _step$value = (0, _slicedToArray3.default)(_step.value, 2),
-              val = _step$value[0],
-              _idx = _step$value[1];
+    /**
+     * forEach applied along the `Series` values
+     *
+     * @param {function} func
+     *  Function to apply along the values
+     *
+     * @returns {Series}
+     *
+     * @example
+     * const ds = new Series([1, 2, 3, 4], {name: 'New Series'})
+     *
+     * // Logs 1, 4, 9, 16
+     * ds.forEach((val, idx) => console.log(val ** 2));
+     */
 
-          // $FlowIssue TODO
-          array.push(func(val, _idx));
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
-      }
-
-      return new Series(array, { name: this.name, index: this.index });
+  }, {
+    key: 'forEach',
+    value: function forEach(func) {
+      this.values.forEach(function (val, idx) {
+        return func(val, idx);
+      });
     }
 
     /**

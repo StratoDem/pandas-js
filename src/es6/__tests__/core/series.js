@@ -132,6 +132,14 @@ describe('series', () => {
       });
     });
 
+    describe('forEach()', () => {
+      const ds = new Series([1, 2, 3, 4]);
+
+      let a = 0;
+      ds.forEach((val) => { a += val; });
+      expect(a).toEqual(10);
+    });
+
     describe('sum()', () => {
       it('returns the sum of the Series', () => {
         expect(new Series([1, 2, 3]).sum()).toEqual(6);
@@ -173,7 +181,7 @@ describe('series', () => {
         const dsAbs = ds.abs();
         expect(dsAbs).toBeInstanceOf(Series);
         expect(dsAbs.values.toArray()).toEqual(['hi', 2, 4]);
-      })
+      });
     });
 
     describe('add()', () => {

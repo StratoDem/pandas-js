@@ -93,17 +93,30 @@ export default class Series extends NDFrame {
    * const ds = new Series([1, 2, 3, 4], {name: 'New Series'})
    *
    * // Returns Series([1, 4, 9, 16], {name: 'New Series', index: [1, 2]})
-   * ds.map((val, idx) => val ** 2;
+   * ds.map((val, idx) => val ** 2);
    */
   map(func: T_MF): Series {
-    const array = [];
-    // eslint-disable-next-line
-    for (const [val, idx] of enumerate(this)) {
-      // $FlowIssue TODO
-      array.push(func(val, idx));
-    }
+    return new Series(
+      this.values.map((val, idx) => func(val, idx)),
+      {name: this.name, index: this.index});
+  }
 
-    return new Series(array, {name: this.name, index: this.index});
+  /**
+   * forEach applied along the `Series` values
+   *
+   * @param {function} func
+   *  Function to apply along the values
+   *
+   * @returns {Series}
+   *
+   * @example
+   * const ds = new Series([1, 2, 3, 4], {name: 'New Series'})
+   *
+   * // Logs 1, 4, 9, 16
+   * ds.forEach((val, idx) => console.log(val ** 2));
+   */
+  forEach(func: T_MF): void {
+    this.values.forEach((val, idx) => func(val, idx));
   }
 
   /**

@@ -1,17 +1,19 @@
-/**
+/** @flow
  * Created by michael on 3/22/17.
  */
 
 import Immutable from 'immutable';
 
 
-declare type T_SK = string|number;
+declare type T_SK = string | number;
 declare type T_LIST = Immutable.List;
 declare type T_MAP = Immutable.OrderedMap;
-declare type T_INDEX = Array<T_SK>|T_LIST;
+declare type T_INDEX = Array<T_SK> | T_LIST;
 
 
 export class Index {
+  _values: T_LIST;
+
   constructor(indexVals: T_INDEX) {
     if (Array.isArray(indexVals))
       this._values = Immutable.List(indexVals);
@@ -48,6 +50,9 @@ export class Index {
 
 
 export class MultiIndex {
+  _multiindex: T_MAP;
+  _values: Immutable.OrderedMap;
+
   /**
    * A MultiIndex is an Immutable.OrderedMap of MultiIndexes nested until pointing to an Index
    *
@@ -74,7 +79,7 @@ export class MultiIndex {
    *
    * @param {string|number} key
    */
-  get(key: T_SK): Index|MultiIndex {
+  get(key: T_SK): Index | MultiIndex {
     if (!(typeof key === 'string' || typeof key === 'number'))
       throw new TypeError('key must be string or number');
 
@@ -87,12 +92,12 @@ export class MultiIndex {
    * @param {Array<string|number>|Immutable.List} keys
    * @returns {*|T_MAP}
    */
-  getIn(keys: Array<T_SK>|Immutable.List): Index|MultiIndex {
+  getIn(keys: Array<T_SK> | Immutable.List): Index | MultiIndex {
     if (!(Array.isArray(keys) || keys instanceof Immutable.List))
       throw new TypeError('keys must be Array or List');
 
     let idx = this._multiindex;
-    keys.forEach(k => idx = idx.get(k));
+    keys.forEach((k: T_SK) => { idx = idx.get(k); });
     return idx;
   }
 
@@ -114,10 +119,12 @@ export class MultiIndex {
         return [k, new Index(v)];
       else if (v instanceof Immutable.OrderedMap)
         return [k, new MultiIndex(v)];
+
+      throw new Error('Invalid value');
     }));
   }
 
-  static _parseMultiIndex(multiindex: T_MAP) {
+  static _parseMultiIndex(multiindex: T_MAP): Immutable.OrderedMap {
     if (!(multiindex instanceof Immutable.OrderedMap))
       throw new TypeError('multiindex in parser must be an Immutable.OrderedMap');
 
@@ -126,8 +133,8 @@ export class MultiIndex {
         return [k, v.values];
       else if (v instanceof Immutable.OrderedMap)
         return [k, MultiIndex._parseMultiIndex(v)];
-      else
-        throw new TypeError('invalid value');
+
+      throw new TypeError('invalid value');
     }));
   }
 }

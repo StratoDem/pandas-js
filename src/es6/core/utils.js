@@ -19,6 +19,7 @@ export const sum = iterable => iterable.reduce((s, v) => s + v, 0);
 export function* enumerate(iterable) {
   let i = 0;
 
+  // eslint-disable-next-line
   for (const x of iterable) {
     yield [x, i];
     i += 1;

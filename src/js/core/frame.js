@@ -91,8 +91,7 @@ var parseArrayToSeriesMap = function parseArrayToSeriesMap(array, index) {
   return _immutable2.default.Map(dataMap);
 };
 // import { Workbook, Sheet } from './structs'; TODO
-
-/**
+/** 
  * DataFrame object
  */
 
